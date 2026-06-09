@@ -1,2147 +1,1984 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<title>MV GOOFY Voy 18 - Control de Embarque</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #0a0e27;
-    min-height: 100vh;
-    color: #e8eaf6;
-    overflow-x: hidden;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-  body { padding-bottom: 80px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTP - Sistema de Gestión Portuaria</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --htp-blue: #1a365d;
+            --htp-light: #2c5282;
+            --htp-accent: #3182ce;
+            --htp-gold: #d69e2e;
+            --htp-red: #c53030;
+            --htp-green: #38a169;
+            --htp-orange: #dd6b20;
+            --bg: #f7fafc;
+            --card-bg: #ffffff;
+            --text: #2d3748;
+            --text-light: #718096;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  .header {
-    background: linear-gradient(135deg, #0d1b3e, #1a237e);
-    padding: 14px 16px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    backdrop-filter: blur(10px);
-  }
-  .header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-  .header-title {
-    font-size: 1.1rem;
-    font-weight: 800;
-    background: linear-gradient(90deg, #00e5ff, #7c4dff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .mode-badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-  .mode-operator { background: rgba(0,230,118,0.2); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
-  .mode-supervisor { background: rgba(0,229,255,0.2); color: #00e5ff; border: 1px solid rgba(0,229,255,0.3); }
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--htp-blue) 0%, var(--htp-light) 100%);
+            color: white; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+            box-shadow: var(--shadow-lg); position: sticky; top: 0; z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .logo-section { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 48px; height: 48px; background: white; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-weight: 800;
+            color: var(--htp-blue); font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .logo-text h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+        .logo-text p { font-size: 11px; opacity: 0.85; font-weight: 400; }
+        .mode-badge {
+            padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .mode-supervisor { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); }
+        .mode-tarja { background: rgba(214,158,46,0.3); border: 1px solid var(--htp-gold); color: #fff; }
+        .mode-gerencia { background: rgba(56,161,105,0.3); border: 1px solid var(--htp-green); color: #fff; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .header-btn {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+            color: white; padding: 8px 14px; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+        }
+        .header-btn:hover { background: rgba(255,255,255,0.25); }
 
-  .header-info {
-    display: flex;
-    gap: 12px;
-    font-size: 0.72rem;
-    color: #9fa8da;
-    flex-wrap: wrap;
-  }
-  .header-info span { display: flex; align-items: center; gap: 4px; }
-  .live-dot {
-    width: 6px; height: 6px;
-    background: #00e676;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-    display: inline-block;
-  }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        /* NAV */
+        .nav-tabs {
+            display: flex; background: white; border-bottom: 1px solid var(--border);
+            padding: 0 24px; gap: 4px; overflow-x: auto;
+        }
+        .nav-tab {
+            padding: 14px 20px; border: none; background: none; cursor: pointer;
+            font-size: 13px; font-weight: 600; color: var(--text-light);
+            border-bottom: 3px solid transparent; white-space: nowrap; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .nav-tab:hover { color: var(--htp-blue); }
+        .nav-tab.active { color: var(--htp-blue); border-bottom-color: var(--htp-blue); }
+        .nav-tab i { font-size: 14px; }
 
-  .scroll-container { padding: 12px 14px; }
+        /* MAIN */
+        .main-content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-  .metrics-scroll {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    margin-bottom: 14px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .metrics-scroll::-webkit-scrollbar { display: none; }
-  .metric-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    padding: 12px 14px;
-    min-width: 130px;
-    flex-shrink: 0;
-  }
-  .metric-card h4 {
-    font-size: 0.65rem;
-    color: #9fa8da;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
-    font-weight: 500;
-  }
-  .metric-card .value {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #fff;
-  }
-  .metric-card .sub {
-    font-size: 0.65rem;
-    color: #5c6bc0;
-    margin-top: 2px;
-  }
+        /* CARDS */
+        .card {
+            background: var(--card-bg); border-radius: 12px; box-shadow: var(--shadow);
+            border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px;
+        }
+        .card-header {
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card-title { font-size: 15px; font-weight: 700; color: var(--htp-blue); display: flex; align-items: center; gap: 8px; }
+        .card-body { padding: 20px; }
 
-  .bodegas-section { margin-bottom: 14px; }
-  .section-title {
-    font-size: 0.8rem;
-    color: #9fa8da;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .bodega-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 10px;
-    position: relative;
-    overflow: hidden;
-  }
-  .bodega-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-  }
-  .bodega-1::before { background: #00e5ff; }
-  .bodega-2::before { background: #ff9100; }
-  .bodega-3::before { background: #00e676; }
-  .bodega-5::before { background: #7c4dff; }
-  .bodega-rematada { border-color: #ffd700 !important; }
-  .bodega-rematada::before { background: #ffd700 !important; }
+        /* GRID */
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        @media (max-width: 1024px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } .grid-3 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
 
-  .bodega-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  .bodega-name {
-    font-size: 0.95rem;
-    font-weight: 700;
-  }
-  .bodega-pct {
-    font-size: 1.1rem;
-    font-weight: 800;
-  }
-  .bodega-1 .bodega-pct { color: #00e5ff; }
-  .bodega-2 .bodega-pct { color: #ff9100; }
-  .bodega-3 .bodega-pct { color: #00e676; }
-  .bodega-5 .bodega-pct { color: #b388ff; }
-  .bodega-rematada .bodega-pct { color: #ffd700 !important; }
+        /* STATS */
+        .stat-card {
+            background: linear-gradient(135deg, var(--htp-blue) 0%, var(--htp-light) 100%);
+            color: white; padding: 20px; border-radius: 12px; position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: -20px; right: -20px; width: 80px; height: 80px;
+            background: rgba(255,255,255,0.08); border-radius: 50%;
+        }
+        .stat-card.green { background: linear-gradient(135deg, var(--htp-green) 0%, #2f855a 100%); }
+        .stat-card.orange { background: linear-gradient(135deg, var(--htp-orange) 0%, #c05621 100%); }
+        .stat-card.red { background: linear-gradient(135deg, var(--htp-red) 0%, #9b2c2c 100%); }
+        .stat-card.gold { background: linear-gradient(135deg, var(--htp-gold) 0%, #b7791f 100%); }
+        .stat-label { font-size: 12px; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 800; }
+        .stat-sub { font-size: 12px; opacity: 0.7; margin-top: 4px; }
 
-  .progress-track {
-    background: rgba(0,0,0,0.3);
-    border-radius: 8px;
-    height: 22px;
-    overflow: hidden;
-    position: relative;
-  }
-  .progress-fill {
-    height: 100%;
-    border-radius: 8px;
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 8px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #fff;
-  }
-  .bodega-1 .progress-fill { background: linear-gradient(90deg, #00e5ff, #0091ea); }
-  .bodega-2 .progress-fill { background: linear-gradient(90deg, #ff9100, #ff6d00); }
-  .bodega-3 .progress-fill { background: linear-gradient(90deg, #00e676, #00c853); }
-  .bodega-5 .progress-fill { background: linear-gradient(90deg, #7c4dff, #651fff); }
-  .bodega-rematada .progress-fill { background: linear-gradient(90deg, #ffd700, #ffab00) !important; }
+        /* FORMS */
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+            font-size: 14px; font-family: inherit; transition: all 0.2s; background: white;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none; border-color: var(--htp-accent); box-shadow: 0 0 0 3px rgba(49,130,206,0.1);
+        }
+        .form-textarea { min-height: 80px; resize: vertical; }
 
-  .bodega-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin-top: 10px;
-  }
-  .stat-item {
-    text-align: center;
-    background: rgba(0,0,0,0.2);
-    border-radius: 8px;
-    padding: 8px 4px;
-  }
-  .stat-item .num { font-size: 1rem; font-weight: 700; color: #fff; }
-  .stat-item .lbl { font-size: 0.6rem; color: #9fa8da; text-transform: uppercase; }
+        /* BUTTONS */
+        .btn {
+            padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s; display: inline-flex;
+            align-items: center; gap: 8px; font-family: inherit;
+        }
+        .btn-primary { background: var(--htp-blue); color: white; }
+        .btn-primary:hover { background: var(--htp-light); transform: translateY(-1px); box-shadow: var(--shadow); }
+        .btn-success { background: var(--htp-green); color: white; }
+        .btn-success:hover { background: #2f855a; }
+        .btn-danger { background: var(--htp-red); color: white; }
+        .btn-danger:hover { background: #9b2c2c; }
+        .btn-warning { background: var(--htp-orange); color: white; }
+        .btn-warning:hover { background: #c05621; }
+        .btn-gold { background: var(--htp-gold); color: white; }
+        .btn-gold:hover { background: #b7791f; }
+        .btn-outline {
+            background: transparent; border: 1.5px solid var(--border); color: var(--text);
+        }
+        .btn-outline:hover { border-color: var(--htp-blue); color: var(--htp-blue); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-lg { padding: 14px 28px; font-size: 15px; }
 
-  .bodega-remaining {
-    font-size: 0.72rem;
-    color: #9fa8da;
-    margin-top: 8px;
-    text-align: center;
-  }
-  .bodega-remaining span { color: #00e676; font-weight: 600; }
-  .remate-info {
-    font-size: 0.72rem;
-    color: #ffd700;
-    margin-top: 6px;
-    text-align: center;
-    font-weight: 600;
-  }
-  .remate-real {
-    font-size: 0.7rem;
-    color: #00e676;
-    margin-top: 4px;
-    text-align: center;
-  }
+        /* TABLES */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th {
+            background: var(--htp-blue); color: white; padding: 12px 14px; text-align: left;
+            font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+        tr:hover td { background: #f7fafc; }
+        tr:last-child td { border-bottom: none; }
+        .badge {
+            padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+            display: inline-block;
+        }
+        .badge-green { background: #c6f6d5; color: #22543d; }
+        .badge-yellow { background: #fefcbf; color: #744210; }
+        .badge-red { background: #fed7d7; color: #742a2a; }
+        .badge-blue { background: #bee3f8; color: #2a4365; }
+        .badge-gray { background: #e2e8f0; color: #4a5568; }
 
-  .form-section {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 14px;
-  }
-  .form-section h3 {
-    font-size: 0.9rem;
-    color: #00e5ff;
-    margin-bottom: 14px;
-    font-weight: 600;
-  }
-  .form-group { margin-bottom: 12px; }
-  .form-group label {
-    display: block;
-    font-size: 0.75rem;
-    color: #9fa8da;
-    margin-bottom: 5px;
-    font-weight: 500;
-  }
-  .form-group input, .form-group select {
-    width: 100%;
-    padding: 14px 12px;
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 10px;
-    background: rgba(0,0,0,0.3);
-    color: #fff;
-    font-size: 1rem;
-    font-family: inherit;
-    transition: all 0.3s;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  .form-group input:focus, .form-group select:focus {
-    outline: none;
-    border-color: #00e5ff;
-    box-shadow: 0 0 15px rgba(0,229,255,0.15);
-  }
-  .form-group select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239fa8da' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 32px;
-  }
-  .patente-found { border-color: #00e5ff !important; background: rgba(0,229,255,0.05) !important; }
-  .patente-notfound { border-color: #ff1744 !important; background: rgba(255,23,68,0.05) !important; }
+        /* SHIP CARDS */
+        .ship-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .ship-card {
+            background: white; border-radius: 12px; border: 2px solid var(--border);
+            padding: 20px; cursor: pointer; transition: all 0.2s; position: relative;
+        }
+        .ship-card:hover { border-color: var(--htp-accent); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .ship-card.selected { border-color: var(--htp-blue); box-shadow: 0 0 0 3px rgba(26,54,93,0.1); }
+        .ship-card.closed { opacity: 0.6; background: #f7fafc; }
+        .ship-card.closed::after {
+            content: 'CERRADO'; position: absolute; top: 12px; right: 12px;
+            background: var(--htp-red); color: white; padding: 2px 8px; border-radius: 4px;
+            font-size: 10px; font-weight: 700;
+        }
+        .ship-name { font-size: 16px; font-weight: 700; color: var(--htp-blue); margin-bottom: 4px; }
+        .ship-detail { font-size: 12px; color: var(--text-light); margin-bottom: 2px; }
+        .ship-progress { margin-top: 12px; }
+        .progress-bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+        .ship-stats { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+        .ship-stat { text-align: center; flex: 1; }
+        .ship-stat-value { font-size: 18px; font-weight: 700; color: var(--htp-blue); }
+        .ship-stat-label { font-size: 10px; color: var(--text-light); text-transform: uppercase; }
 
-  .tara-info {
-    background: rgba(0,0,0,0.3);
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 0.82rem;
-    color: #c5cae9;
-    margin-top: 6px;
-    border-left: 3px solid #00e5ff;
-    display: none;
-  }
-  .tara-info.show { display: block; }
-  .tara-info.error { border-left-color: #ff1744; color: #ff8a80; }
-  .tara-info .label { color: #9fa8da; font-size: 0.7rem; }
-  .tara-info .val { color: #00e5ff; font-weight: 700; }
+        /* MODAL */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center; z-index: 1000;
+            opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal {
+            background: white; border-radius: 16px; width: 90%; max-width: 600px; max-height: 85vh;
+            overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            transform: scale(0.95); transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal-header {
+            padding: 20px 24px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .modal-title { font-size: 16px; font-weight: 700; color: var(--htp-blue); }
+        .modal-close { background: none; border: none; font-size: 20px; color: var(--text-light); cursor: pointer; }
+        .modal-body { padding: 24px; overflow-y: auto; max-height: 60vh; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
 
-  .btn {
-    width: 100%;
-    padding: 16px;
-    border: none;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-family: inherit;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none !important;
-  }
-  .btn-primary {
-    background: linear-gradient(135deg, #00e5ff, #0091ea);
-    color: #fff;
-    box-shadow: 0 4px 20px rgba(0,229,255,0.3);
-  }
-  .btn-success {
-    background: linear-gradient(135deg, #00e676, #00c853);
-    color: #fff;
-    box-shadow: 0 4px 20px rgba(0,230,118,0.3);
-  }
-  .btn-warning {
-    background: linear-gradient(135deg, #ff9100, #ff6d00);
-    color: #fff;
-  }
-  .btn-danger {
-    background: linear-gradient(135deg, #ff1744, #d50000);
-    color: #fff;
-  }
-  .btn-outline {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.2);
-    color: #9fa8da;
-  }
+        /* TABS */
+        .sub-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        .sub-tab {
+            padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; background: none; color: var(--text-light); transition: all 0.2s;
+        }
+        .sub-tab:hover { background: #edf2f7; color: var(--text); }
+        .sub-tab.active { background: var(--htp-blue); color: white; }
 
-  .btn-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 10px;
-  }
-  .btn-row .btn { font-size: 0.85rem; padding: 12px; }
+        /* ALERT */
+        .alert {
+            padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .alert-success { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+        .alert-error { background: #fed7d7; color: #742a2a; border: 1px solid #fc8181; }
+        .alert-info { background: #bee3f8; color: #2a4365; border: 1px solid #90cdf4; }
 
-  .table-section {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 14px;
-    overflow-x: auto;
-  }
-  .table-section h3 {
-    font-size: 0.85rem;
-    color: #00e5ff;
-    margin-bottom: 12px;
-    font-weight: 600;
-  }
-  table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 500px; }
-  th {
-    background: rgba(0,0,0,0.3);
-    color: #00e5ff;
-    padding: 10px 8px;
-    text-align: left;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.65rem;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-  }
-  td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #c5cae9; white-space: nowrap; }
-  tr:hover { background: rgba(0,229,255,0.03); }
-  .badge-b1 { background: rgba(0,229,255,0.15); color: #00e5ff; padding: 2px 6px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; }
-  .badge-b2 { background: rgba(255,145,0,0.15); color: #ff9100; padding: 2px 6px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; }
-  .badge-b3 { background: rgba(0,230,118,0.15); color: #00e676; padding: 2px 6px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; }
-  .badge-b5 { background: rgba(124,77,255,0.15); color: #b388ff; padding: 2px 6px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; }
+        /* TURNOS */
+        .turno-card {
+            background: white; border: 2px solid var(--border); border-radius: 10px; padding: 16px;
+            margin-bottom: 12px; cursor: pointer; transition: all 0.2s;
+        }
+        .turno-card:hover { border-color: var(--htp-accent); }
+        .turno-card.selected { border-color: var(--htp-blue); background: #ebf8ff; }
+        .turno-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .turno-name { font-weight: 700; font-size: 14px; color: var(--htp-blue); }
+        .turno-time { font-size: 12px; color: var(--text-light); }
+        .turno-stats { display: flex; gap: 20px; font-size: 12px; color: var(--text-light); }
 
-  .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(10,14,39,0.95);
-    backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255,255,255,0.08);
-    display: flex;
-    justify-content: space-around;
-    padding: 8px 0;
-    z-index: 100;
-  }
-  .nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    padding: 6px 16px;
-    color: #5c6bc0;
-    text-decoration: none;
-    font-size: 0.65rem;
-    font-weight: 500;
-    transition: all 0.3s;
-    cursor: pointer;
-    border: none;
-    background: none;
-    font-family: inherit;
-  }
-  .nav-item.active { color: #00e5ff; }
-  .nav-item .icon { font-size: 1.3rem; }
+        /* BODEGAS */
+        .bodega-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+        .bodega-card {
+            background: white; border: 2px solid var(--border); border-radius: 10px; padding: 16px;
+            text-align: center; cursor: pointer; transition: all 0.2s;
+        }
+        .bodega-card:hover { border-color: var(--htp-accent); transform: translateY(-2px); }
+        .bodega-card.selected { border-color: var(--htp-blue); background: #ebf8ff; }
+        .bodega-card.occupied { border-color: var(--htp-orange); background: #fffaf0; }
+        .bodega-name { font-size: 20px; font-weight: 800; color: var(--htp-blue); margin-bottom: 4px; }
+        .bodega-status { font-size: 11px; font-weight: 600; }
+        .bodega-capacity { font-size: 12px; color: var(--text-light); margin-top: 4px; }
 
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
-    z-index: 200;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 0;
-  }
-  .modal-overlay.active { display: flex; }
-  .modal-sheet {
-    background: linear-gradient(180deg, #0d1b3e, #0a0e27);
-    border-radius: 20px 20px 0 0;
-    padding: 20px;
-    width: 100%;
-    max-height: 85vh;
-    overflow-y: auto;
-    animation: slideUp 0.3s ease;
-    border-top: 1px solid rgba(255,255,255,0.1);
-  }
-  @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-  }
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-  }
-  .modal-header h2 { font-size: 1.1rem; color: #00e5ff; }
-  .close-btn {
-    background: rgba(255,255,255,0.08);
-    border: none;
-    color: #fff;
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 1.3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+        /* TIMELINE */
+        .timeline { position: relative; padding-left: 28px; }
+        .timeline::before {
+            content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--border);
+        }
+        .timeline-item { position: relative; margin-bottom: 16px; }
+        .timeline-dot {
+            position: absolute; left: -24px; top: 2px; width: 14px; height: 14px;
+            border-radius: 50%; background: var(--htp-blue); border: 2px solid white; box-shadow: 0 0 0 2px var(--htp-blue);
+        }
+        .timeline-dot.green { background: var(--htp-green); box-shadow: 0 0 0 2px var(--htp-green); }
+        .timeline-dot.red { background: var(--htp-red); box-shadow: 0 0 0 2px var(--htp-red); }
+        .timeline-dot.orange { background: var(--htp-orange); box-shadow: 0 0 0 2px var(--htp-orange); }
+        .timeline-content { background: white; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); }
+        .timeline-time { font-size: 11px; color: var(--text-light); margin-bottom: 4px; }
+        .timeline-text { font-size: 13px; }
 
-  .turno-tabs {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 16px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .turno-tabs::-webkit-scrollbar { display: none; }
-  .turno-tab {
-    padding: 8px 14px;
-    border: 1px solid rgba(255,255,255,0.15);
-    background: rgba(0,0,0,0.3);
-    color: #9fa8da;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-size: 0.78rem;
-    white-space: nowrap;
-    font-family: inherit;
-  }
-  .turno-tab.active {
-    background: linear-gradient(135deg, #00e5ff, #0091ea);
-    color: #fff;
-    border-color: transparent;
-  }
+        /* CHART PLACEHOLDER */
+        .chart-container { height: 300px; background: #f7fafc; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-light); }
 
-  .report-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .report-item {
-    background: rgba(0,0,0,0.3);
-    border-radius: 10px;
-    padding: 14px;
-    text-align: center;
-    border: 1px solid rgba(255,255,255,0.05);
-  }
-  .report-item .num { font-size: 1.6rem; font-weight: 700; color: #00e5ff; }
-  .report-item .lbl { font-size: 0.7rem; color: #9fa8da; margin-top: 4px; }
+        /* UTILS */
+        .text-center { text-align: center; }
+        .mb-0 { margin-bottom: 0; }
+        .mb-1 { margin-bottom: 8px; }
+        .mb-2 { margin-bottom: 16px; }
+        .mt-2 { margin-top: 16px; }
+        .flex { display: flex; }
+        .flex-between { justify-content: space-between; }
+        .flex-center { align-items: center; }
+        .gap-2 { gap: 16px; }
+        .gap-1 { gap: 8px; }
+        .w-full { width: 100%; }
 
-  .toast {
-    position: fixed;
-    top: 70px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-100px);
-    padding: 12px 24px;
-    border-radius: 12px;
-    color: #fff;
-    font-weight: 600;
-    font-size: 0.88rem;
-    z-index: 300;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-    text-align: center;
-    max-width: 90vw;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast-success { background: linear-gradient(135deg, #00e676, #00c853); }
-  .toast-error { background: linear-gradient(135deg, #ff1744, #d50000); }
-  .toast-info { background: linear-gradient(135deg, #00e5ff, #0091ea); }
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 10px; padding: 12px 16px; }
+            .main-content { padding: 16px; }
+            .bodega-grid { grid-template-columns: repeat(3, 1fr); }
+            .modal { width: 95%; margin: 16px; }
+        }
 
-  .loading-screen {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: #0a0e27;
-    z-index: 500;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-  }
-  .loading-screen.hidden { display: none; }
-  .spinner {
-    width: 50px; height: 50px;
-    border: 3px solid rgba(0,229,255,0.2);
-    border-top-color: #00e5ff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { color: #9fa8da; font-size: 0.9rem; }
+        /* PRINT */
+        @media print {
+            .header, .nav-tabs, .header-right, .btn { display: none !important; }
+            .section { display: block !important; }
+            .card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+        }
 
-  .supervisor-view .form-section { display: none; }
-  .supervisor-view .btn-row { display: none; }
+        /* LOADING */
+        .loading {
+            display: inline-block; width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top-color: white; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  .fade-in { animation: fadeIn 0.4s ease; }
-
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.2); border-radius: 2px; }
-
-  .supervisor-panel {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 14px;
-  }
-  .supervisor-panel h3 {
-    font-size: 0.9rem;
-    color: #ff9100;
-    margin-bottom: 14px;
-    font-weight: 600;
-  }
-  .supervisor-info {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  .supervisor-info-item {
-    background: rgba(0,0,0,0.3);
-    border-radius: 10px;
-    padding: 12px;
-    text-align: center;
-  }
-  .supervisor-info-item .label {
-    font-size: 0.65rem;
-    color: #9fa8da;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-  .supervisor-info-item .value {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #fff;
-  }
-  .supervisor-info-item .value.highlight { color: #ff9100; }
-  .supervisor-info-item .value.success { color: #00e676; }
-  .supervisor-info-item .value.danger { color: #ff1744; }
-
-  .detencion-list {
-    margin-top: 10px;
-  }
-  .detencion-item {
-    background: rgba(255,23,68,0.08);
-    border: 1px solid rgba(255,23,68,0.2);
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .detencion-item .time { font-size: 0.75rem; color: #ff8a80; }
-  .detencion-item .reason { font-size: 0.72rem; color: #c5cae9; }
-  .detencion-item .mins { font-size: 0.8rem; font-weight: 700; color: #ff1744; }
-
-  .modal-form-group {
-    margin-bottom: 12px;
-  }
-  .modal-form-group label {
-    display: block;
-    font-size: 0.75rem;
-    color: #9fa8da;
-    margin-bottom: 5px;
-  }
-  .modal-form-group input, .modal-form-group select, .modal-form-group textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 10px;
-    background: rgba(0,0,0,0.3);
-    color: #fff;
-    font-size: 0.9rem;
-    font-family: inherit;
-  }
-  .modal-form-group textarea {
-    resize: vertical;
-    min-height: 60px;
-  }
-  .modal-form-group input:focus, .modal-form-group select:focus, .modal-form-group textarea:focus {
-    outline: none;
-    border-color: #ff9100;
-  }
-
-  .add-camion-form {
-    background: rgba(0,230,118,0.05);
-    border: 1px solid rgba(0,230,118,0.2);
-    border-radius: 12px;
-    padding: 14px;
-    margin-top: 10px;
-    display: none;
-  }
-  .add-camion-form.show { display: block; }
-
-  .turno-select-section {
-    background: rgba(0,229,255,0.08);
-    border: 1px solid rgba(0,229,255,0.2);
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 14px;
-  }
-  .turno-select-section h3 {
-    font-size: 0.9rem;
-    color: #00e5ff;
-    margin-bottom: 12px;
-    font-weight: 600;
-  }
-  .turno-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-  }
-  .turno-btn-select {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 12px;
-    padding: 12px 6px;
-    cursor: pointer;
-    text-align: center;
-    color: #9fa8da;
-    font-family: inherit;
-    transition: all 0.3s;
-  }
-  .turno-btn-select .icon { font-size: 1.3rem; display: block; margin-bottom: 3px; }
-  .turno-btn-select .label { font-size: 0.7rem; font-weight: 600; }
-  .turno-btn-select .hours { font-size: 0.6rem; color: #5c6bc0; margin-top: 2px; }
-  .turno-btn-select:hover { border-color: rgba(0,229,255,0.4); }
-  .turno-btn-select.selected {
-    background: linear-gradient(135deg, #00e5ff, #0091ea);
-    border-color: transparent;
-    color: #fff;
-  }
-  .turno-btn-select.selected .hours { color: rgba(255,255,255,0.7); }
-
-  .operator-bodega-compact {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  .op-bod-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 10px;
-    padding: 10px;
-    text-align: center;
-  }
-  .op-bod-card .name { font-size: 0.75rem; font-weight: 600; margin-bottom: 4px; }
-  .op-bod-card .pct { font-size: 1.1rem; font-weight: 800; }
-  .op-bod-card .ton { font-size: 0.7rem; color: #9fa8da; }
-  .op-bod-card .faltan { font-size: 0.65rem; color: #5c6bc0; }
-
-  /* NUEVO: Panel de ajuste por bodega para supervisor */
-  .ajuste-bodega-panel {
-    background: rgba(255,145,0,0.08);
-    border: 1px solid rgba(255,145,0,0.2);
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 14px;
-  }
-  .ajuste-bodega-panel h3 {
-    font-size: 0.9rem;
-    color: #ff9100;
-    margin-bottom: 14px;
-    font-weight: 600;
-  }
-  .ajuste-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  .ajuste-item {
-    background: rgba(0,0,0,0.3);
-    border-radius: 10px;
-    padding: 12px;
-  }
-  .ajuste-item label {
-    font-size: 0.7rem;
-    color: #9fa8da;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    display: block;
-  }
-  .ajuste-item input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 8px;
-    background: rgba(0,0,0,0.3);
-    color: #fff;
-    font-size: 0.9rem;
-    font-family: inherit;
-  }
-  .ajuste-item input:focus {
-    outline: none;
-    border-color: #ff9100;
-  }
-
-  /* NUEVO: Panel de rate manual */
-  .rate-panel {
-    background: rgba(0,229,255,0.08);
-    border: 1px solid rgba(0,229,255,0.2);
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 14px;
-  }
-  .rate-panel h3 {
-    font-size: 0.9rem;
-    color: #00e5ff;
-    margin-bottom: 14px;
-    font-weight: 600;
-  }
-  .rate-info {
-    background: rgba(0,0,0,0.3);
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 12px;
-    font-size: 0.8rem;
-    color: #c5cae9;
-  }
-  .rate-info strong { color: #00e5ff; }
-
-  @media (min-width: 768px) {
-    body { padding-bottom: 0; }
-    .scroll-container { max-width: 800px; margin: 0 auto; padding: 20px; }
-    .bottom-nav { display: none; }
-  }
-</style>
+        /* EMPTY STATE */
+        .empty-state { text-align: center; padding: 48px 20px; color: var(--text-light); }
+        .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
+        .empty-state p { font-size: 13px; }
+    </style>
 <base target="_blank">
 </head>
 <body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo-section">
+                <div class="logo-icon">HTP</div>
+                <div class="logo-text">
+                    <h1>Huachipato Terminal Portuario</h1>
+                    <p>Una empresa del Grupo CAP</p>
+                </div>
+            </div>
+            <span class="mode-badge" id="modeBadge">SUPERVISOR</span>
+        </div>
+        <div class="header-right">
+            <span id="currentDate" style="font-size:13px;opacity:0.9;"></span>
+            <button class="header-btn" onclick="showModal('modalConfig')">
+                <i class="fas fa-cog"></i> Config
+            </button>
+            <button class="header-btn" onclick="window.location.href='index.html'">
+                <i class="fas fa-sign-out-alt"></i> Salir
+            </button>
+        </div>
+    </header>
 
-<div class="loading-screen" id="loadingScreen">
-  <div class="spinner"></div>
-  <div class="loading-text">Conectando al sistema...</div>
-</div>
+    <!-- NAV TABS -->
+    <nav class="nav-tabs" id="navTabs">
+        <button class="nav-tab active" data-section="dashboard" onclick="showSection('dashboard')">
+            <i class="fas fa-chart-line"></i> Dashboard
+        </button>
+        <button class="nav-tab" data-section="ships" onclick="showSection('ships')">
+            <i class="fas fa-ship"></i> Buques
+        </button>
+        <button class="nav-tab" data-section="operations" onclick="showSection('operations')">
+            <i class="fas fa-cogs"></i> Operaciones
+        </button>
+        <button class="nav-tab" data-section="reports" onclick="showSection('reports')">
+            <i class="fas fa-file-alt"></i> Reportes
+        </button>
+        <button class="nav-tab" data-section="management" onclick="showSection('management')">
+            <i class="fas fa-tools"></i> Gestión
+        </button>
+    </nav>
 
-<div class="header">
-  <div class="header-top">
-    <div class="header-title">🚢 MV GOOFY V18</div>
-    <div class="mode-badge" id="modeBadge">Cargando...</div>
-  </div>
-  <div class="header-info">
-    <span><span class="live-dot"></span> En vivo</span>
-    <span id="connectionStatus">Conectando...</span>
-    <span id="turnoDisplay">--</span>
-    <span id="totalProgress">16,125.30 / 43,700 MT</span>
-  </div>
-</div>
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
 
-<div class="scroll-container" id="mainContent">
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="section active">
+            <div class="grid-4 mb-2">
+                <div class="stat-card">
+                    <div class="stat-label">Buques Activos</div>
+                    <div class="stat-value" id="statActiveShips">0</div>
+                    <div class="stat-sub">En operación actualmente</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-label">Tonelaje Total</div>
+                    <div class="stat-value" id="statTotalTons">0</div>
+                    <div class="stat-sub">Toneladas en proceso</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-label">Camiones Hoy</div>
+                    <div class="stat-value" id="statTrucksToday">0</div>
+                    <div class="stat-sub">Vueltas registradas</div>
+                </div>
+                <div class="stat-card gold">
+                    <div class="stat-label">Eficiencia</div>
+                    <div class="stat-value" id="statEfficiency">0%</div>
+                    <div class="stat-sub">Promedio del período</div>
+                </div>
+            </div>
 
-  <div class="turno-select-section" id="turnoSelectSection">
-    <h3>📅 Selecciona tu Turno</h3>
-    <div class="turno-grid">
-      <button class="turno-btn-select" data-turno="1" onclick="selectTurnoApp('1', this)">
-        <span class="icon">🌙</span>
-        <span class="label">1° Turno</span>
-        <span class="hours">00:00 - 08:00</span>
-      </button>
-      <button class="turno-btn-select" data-turno="2" onclick="selectTurnoApp('2', this)">
-        <span class="icon">🌅</span>
-        <span class="label">2° Turno</span>
-        <span class="hours">08:00 - 16:00</span>
-      </button>
-      <button class="turno-btn-select" data-turno="3" onclick="selectTurnoApp('3', this)">
-        <span class="icon">🌇</span>
-        <span class="label">3° Turno</span>
-        <span class="hours">16:00 - 00:00</span>
-      </button>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-ship"></i> Buques en Operación</div>
+                        <button class="btn btn-sm btn-primary" onclick="showSection('ships')">Ver todos</button>
+                    </div>
+                    <div class="card-body" id="dashboardShips">
+                        <div class="empty-state">
+                            <i class="fas fa-ship"></i>
+                            <h3>No hay buques activos</h3>
+                            <p>Los buques en operación aparecerán aquí</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-clock"></i> Actividad Reciente</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline" id="dashboardTimeline">
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-time">Sistema iniciado</div>
+                                    <div class="timeline-text">Bienvenido al sistema HTP</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SHIPS -->
+        <section id="ships" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-ship"></i> Gestión de Buques</div>
+                    <div class="flex gap-1">
+                        <button class="btn btn-primary" onclick="showModal('modalNewShip')">
+                            <i class="fas fa-plus"></i> Nuevo Buque
+                        </button>
+                        <button class="btn btn-outline" onclick="showSection('pastShips')">
+                            <i class="fas fa-history"></i> Historial
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="form-group" style="max-width:400px;">
+                        <input type="text" class="form-input" id="shipSearch" placeholder="🔍 Buscar buque..." onkeyup="filterShips()">
+                    </div>
+                    <div class="ship-grid" id="shipsGrid">
+                        <!-- Ships rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAST SHIPS -->
+        <section id="pastShips" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-history"></i> Buques Pasados</div>
+                    <button class="btn btn-outline" onclick="showSection('ships')">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="sub-tabs">
+                        <button class="sub-tab active" onclick="filterPastShips('all')">Todos</button>
+                        <button class="sub-tab" onclick="filterPastShips('with-detentions')">Con Detenciones</button>
+                        <button class="sub-tab" onclick="filterPastShips('no-detentions')">Sin Detenciones</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Buque</th>
+                                    <th>Operación</th>
+                                    <th>Inicio</th>
+                                    <th>Término</th>
+                                    <th>Tonelaje</th>
+                                    <th>Detenciones</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pastShipsTable">
+                                <!-- Rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- OPERATIONS -->
+        <section id="operations" class="section">
+            <div id="operationsContent">
+                <!-- Content varies by mode -->
+            </div>
+        </section>
+
+        <!-- REPORTS -->
+        <section id="reports" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-file-excel"></i> Reportes y Exportaciones</div>
+                </div>
+                <div class="card-body">
+                    <div class="grid-2">
+                        <div class="card" style="border:1px dashed var(--htp-accent);">
+                            <div class="card-body text-center">
+                                <i class="fas fa-truck" style="font-size:32px;color:var(--htp-blue);margin-bottom:12px;"></i>
+                                <h3 style="font-size:15px;margin-bottom:8px;">Vueltas por Camión</h3>
+                                <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Exporta el detalle de vueltas de camiones por buque y período</p>
+                                <button class="btn btn-primary" onclick="exportTruckTurns()">
+                                    <i class="fas fa-download"></i> Exportar Excel
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card" style="border:1px dashed var(--htp-green);">
+                            <div class="card-body text-center">
+                                <i class="fas fa-ship" style="font-size:32px;color:var(--htp-green);margin-bottom:12px;"></i>
+                                <h3 style="font-size:15px;margin-bottom:8px;">Resumen de Buques</h3>
+                                <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Exporta resumen de todas las operaciones de buques</p>
+                                <button class="btn btn-success" onclick="exportShipsSummary()">
+                                    <i class="fas fa-download"></i> Exportar Excel
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card" style="border:1px dashed var(--htp-orange);">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-bar" style="font-size:32px;color:var(--htp-orange);margin-bottom:12px;"></i>
+                                <h3 style="font-size:15px;margin-bottom:8px;">Reporte de Eficiencia</h3>
+                                <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Métricas de eficiencia y productividad</p>
+                                <button class="btn btn-warning" onclick="exportEfficiencyReport()">
+                                    <i class="fas fa-download"></i> Exportar Excel
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card" style="border:1px dashed var(--htp-red);">
+                            <div class="card-body text-center">
+                                <i class="fas fa-exclamation-triangle" style="font-size:32px;color:var(--htp-red);margin-bottom:12px;"></i>
+                                <h3 style="font-size:15px;margin-bottom:8px;">Detenciones</h3>
+                                <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Reporte detallado de detenciones por buque</p>
+                                <button class="btn btn-danger" onclick="exportDetentionsReport()">
+                                    <i class="fas fa-download"></i> Exportar Excel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MANAGEMENT -->
+        <section id="management" class="section">
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-warehouse"></i> Configuración de Bodegas</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="bodega-grid" id="bodegasGrid">
+                            <!-- Bodegas B1-B5 rendered by JS -->
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-primary" onclick="saveBodegasConfig()">
+                                <i class="fas fa-save"></i> Guardar Configuración
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-users-cog"></i> Configuración de Turnos</div>
+                    </div>
+                    <div class="card-body">
+                        <div id="turnosConfig">
+                            <!-- Turnos rendered by JS -->
+                        </div>
+                        <button class="btn btn-primary mt-2" onclick="saveTurnosConfig()">
+                            <i class="fas fa-save"></i> Guardar Turnos
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-2">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-exclamation-circle"></i> Tipos de Detención</div>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Agregar nuevo tipo de detención</label>
+                        <div class="flex gap-1">
+                            <input type="text" class="form-input" id="newDetentionType" placeholder="Nombre del tipo de detención">
+                            <button class="btn btn-primary" onclick="addDetentionType()">
+                                <i class="fas fa-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container mt-2">
+                        <table>
+                            <thead>
+                                <tr><th>Tipo de Detención</th><th>Acciones</th></tr>
+                            </thead>
+                            <tbody id="detentionTypesTable">
+                                <!-- Rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL: Nuevo Buque -->
+    <div class="modal-overlay" id="modalNewShip">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-plus"></i> Nuevo Buque</div>
+                <button class="modal-close" onclick="closeModal('modalNewShip')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nombre del Buque</label>
+                    <input type="text" class="form-input" id="newShipName" placeholder="Ej: MV Pacific Star">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Operación</label>
+                        <select class="form-select" id="newShipOperation">
+                            <option value="Carga">Carga</option>
+                            <option value="Descarga">Descarga</option>
+                            <option value="Transbordo">Transbordo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tonelaje Total</label>
+                        <input type="number" class="form-input" id="newShipTonnage" placeholder="Ej: 50000">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Fecha de Inicio</label>
+                        <input type="datetime-local" class="form-input" id="newShipStart">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha Est. Término</label>
+                        <input type="datetime-local" class="form-input" id="newShipEnd">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Bodegas Asignadas</label>
+                    <div class="bodega-grid" id="newShipBodegas" style="grid-template-columns: repeat(5, 1fr);">
+                        <div class="bodega-card" data-bodega="B1" onclick="toggleBodegaSelection(this)">
+                            <div class="bodega-name">B1</div>
+                        </div>
+                        <div class="bodega-card" data-bodega="B2" onclick="toggleBodegaSelection(this)">
+                            <div class="bodega-name">B2</div>
+                        </div>
+                        <div class="bodega-card" data-bodega="B3" onclick="toggleBodegaSelection(this)">
+                            <div class="bodega-name">B3</div>
+                        </div>
+                        <div class="bodega-card" data-bodega="B4" onclick="toggleBodegaSelection(this)">
+                            <div class="bodega-name">B4</div>
+                        </div>
+                        <div class="bodega-card" data-bodega="B5" onclick="toggleBodegaSelection(this)">
+                            <div class="bodega-name">B5</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observaciones</label>
+                    <textarea class="form-textarea" id="newShipNotes" placeholder="Observaciones adicionales..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('modalNewShip')">Cancelar</button>
+                <button class="btn btn-primary" onclick="createNewShip()">
+                    <i class="fas fa-save"></i> Crear Buque
+                </button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div class="metrics-scroll" id="metricsSection" style="display:none;">
-    <div class="metric-card"><h4>⏱️ Tiempo</h4><div class="value" id="timeDisplay">48:02</div><div class="sub">Transcurrido</div></div>
-    <div class="metric-card"><h4>⚡ Rate/Hora</h4><div class="value" id="rateHoraDisplay">1,006.99</div><div class="sub">ton/hr efectivo</div></div>
-    <div class="metric-card"><h4>📈 Rate/Día</h4><div class="value" id="rateDiaDisplay">8,055.94</div><div class="sub">ton/24hr</div></div>
-    <div class="metric-card"><h4>🚛 Camiones</h4><div class="value" id="truckCount">656</div><div class="sub">Total</div></div>
-    <div class="metric-card"><h4>📦 Cargado</h4><div class="value" id="loadedDisplay">16,125.30</div><div class="sub">MT</div></div>
-  </div>
-
-  <div class="ajuste-bodega-panel" id="ajusteBodegaPanel" style="display:none;">
-    <h3>🔧 Ajustar Tonelaje por Bodega</h3>
-    <div class="ajuste-grid">
-      <div class="ajuste-item">
-        <label style="color:#00e5ff;">Bodega 1 (NO.1)</label>
-        <input type="number" id="ajusteB1" placeholder="0.00" step="0.01" value="0">
-      </div>
-      <div class="ajuste-item">
-        <label style="color:#ff9100;">Bodega 2 (NO.2)</label>
-        <input type="number" id="ajusteB2" placeholder="0.00" step="0.01" value="4280.30">
-      </div>
-      <div class="ajuste-item">
-        <label style="color:#00e676;">Bodega 3 (NO.3)</label>
-        <input type="number" id="ajusteB3" placeholder="0.00" step="0.01" value="11845.00">
-      </div>
-      <div class="ajuste-item">
-        <label style="color:#b388ff;">Bodega 5 (NO.5)</label>
-        <input type="number" id="ajusteB5" placeholder="0.00" step="0.01" value="0">
-      </div>
-    </div>
-    <div class="ajuste-grid">
-      <div class="ajuste-item">
-        <label>Camiones B1</label>
-        <input type="number" id="ajusteCamionesB1" placeholder="0" min="0" value="0">
-      </div>
-      <div class="ajuste-item">
-        <label>Camiones B2</label>
-        <input type="number" id="ajusteCamionesB2" placeholder="0" min="0" value="109">
-      </div>
-      <div class="ajuste-item">
-        <label>Camiones B3</label>
-        <input type="number" id="ajusteCamionesB3" placeholder="0" min="0" value="547">
-      </div>
-      <div class="ajuste-item">
-        <label>Camiones B5</label>
-        <input type="number" id="ajusteCamionesB5" placeholder="0" min="0" value="0">
-      </div>
-    </div>
-    <button class="btn btn-warning" onclick="aplicarAjusteBodegas()" style="margin-top:8px; font-size:0.85rem; padding:12px;">✅ Aplicar Ajuste de Bodegas</button>
-    <p style="font-size:0.7rem; color:#9fa8da; margin-top:8px; text-align:center;">
-      Total ajustado: <span id="ajusteTotalPreview" style="color:#ff9100; font-weight:700;">16,125.30</span> MT
-    </p>
-  </div>
-
-  <div class="rate-panel" id="ratePanel" style="display:none;">
-    <h3>⚡ Configurar Rate Manual</h3>
-    <div class="rate-info">
-      <p><strong>Rate Día Actual:</strong> <span id="rateDiaActual">8,055.937</span> ton/día</p>
-      <p><strong>Rate Hora Actual:</strong> <span id="rateHoraActual">1,006.992</span> ton/hr</p>
-      <p style="margin-top:6px; font-size:0.75rem; color:#9fa8da;">
-        Total embarcado: 16,125.30 MT | Horas trabajadas: 48.04 | 8 turnos completados
-      </p>
-    </div>
-    <div class="modal-form-group">
-      <label>Rate Día (ton/día)</label>
-      <input type="number" id="rateDiaManual" value="8055.937" step="0.001">
-    </div>
-    <div class="modal-form-group">
-      <label>Horas Trabajadas Totales</label>
-      <input type="number" id="horasTrabajadasManual" value="48.04" step="0.01">
-    </div>
-    <div class="modal-form-group">
-      <label>Tonelaje Total Embarcado (MT)</label>
-      <input type="number" id="tonelajeTotalManual" value="16125.30" step="0.01">
-    </div>
-    <button class="btn btn-primary" onclick="aplicarRateManual()" style="font-size:0.85rem; padding:12px;">✅ Aplicar Rate Manual</button>
-  </div>
-
-  <div class="supervisor-panel" id="supervisorPanel" style="display:none;">
-    <h3>👁️ Panel de Control - Supervisor</h3>
-    <div class="supervisor-info">
-      <div class="supervisor-info-item"><div class="label">Inicio Embarque</div><div class="value" id="supInicioEmbarque">--</div></div>
-      <div class="supervisor-info-item"><div class="label">Tiempo Total</div><div class="value highlight" id="supTiempoTotal">48h 2m</div></div>
-      <div class="supervisor-info-item"><div class="label">Min Detención</div><div class="value danger" id="supMinDetencion">0</div></div>
-      <div class="supervisor-info-item"><div class="label">Min Atraso</div><div class="value danger" id="supMinAtraso">0</div></div>
-      <div class="supervisor-info-item"><div class="label">Horas Efectivas</div><div class="value success" id="supHorasEfectivas">48.04</div></div>
-      <div class="supervisor-info-item"><div class="label">Rate Día</div><div class="value success" id="supRateDia">8,055.94</div></div>
-    </div>
-    <div class="detencion-list" id="detencionList"></div>
-    <div class="btn-row" style="margin-top:12px;">
-      <button class="btn btn-primary" onclick="modalInicioEmbarque()" style="font-size:0.8rem; padding:10px;">🚀 Inicio Embarque</button>
-      <button class="btn btn-warning" onclick="modalDetencion()" style="font-size:0.8rem; padding:10px;">⏸️ Detención</button>
-      <button class="btn btn-danger" onclick="modalFinEmbarque()" style="font-size:0.8rem; padding:10px;">🏁 Fin Embarque</button>
-      <button class="btn btn-outline" onclick="modalGira()" style="font-size:0.8rem; padding:10px;">🔄 Gira</button>
-    </div>
-    <div class="btn-row" style="margin-top:8px;">
-      <button class="btn btn-warning" onclick="modalAtraso()" style="font-size:0.8rem; padding:10px;">⏰ Min Atraso</button>
-      <button class="btn btn-primary" onclick="modalRemateBodega()" style="font-size:0.8rem; padding:10px;">🏭 Remate Bodega</button>
-    </div>
-    <div class="btn-row" style="margin-top:8px;">
-      <button class="btn btn-success" onclick="mostrarAjusteBodegas()" style="font-size:0.8rem; padding:10px;">🔧 Ajustar Bodegas</button>
-      <button class="btn btn-primary" onclick="mostrarRateManual()" style="font-size:0.8rem; padding:10px;">⚡ Ajustar Rate</button>
-    </div>
-    <div style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
-      <button class="btn btn-danger" onclick="modalBorrarTodo()" style="font-size:0.8rem; padding:10px; background:linear-gradient(135deg, #d50000, #b71c1c);">🗑️ Borrar Todos los Datos</button>
-    </div>
-  </div>
-
-  <div class="operator-bodega-compact" id="operatorBodegaCompact" style="display:none;">
-    <div class="op-bod-card" id="opBod1"><div class="name" style="color:#00e5ff;">Bodega 1</div><div class="pct" style="color:#00e5ff;" id="opPct1">0%</div><div class="ton" id="opTon1">0 / 12,830 MT</div><div class="faltan" id="opFaltan1">Faltan: 12,830 MT</div></div>
-    <div class="op-bod-card" id="opBod2"><div class="name" style="color:#ff9100;">Bodega 2</div><div class="pct" style="color:#ff9100;" id="opPct2">77.8%</div><div class="ton" id="opTon2">4,280.3 / 5,500 MT</div><div class="faltan" id="opFaltan2">Faltan: 1,219.7 MT</div></div>
-    <div class="op-bod-card" id="opBod3"><div class="name" style="color:#00e676;">Bodega 3</div><div class="pct" style="color:#00e676;" id="opPct3">89.7%</div><div class="ton" id="opTon3">11,845 / 13,200 MT</div><div class="faltan" id="opFaltan3">Faltan: 1,355 MT</div></div>
-    <div class="op-bod-card" id="opBod5"><div class="name" style="color:#b388ff;">Bodega 5</div><div class="pct" style="color:#b388ff;" id="opPct5">0%</div><div class="ton" id="opTon5">0 / 12,170 MT</div><div class="faltan" id="opFaltan5">Faltan: 12,170 MT</div></div>
-  </div>
-
-  <div class="bodegas-section" id="bodegasSection" style="display:none;">
-    <div class="section-title">🏭 Bodegas</div>
-
-    <div class="bodega-card bodega-1" id="cardBodega1">
-      <div class="bodega-header">
-        <span class="bodega-name">Bodega 1 (NO.1)</span>
-        <span class="bodega-pct" id="pct1">0%</span>
-      </div>
-      <div class="progress-track"><div class="progress-fill" id="bar1" style="width:0%">0%</div></div>
-      <div class="bodega-remaining">Faltan: <span id="faltan1">12,830</span> MT</div>
-      <div class="remate-info" id="remateInfo1" style="display:none;">⏰ Remate estimado: <span id="remateEst1">--</span></div>
-      <div class="remate-real" id="remateReal1" style="display:none;">✅ Remate real: <span id="remateRealText1">--</span></div>
-      <div class="bodega-stats">
-        <div class="stat-item"><div class="num" id="ton1">0</div><div class="lbl">Toneladas</div></div>
-        <div class="stat-item"><div class="num" id="cam1">0</div><div class="lbl">Camiones</div></div>
-        <div class="stat-item"><div class="num" id="rate1">0</div><div class="lbl">ton/hr</div></div>
-      </div>
+    <!-- MODAL: Detalle Buque -->
+    <div class="modal-overlay" id="modalShipDetail">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <div class="modal-title" id="shipDetailTitle">Detalle del Buque</div>
+                <button class="modal-close" onclick="closeModal('modalShipDetail')">&times;</button>
+            </div>
+            <div class="modal-body" id="shipDetailBody">
+                <!-- Rendered by JS -->
+            </div>
+            <div class="modal-footer" id="shipDetailFooter">
+                <button class="btn btn-outline" onclick="closeModal('modalShipDetail')">Cerrar</button>
+            </div>
+        </div>
     </div>
 
-    <div class="bodega-card bodega-2" id="cardBodega2">
-      <div class="bodega-header">
-        <span class="bodega-name">Bodega 2 (NO.2)</span>
-        <span class="bodega-pct" id="pct2">77.8%</span>
-      </div>
-      <div class="progress-track"><div class="progress-fill" id="bar2" style="width:77.8%">77.8%</div></div>
-      <div class="bodega-remaining">Faltan: <span id="faltan2">1,219.7</span> MT</div>
-      <div class="remate-info" id="remateInfo2" style="display:none;">⏰ Remate estimado: <span id="remateEst2">--</span></div>
-      <div class="remate-real" id="remateReal2" style="display:none;">✅ Remate real: <span id="remateRealText2">--</span></div>
-      <div class="bodega-stats">
-        <div class="stat-item"><div class="num" id="ton2">4,280.3</div><div class="lbl">Toneladas</div></div>
-        <div class="stat-item"><div class="num" id="cam2">109</div><div class="lbl">Camiones</div></div>
-        <div class="stat-item"><div class="num" id="rate2">89.1</div><div class="lbl">ton/hr</div></div>
-      </div>
+    <!-- MODAL: Configuración -->
+    <div class="modal-overlay" id="modalConfig">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-cog"></i> Configuración del Sistema</div>
+                <button class="modal-close" onclick="closeModal('modalConfig')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nombre de la Empresa</label>
+                    <input type="text" class="form-input" id="configCompanyName" value="Huachipato Terminal Portuario">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Subtítulo</label>
+                    <input type="text" class="form-input" id="configSubtitle" value="Una empresa del Grupo CAP">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Logo URL (opcional)</label>
+                    <input type="text" class="form-input" id="configLogo" placeholder="URL del logo">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Zona Horaria</label>
+                    <select class="form-select" id="configTimezone">
+                        <option value="America/Santiago">Santiago, Chile (CLT)</option>
+                        <option value="America/Buenos_Aires">Buenos Aires (ART)</option>
+                        <option value="America/Lima">Lima (PET)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('modalConfig')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveConfig()">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="bodega-card bodega-3" id="cardBodega3">
-      <div class="bodega-header">
-        <span class="bodega-name">Bodega 3 (NO.3)</span>
-        <span class="bodega-pct" id="pct3">89.7%</span>
-      </div>
-      <div class="progress-track"><div class="progress-fill" id="bar3" style="width:89.7%">89.7%</div></div>
-      <div class="bodega-remaining">Faltan: <span id="faltan3">1,355</span> MT</div>
-      <div class="remate-info" id="remateInfo3" style="display:none;">⏰ Remate estimado: <span id="remateEst3">--</span></div>
-      <div class="remate-real" id="remateReal3" style="display:none;">✅ Remate real: <span id="remateRealText3">--</span></div>
-      <div class="bodega-stats">
-        <div class="stat-item"><div class="num" id="ton3">11,845</div><div class="lbl">Toneladas</div></div>
-        <div class="stat-item"><div class="num" id="cam3">547</div><div class="lbl">Camiones</div></div>
-        <div class="stat-item"><div class="num" id="rate3">246.6</div><div class="lbl">ton/hr</div></div>
-      </div>
+    <!-- MODAL: Registrar Detención -->
+    <div class="modal-overlay" id="modalDetention">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-exclamation-triangle"></i> Registrar Detención</div>
+                <button class="modal-close" onclick="closeModal('modalDetention')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Buque</label>
+                    <input type="text" class="form-input" id="detentionShip" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipo de Detención</label>
+                    <select class="form-select" id="detentionType">
+                        <option value="">Seleccionar tipo...</option>
+                    </select>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Inicio</label>
+                        <input type="datetime-local" class="form-input" id="detentionStart">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Término</label>
+                        <input type="datetime-local" class="form-input" id="detentionEnd">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Motivo / Observación</label>
+                    <textarea class="form-textarea" id="detentionNotes" placeholder="Describa el motivo de la detención..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('modalDetention')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveDetention()">
+                    <i class="fas fa-save"></i> Registrar Detención
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="bodega-card bodega-5" id="cardBodega5">
-      <div class="bodega-header">
-        <span class="bodega-name">Bodega 5 (NO.5)</span>
-        <span class="bodega-pct" id="pct5">0%</span>
-      </div>
-      <div class="progress-track"><div class="progress-fill" id="bar5" style="width:0%">0%</div></div>
-      <div class="bodega-remaining">Faltan: <span id="faltan5">12,170</span> MT</div>
-      <div class="remate-info" id="remateInfo5" style="display:none;">⏰ Remate estimado: <span id="remateEst5">--</span></div>
-      <div class="remate-real" id="remateReal5" style="display:none;">✅ Remate real: <span id="remateRealText5">--</span></div>
-      <div class="bodega-stats">
-        <div class="stat-item"><div class="num" id="ton5">0</div><div class="lbl">Toneladas</div></div>
-        <div class="stat-item"><div class="num" id="cam5">0</div><div class="lbl">Camiones</div></div>
-        <div class="stat-item"><div class="num" id="rate5">0</div><div class="lbl">ton/hr</div></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="form-section" id="formSection" style="display:none;">
-    <h3>📝 Registrar Camión</h3>
-    <div id="turnoOperadorPanel">
-      <div class="form-group">
-        <label>Bodega de Destino</label>
-        <select id="bodegaSelect">
-          <option value="">Seleccionar bodega...</option>
-          <option value="1">Bodega 1 (NO.1)</option>
-          <option value="2">Bodega 2 (NO.2)</option>
-          <option value="3">Bodega 3 (NO.3)</option>
-          <option value="5">Bodega 5 (NO.5)</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Patente del Camión</label>
-        <select id="patenteSelect"><option value="">Seleccionar patente...</option></select>
-        <div class="tara-info" id="taraInfo"><span class="label">Carga Neta:</span> <span class="val" id="cargaNetaDisplay">--</span> MT</div>
-        <div class="tara-info error" id="patenteError" style="display:none;">⚠️ Selecciona una patente válida</div>
-      </div>
-      <button class="btn btn-success" id="btnRegistrar" onclick="registrarCamion()" disabled>➕ Registrar Camión</button>
-      <div style="margin-top:12px; text-align:center;">
-        <button class="btn btn-outline" onclick="toggleAddCamion()" style="font-size:0.8rem; padding:10px;">➕ Agregar Nuevo Camión</button>
-      </div>
-      <div class="add-camion-form" id="addCamionForm">
-        <h4 style="color:#00e676; font-size:0.85rem; margin-bottom:10px;">Nuevo Camión</h4>
-        <div class="modal-form-group"><label>Patente</label><input type="text" id="newPatente" placeholder="Ej: AB-CD-12" maxlength="10"></div>
-        <div class="modal-form-group"><label>Carga Neta (MT)</label><input type="number" id="newCarga" placeholder="Ej: 23.90" step="0.01"></div>
-        <button class="btn btn-success" onclick="agregarNuevoCamion()" style="font-size:0.85rem; padding:12px;">💾 Guardar Camión</button>
-      </div>
-    </div>
-
-    <div id="cierreTurnoPanel" style="display:none; margin-top:16px; border-top:1px solid rgba(255,255,255,0.1); padding-top:16px;">
-      <h3 style="color:#ff9100; font-size:0.9rem; margin-bottom:12px;">🔒 Cierre de Turno</h3>
-      <div class="form-group"><label>Minutos de Detención (si hubo)</label><input type="number" id="minDetencionOperador" placeholder="0" min="0" value="0"></div>
-      <div class="form-group"><label>Observaciones</label><textarea id="observacionesOperador" placeholder="Observaciones del turno..." style="width:100%; padding:12px; border-radius:10px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.12); font-family:inherit; resize:vertical; min-height:60px;"></textarea></div>
-      <button class="btn btn-warning" onclick="cerrarTurnoOperador()">🔒 Cerrar Turno</button>
+    <!-- MODAL: Registrar Vuelta de Camión -->
+    <div class="modal-overlay" id="modalTruckTurn">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-truck"></i> Registrar Vuelta de Camión</div>
+                <button class="modal-close" onclick="closeModal('modalTruckTurn')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Buque</label>
+                    <select class="form-select" id="truckTurnShip"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Patente Camión</label>
+                    <input type="text" class="form-input" id="truckTurnPlate" placeholder="Ej: AB-CD-12">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Bodega</label>
+                        <select class="form-select" id="truckTurnBodega">
+                            <option value="B1">B1</option>
+                            <option value="B2">B2</option>
+                            <option value="B3">B3</option>
+                            <option value="B4">B4</option>
+                            <option value="B5">B5</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Toneladas</label>
+                        <input type="number" class="form-input" id="truckTurnTons" placeholder="Ej: 35.5" step="0.1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Turno</label>
+                    <select class="form-select" id="truckTurnShift"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Hora de Registro</label>
+                    <input type="datetime-local" class="form-input" id="truckTurnTime">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('modalTruckTurn')">Cancelar</button>
+                <button class="btn btn-success" onclick="saveTruckTurn()">
+                    <i class="fas fa-save"></i> Registrar Vuelta
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="iniciarTurno()" id="btnIniciarTurno">▶️ Iniciar Turno</button>
-      <button class="btn btn-outline" onclick="mostrarResumen()">📊 Resumen</button>
+    <!-- MODAL: Ajustar Tonelaje -->
+    <div class="modal-overlay" id="modalAdjustTonnage">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-weight-hanging"></i> Ajustar Tonelaje</div>
+                <button class="modal-close" onclick="closeModal('modalAdjustTonnage')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Buque</label>
+                    <input type="text" class="form-input" id="adjustTonnageShip" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tonelaje Actual</label>
+                    <input type="number" class="form-input" id="adjustTonnageCurrent" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nuevo Tonelaje Total</label>
+                    <input type="number" class="form-input" id="adjustTonnageNew" placeholder="Nuevo tonelaje">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Motivo del Ajuste</label>
+                    <textarea class="form-textarea" id="adjustTonnageReason" placeholder="Motivo del ajuste..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('modalAdjustTonnage')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveTonnageAdjustment()">
+                    <i class="fas fa-save"></i> Guardar Ajuste
+                </button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div class="table-section" id="tableSection" style="display:none;">
-    <h3>📋 Últimos Camiones</h3>
-    <table>
-      <thead><tr><th>Hora</th><th>Patente</th><th>Bod</th><th>Carga</th><th>Turno</th></tr></thead>
-      <tbody id="tablaCamiones"><tr><td colspan="5" style="text-align:center; color:#5c6bc0; padding:20px;">Sin camiones registrados</td></tr></tbody>
-    </table>
-  </div>
-
-</div>
-
-<div class="bottom-nav" id="bottomNav">
-  <button class="nav-item active" onclick="scrollToSection('mainContent')"><span class="icon">🏭</span><span>Bodegas</span></button>
-  <button class="nav-item" onclick="mostrarResumen()"><span class="icon">📊</span><span>Resumen</span></button>
-  <button class="nav-item" onclick="exportarDatos()"><span class="icon">💾</span><span>Exportar</span></button>
-  <button class="nav-item" onclick="window.location.href='index.html'"><span class="icon">⚙️</span><span>Modo</span></button>
-</div>
-
-<div class="modal-overlay" id="modalResumen">
-  <div class="modal-sheet">
-    <div class="modal-header"><h2>📊 Resumen por Turno</h2><button class="close-btn" onclick="cerrarModal()">×</button></div>
-    <div class="turno-tabs">
-      <button class="turno-tab active" onclick="seleccionarTurno('1', this)">🌙 1° Turno</button>
-      <button class="turno-tab" onclick="seleccionarTurno('2', this)">🌅 2° Turno</button>
-      <button class="turno-tab" onclick="seleccionarTurno('3', this)">🌇 3° Turno</button>
-      <button class="turno-tab" onclick="seleccionarTurno('todos', this)">📅 Todo</button>
+    <!-- MODAL: Cerrar Buque -->
+    <div class="modal-overlay" id="modalCloseShip">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-lock"></i> Cerrar Buque</div>
+                <button class="modal-close" onclick="closeModal('modalCloseShip')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>¿Está seguro de cerrar este buque? Esta acción no se puede deshacer fácilmente.</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Buque</label>
+                    <input type="text" class="form-input" id="closeShipName" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha de Cierre</label>
+                    <input type="datetime-local" class="form-input" id="closeShipDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tonelaje Final</label>
+                    <input type="number" class="form-input" id="closeShipFinalTonnage" placeholder="Tonelaje final cargado/descargado">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observaciones de Cierre</label>
+                    <textarea class="form-textarea" id="closeShipNotes" placeholder="Observaciones finales..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('modalCloseShip')">Cancelar</button>
+                <button class="btn btn-danger" onclick="confirmCloseShip()">
+                    <i class="fas fa-lock"></i> Cerrar Buque
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="report-grid" id="reportGrid"></div>
-    <div style="margin-bottom:12px; font-size:0.8rem; color:#9fa8da; font-weight:600;">📋 Camiones del turno</div>
-    <div id="reporteCamiones" style="overflow-x:auto;"></div>
-    <div style="margin:16px 0 12px; font-size:0.8rem; color:#9fa8da; font-weight:600;">🏭 Bodegas del turno</div>
-    <div id="reporteBodegas" style="overflow-x:auto;"></div>
-    <div style="margin:16px 0 12px; font-size:0.8rem; color:#ffd700; font-weight:600;">🏭 Remates de Bodegas</div>
-    <div id="reporteRemates" style="overflow-x:auto;"></div>
-    <button class="btn btn-success" onclick="exportarResumen()" style="margin-top:16px;">📥 Descargar CSV</button>
-  </div>
-</div>
 
-<div class="modal-overlay" id="modalInicioEmb">
-  <div class="modal-sheet">
-    <div class="modal-header"><h2>🚀 Inicio de Embarque</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
-    <div class="modal-form-group"><label>Fecha y Hora de Inicio</label><input type="datetime-local" id="inicioEmbarqueInput"></div>
-    <div class="modal-form-group"><label>Observación</label><textarea id="inicioObservacion" placeholder="Observaciones..."></textarea></div>
-    <button class="btn btn-success" onclick="guardarInicioEmbarque()">💾 Guardar Inicio</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modalDetencion">
-  <div class="modal-sheet">
-    <div class="modal-header"><h2>⏸️ Registrar Detención</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
-    <div class="modal-form-group"><label>Fecha y Hora de Inicio Detención</label><input type="datetime-local" id="detencionInicioInput"></div>
-    <div class="modal-form-group"><label>Turno Afectado</label><select id="detencionTurno"><option value="1">1° Turno (00:00 - 08:00)</option><option value="2">2° Turno (08:00 - 16:00)</option><option value="3">3° Turno (16:00 - 00:00)</option></select></div>
-    <div class="modal-form-group"><label>Duración (minutos)</label><input type="number" id="detencionMinutos" placeholder="Ej: 30" min="1"></div>
-    <div class="modal-form-group"><label>Motivo / Observación</label><textarea id="detencionMotivo" placeholder="Motivo de la detención..."></textarea></div>
-    <button class="btn btn-warning" onclick="guardarDetencion()">💾 Registrar Detención</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modalFinEmb">
-  <div class="modal-sheet">
-    <div class="modal-header"><h2>🏁 Fin de Embarque</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
-    <div class="modal-form-group"><label>Fecha y Hora de Fin</label><input type="datetime-local" id="finEmbarqueInput"></div>
-    <div class="modal-form-group"><label>Observación</label><textarea id="finObservacion" placeholder="Observaciones finales..."></textarea></div>
-    <button class="btn btn-danger" onclick="guardarFinEmbarque()">🏁 Guardar Fin</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modalGira">
-  <div class="modal-sheet">
-    <div class="modal-header"><h2>🔄 Registrar Gira</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
-    <div class="modal-form-group"><label>Tipo</label><select id="giraTipo"><option value="salida">Salida a Gira</option><option value="retorno">Retorno de Gira</option></select></div>
-    <div class="modal-form-group"><label>Fecha y Hora</label><input type="datetime-local" id="giraHoraInput"></div>
-    <div class="modal-form-group"><label>Observación</label><textarea id="giraObservacion" placeholder="Detalles de la gira..."></textarea></div>
-    <button class="btn btn-primary" onclick="guardarGira()">💾 Registrar</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modalAtraso">
-  <div class="modal-sheet">
-    <div class="modal-header"><h2>⏰ Registrar Minutos de Atraso</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
-    <div class="modal-form-group"><label>Fecha y Hora de Inicio del Atraso</label><input type="datetime-local" id="atrasoInicioInput"></div>
-    <div class="modal-form-group"><label>Turno Afectado</label><select id="atrasoTurno"><option value="1">1° Turno (00:00 - 08:00)</option><option value="2">2° Turno (08:00 - 16:00)</option><option value="3">3° Turno (16:00 - 00:00)</option></select></div>
-    <div class="modal-form-group"><label>Minutos de Atraso</label><input type="number" id="atrasoMinutos" placeholder="Ej: 15" min="1"></div>
-    <div class="modal-form-group"><label>Motivo / Observación</label><textarea id="atrasoMotivo" placeholder="Motivo del atraso..."></textarea></div>
-    <button class="btn btn-warning" onclick="guardarAtraso()">💾 Registrar Atraso</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modalRemateBodega">
-  <div class="modal-sheet">
-    <div class="modal-header"><h2>🏭 Registrar Remate de Bodega</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
-    <div class="modal-form-group"><label>Bodega</label><select id="remateBodegaSelect"><option value="">Seleccionar bodega...</option><option value="1">Bodega 1 (NO.1)</option><option value="2">Bodega 2 (NO.2)</option><option value="3">Bodega 3 (NO.3)</option><option value="5">Bodega 5 (NO.5)</option></select></div>
-    <div class="modal-form-group"><label>Fecha y Hora de Remate Real</label><input type="datetime-local" id="remateHoraInput"></div>
-    <div class="modal-form-group"><label>Observación</label><textarea id="remateObservacion" placeholder="Detalles del remate..."></textarea></div>
-    <button class="btn btn-primary" onclick="guardarRemateBodega()">💾 Registrar Remate</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modalBorrar">
-  <div class="modal-sheet">
-    <div class="modal-header"><h2>🗑️ Borrar Todos los Datos</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
-    <div style="background:rgba(255,23,68,0.1); border:1px solid rgba(255,23,68,0.3); border-radius:10px; padding:14px; margin-bottom:16px;">
-      <p style="color:#ff8a80; font-size:0.85rem; margin:0;">⚠️ <strong>ADVERTENCIA:</strong> Esta acción eliminará TODOS los camiones registrados, detenciones, giras, atrasos, remates e inicio de embarque. No se puede deshacer.</p>
+    <!-- MODAL: Eliminar Buque -->
+    <div class="modal-overlay" id="modalDeleteShip">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--htp-red);"><i class="fas fa-trash"></i> Eliminar Buque</div>
+                <button class="modal-close" onclick="closeModal('modalDeleteShip')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Esta acción eliminará permanentemente el buque y todos sus datos.</span>
+                </div>
+                <p style="font-size: 13px; margin-bottom: 12px;">Buque a eliminar: <strong id="deleteShipName"></strong></p>
+                <div class="form-group">
+                    <label class="form-label">Escriba ELIMINAR para confirmar</label>
+                    <input type="text" class="form-input" id="deleteShipConfirm" placeholder="ELIMINAR">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('modalDeleteShip')">Cancelar</button>
+                <button class="btn btn-danger" onclick="confirmDeleteShip()">
+                    <i class="fas fa-trash"></i> Eliminar Permanentemente
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="modal-form-group"><label>Contraseña de Administrador</label><input type="password" id="passBorrar" placeholder="Ingrese contraseña..."></div>
-    <button class="btn btn-danger" onclick="confirmarBorrarTodo()">🗑️ Confirmar Eliminación</button>
-  </div>
-</div>
 
-<div class="toast" id="toast"></div>
+    <script>
+    // ==================== CONFIGURACIÓN Y ESTADO ====================
+    const APP_MODE = new URLSearchParams(window.location.search).get('mode') || 'supervisor';
+    const MODES = { supervisor: 'Supervisor', tarja: 'Tarja', gerencia: 'Gerencia' };
 
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAgxjXIa4GSuS0giN2UqDcAjSg2nYWtdxg",
-  authDomain: "mv-goofy-control.firebaseapp.com",
-  databaseURL: "https://mv-goofy-control-default-rtdb.firebaseio.com",
-  projectId: "mv-goofy-control",
-  storageBucket: "mv-goofy-control.firebasestorage.app",
-  messagingSenderId: "458041869026",
-  appId: "1:458041869026:web:9191f22091895158e7d4bb"
-};
-
-const CAPACIDADES = { 1: 12830, 2: 5500, 3: 13200, 5: 12170 };
-const TOTAL_PLAN = 43700;
-const PASSWORD_ADMIN = "GOOFY2024";
-
-const TURNOS = {
-  '1': { nombre: '1° Turno', inicio: 0, fin: 8, label: '00:00 - 08:00' },
-  '2': { nombre: '2° Turno', inicio: 8, fin: 16, label: '08:00 - 16:00' },
-  '3': { nombre: '3° Turno', inicio: 16, fin: 24, label: '16:00 - 00:00' }
-};
-
-// DATOS REALES DEL EMBARQUE - 8 TURNOS COMPLETADOS
-const TURNOS_HISTORICOS = [
-  { turno: '1', dia: '2do', hrsTrabajo: 1.92, hrsReales: 1.92, vueltas: 24, carga: 654.00 },
-  { turno: '2', dia: '3ro', hrsTrabajo: 8.00, hrsReales: 8.00, vueltas: 74, carga: 1980.74 },
-  { turno: '3', dia: '1ro', hrsTrabajo: 8.00, hrsReales: 8.00, vueltas: 90, carga: 2543.98 },
-  { turno: '1', dia: '2do', hrsTrabajo: 8.00, hrsReales: 8.00, vueltas: 109, carga: 2955.68 },
-  { turno: '2', dia: '3ro', hrsTrabajo: 8.00, hrsReales: 8.00, vueltas: 122, carga: 3221.92 },
-  { turno: '3', dia: '1ro', hrsTrabajo: 4.50, hrsReales: 4.50, vueltas: 70, carga: 488.68 },
-  { turno: '1', dia: '3ro', hrsTrabajo: 1.62, hrsReales: 1.62, vueltas: 32, carga: 818.81 },
-  { turno: '2', dia: '1ro', hrsTrabajo: 8.00, hrsReales: 8.00, vueltas: 135, carga: 3461.49 }
-];
-
-// AJUSTE MANUAL DE BODEGAS (valores iniciales)
-let ajusteBodegas = {
-  1: { toneladas: 0, camiones: 0 },
-  2: { toneladas: 4280.30, camiones: 109 },
-  3: { toneladas: 11845.00, camiones: 547 },
-  5: { toneladas: 0, camiones: 0 }
-};
-
-// RATE MANUAL (valores objetivo)
-let rateManual = {
-  rateDia: 8055.937,
-  rateHora: 1006.992,
-  horasTrabajadas: 48.04,
-  tonelajeTotal: 16125.30
-};
-
-let app, db;
-let isOperator = false;
-let currentTurno = '';
-let turnoActivo = false;
-let horaInicioTurno = null;
-let camiones = [];
-let flota = {};
-let embarqueData = {
-  inicio: null,
-  fin: null,
-  detenciones: [],
-  giras: [],
-  atrasos: [],
-  remates: {}
-};
-let isConnected = false;
-
-function init() {
-  const params = new URLSearchParams(window.location.search);
-  isOperator = params.get('mode') === 'operator';
-
-  const modeBadge = document.getElementById('modeBadge');
-  const formSection = document.getElementById('formSection');
-  const supervisorPanel = document.getElementById('supervisorPanel');
-
-  if (isOperator) {
-    modeBadge.textContent = '📝 Operador';
-    modeBadge.className = 'mode-badge mode-operator';
-    formSection.style.display = 'none';
-    supervisorPanel.style.display = 'none';
-    document.getElementById('mainContent').classList.remove('supervisor-view');
-  } else {
-    modeBadge.textContent = '👁️ Supervisor';
-    modeBadge.className = 'mode-badge mode-supervisor';
-    formSection.style.display = 'none';
-    supervisorPanel.style.display = 'none';
-    document.getElementById('mainContent').classList.add('supervisor-view');
-  }
-
-  document.getElementById('metricsSection').style.display = 'none';
-  document.getElementById('bodegasSection').style.display = 'none';
-  document.getElementById('operatorBodegaCompact').style.display = 'none';
-  document.getElementById('tableSection').style.display = 'none';
-
-  try {
-    app = initializeApp(firebaseConfig);
-    db = getDatabase(app);
-    isConnected = true;
-    document.getElementById('connectionStatus').textContent = '🟢 Conectado';
-    setupRealtimeListeners();
-  } catch (e) {
-    console.error('Firebase error:', e);
-    document.getElementById('connectionStatus').textContent = '🔴 Offline';
-    cargarDatosLocal();
-  }
-
-  document.getElementById('bodegaSelect').addEventListener('change', validarFormulario);
-  document.getElementById('patenteSelect').addEventListener('change', onPatenteChange);
-
-  // Listeners para ajuste de bodegas
-  ['ajusteB1','ajusteB2','ajusteB3','ajusteB5'].forEach(id => {
-    document.getElementById(id).addEventListener('input', actualizarPreviewAjuste);
-  });
-
-  var now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  var nowStr = now.toISOString().slice(0, 16);
-  document.getElementById('inicioEmbarqueInput').value = nowStr;
-  document.getElementById('detencionInicioInput').value = nowStr;
-  document.getElementById('finEmbarqueInput').value = nowStr;
-  document.getElementById('giraHoraInput').value = nowStr;
-  document.getElementById('atrasoInicioInput').value = nowStr;
-  document.getElementById('remateHoraInput').value = nowStr;
-
-  setTimeout(function() {
-    document.getElementById('loadingScreen').classList.add('hidden');
-  }, 800);
-}
-
-function setupRealtimeListeners() {
-  onValue(ref(db, 'flota'), function(snapshot) {
-    flota = snapshot.val() || {};
-    actualizarSelectPatentes();
-  });
-
-  onValue(ref(db, 'embarques/goofy_v18'), function(snapshot) {
-    var data = snapshot.val() || {};
-    camiones = data.camiones ? Object.values(data.camiones) : [];
-    embarqueData = {
-      inicio: data.inicio || null,
-      fin: data.fin || null,
-      detenciones: data.detenciones ? Object.values(data.detenciones) : [],
-      giras: data.giras ? Object.values(data.giras) : [],
-      atrasos: data.atrasos ? Object.values(data.atrasos) : [],
-      remates: data.remates || {}
-    };
-    // Cargar ajustes si existen
-    if (data.ajusteBodegas) ajusteBodegas = data.ajusteBodegas;
-    if (data.rateManual) rateManual = data.rateManual;
-    actualizarUI();
-    actualizarPanelSupervisor();
-  });
-}
-
-function actualizarSelectPatentes() {
-  var select = document.getElementById('patenteSelect');
-  var currentVal = select.value;
-  select.innerHTML = '<option value="">Seleccionar patente...</option>';
-  Object.keys(flota).sort().forEach(function(pat) {
-    var opt = document.createElement('option');
-    opt.value = pat;
-    opt.textContent = pat;
-    select.appendChild(opt);
-  });
-  if (currentVal && flota[currentVal]) select.value = currentVal;
-}
-
-function onPatenteChange() {
-  var pat = document.getElementById('patenteSelect').value;
-  var taraInfo = document.getElementById('taraInfo');
-  var patenteError = document.getElementById('patenteError');
-  var select = document.getElementById('patenteSelect');
-  if (!pat) {
-    taraInfo.classList.remove('show');
-    patenteError.style.display = 'none';
-    select.className = '';
-    validarFormulario();
-    return;
-  }
-  var camion = flota[pat];
-  if (camion) {
-    var carga = camion.cargaNeta || (camion.taraLlena - camion.taraVacia);
-    document.getElementById('cargaNetaDisplay').textContent = carga.toFixed(2);
-    taraInfo.classList.add('show');
-    patenteError.style.display = 'none';
-    select.className = 'patente-found';
-  } else {
-    taraInfo.classList.remove('show');
-    patenteError.style.display = 'block';
-    select.className = 'patente-notfound';
-  }
-  validarFormulario();
-}
-
-function validarFormulario() {
-  var pat = document.getElementById('patenteSelect').value;
-  var bodega = document.getElementById('bodegaSelect').value;
-  var camion = flota[pat];
-  document.getElementById('btnRegistrar').disabled = !(camion && bodega && turnoActivo && isOperator);
-}
-
-window.selectTurnoApp = function(turno, btn) {
-  currentTurno = turno;
-  localStorage.setItem('mv_goofy_turno', turno);
-  document.querySelectorAll('.turno-btn-select').forEach(function(b) { b.classList.remove('selected'); });
-  btn.classList.add('selected');
-  var tInfo = TURNOS[turno] || TURNOS['2'];
-  document.getElementById('turnoDisplay').textContent = '🕐 ' + tInfo.nombre;
-  document.getElementById('turnoSelectSection').style.display = 'none';
-  document.getElementById('metricsSection').style.display = 'flex';
-  document.getElementById('tableSection').style.display = 'block';
-  if (isOperator) {
-    document.getElementById('formSection').style.display = 'block';
-    document.getElementById('operatorBodegaCompact').style.display = 'grid';
-    document.getElementById('bodegasSection').style.display = 'none';
-  } else {
-    document.getElementById('supervisorPanel').style.display = 'block';
-    document.getElementById('bodegasSection').style.display = 'block';
-    document.getElementById('operatorBodegaCompact').style.display = 'none';
-  }
-  actualizarUI();
-  actualizarPanelSupervisor();
-  mostrarToast('✅ ' + tInfo.nombre + ' seleccionado', 'success');
-};
-
-window.toggleAddCamion = function() {
-  document.getElementById('addCamionForm').classList.toggle('show');
-};
-
-window.agregarNuevoCamion = function() {
-  var pat = document.getElementById('newPatente').value.trim().toUpperCase();
-  var carga = parseFloat(document.getElementById('newCarga').value);
-  if (!pat || isNaN(carga) || carga <= 0) {
-    mostrarToast('❌ Completa todos los campos correctamente', 'error');
-    return;
-  }
-  if (flota[pat]) {
-    mostrarToast('⚠️ Esta patente ya existe', 'error');
-    return;
-  }
-  if (db) {
-    var flotaRef = ref(db, 'flota/' + pat);
-    set(flotaRef, { cargaNeta: carga, fechaRegistro: new Date().toISOString() });
-  }
-  flota[pat] = { cargaNeta: carga, fechaRegistro: new Date().toISOString() };
-  actualizarSelectPatentes();
-  document.getElementById('newPatente').value = '';
-  document.getElementById('newCarga').value = '';
-  document.getElementById('addCamionForm').classList.remove('show');
-  document.getElementById('patenteSelect').value = pat;
-  onPatenteChange();
-  mostrarToast('✅ Camión ' + pat + ' agregado', 'success');
-};
-
-window.iniciarTurno = function() {
-  if (!isOperator) { mostrarToast('❌ Solo operadores', 'error'); return; }
-  if (turnoActivo) {
-    document.getElementById('turnoOperadorPanel').style.display = 'none';
-    document.getElementById('cierreTurnoPanel').style.display = 'block';
-    document.getElementById('btnIniciarTurno').textContent = '🔙 Volver';
-    document.getElementById('btnIniciarTurno').onclick = volverAlTurno;
-  } else {
-    horaInicioTurno = new Date();
-    turnoActivo = true;
-    document.getElementById('btnIniciarTurno').textContent = '🔒 Cerrar Turno';
-    document.getElementById('btnIniciarTurno').className = 'btn btn-warning';
-    mostrarToast('✅ ' + TURNOS[currentTurno].nombre + ' iniciado', 'success');
-    validarFormulario();
-  }
-};
-
-function volverAlTurno() {
-  document.getElementById('turnoOperadorPanel').style.display = 'block';
-  document.getElementById('cierreTurnoPanel').style.display = 'none';
-  document.getElementById('btnIniciarTurno').textContent = '🔒 Cerrar Turno';
-  document.getElementById('btnIniciarTurno').onclick = iniciarTurno;
-}
-
-window.cerrarTurnoOperador = function() {
-  var minDet = parseInt(document.getElementById('minDetencionOperador').value) || 0;
-  var obs = document.getElementById('observacionesOperador').value.trim();
-  var cierreData = {
-    turno: currentTurno,
-    horaInicio: horaInicioTurno ? horaInicioTurno.toISOString() : null,
-    horaFin: new Date().toISOString(),
-    minutosDetencion: minDet,
-    observaciones: obs,
-    camionesRegistrados: camiones.filter(function(c) { return c.turno === currentTurno; }).length
-  };
-  if (db) {
-    var cierreRef = ref(db, 'cierres/' + currentTurno + '_' + Date.now());
-    set(cierreRef, cierreData);
-  }
-  turnoActivo = false;
-  horaInicioTurno = null;
-  document.getElementById('turnoOperadorPanel').style.display = 'block';
-  document.getElementById('cierreTurnoPanel').style.display = 'none';
-  document.getElementById('btnIniciarTurno').textContent = '▶️ Iniciar Turno';
-  document.getElementById('btnIniciarTurno').className = 'btn btn-primary';
-  document.getElementById('btnIniciarTurno').onclick = iniciarTurno;
-  mostrarToast('✅ Turno cerrado correctamente', 'success');
-};
-
-window.registrarCamion = function() {
-  if (!isOperator) { mostrarToast('❌ Solo operadores', 'error'); return; }
-  if (!turnoActivo) { mostrarToast('⚠️ Inicie el turno primero', 'error'); return; }
-  var patente = document.getElementById('patenteSelect').value;
-  var bodega = parseInt(document.getElementById('bodegaSelect').value);
-  var camion = flota[patente];
-  if (!camion || !bodega) return;
-  var cargaNeta = camion.cargaNeta || (camion.taraLlena - camion.taraVacia);
-  var ahora = new Date();
-  camiones.push({
-    id: Date.now(),
-    patente: patente,
-    bodega: bodega,
-    cargaNeta: cargaNeta,
-    hora: ahora.toISOString(),
-    turno: currentTurno,
-    fecha: ahora.toISOString().split('T')[0]
-  });
-  document.getElementById('patenteSelect').value = '';
-  document.getElementById('bodegaSelect').value = '';
-  document.getElementById('taraInfo').classList.remove('show');
-  document.getElementById('patenteSelect').className = '';
-  document.getElementById('btnRegistrar').disabled = true;
-  guardarEnFirebase();
-  guardarLocal();
-  mostrarToast('✅ ' + patente + ' → B' + bodega + ' +' + cargaNeta.toFixed(2) + ' MT', 'success');
-};
-
-// NUEVO: Mostrar/ocultar panel de ajuste de bodegas
-window.mostrarAjusteBodegas = function() {
-  var panel = document.getElementById('ajusteBodegaPanel');
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-};
-
-// NUEVO: Mostrar/ocultar panel de rate manual
-window.mostrarRateManual = function() {
-  var panel = document.getElementById('ratePanel');
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-};
-
-// NUEVO: Actualizar preview de ajuste
-window.actualizarPreviewAjuste = function() {
-  var total = 0;
-  [1, 2, 3, 5].forEach(function(b) {
-    var val = parseFloat(document.getElementById('ajusteB' + b).value) || 0;
-    total += val;
-  });
-  document.getElementById('ajusteTotalPreview').textContent = total.toLocaleString('es-CL', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-};
-
-// NUEVO: Aplicar ajuste de bodegas
-window.aplicarAjusteBodegas = function() {
-  [1, 2, 3, 5].forEach(function(b) {
-    var ton = parseFloat(document.getElementById('ajusteB' + b).value) || 0;
-    var cam = parseInt(document.getElementById('ajusteCamionesB' + b).value) || 0;
-    ajusteBodegas[b] = { toneladas: ton, camiones: cam };
-  });
-  guardarEnFirebase();
-  guardarLocal();
-  actualizarUI();
-  actualizarPanelSupervisor();
-  mostrarToast('✅ Ajuste de bodegas aplicado', 'success');
-};
-
-// NUEVO: Aplicar rate manual
-window.aplicarRateManual = function() {
-  rateManual = {
-    rateDia: parseFloat(document.getElementById('rateDiaManual').value) || 8055.937,
-    rateHora: parseFloat(document.getElementById('rateDiaManual').value) / 8 || 1006.992,
-    horasTrabajadas: parseFloat(document.getElementById('horasTrabajadasManual').value) || 48.04,
-    tonelajeTotal: parseFloat(document.getElementById('tonelajeTotalManual').value) || 16125.30
-  };
-  guardarEnFirebase();
-  guardarLocal();
-  actualizarUI();
-  actualizarPanelSupervisor();
-  mostrarToast('✅ Rate manual aplicado: ' + rateManual.rateDia.toFixed(3) + ' ton/día', 'success');
-};
-
-function guardarEnFirebase() {
-  if (!db) return;
-  var embarqueRef = ref(db, 'embarques/goofy_v18');
-  var detObj = {};
-  embarqueData.detenciones.forEach(function(d, i) { detObj[i] = d; });
-  var girObj = {};
-  embarqueData.giras.forEach(function(g, i) { girObj[i] = g; });
-  var atrObj = {};
-  embarqueData.atrasos.forEach(function(a, i) { atrObj[i] = a; });
-  var camObj = {};
-  camiones.forEach(function(c, i) { camObj[i] = c; });
-  set(embarqueRef, {
-    camiones: camObj,
-    inicio: embarqueData.inicio,
-    fin: embarqueData.fin,
-    detenciones: detObj,
-    giras: girObj,
-    atrasos: atrObj,
-    remates: embarqueData.remates,
-    ajusteBodegas: ajusteBodegas,
-    rateManual: rateManual,
-    lastUpdate: new Date().toISOString()
-  });
-}
-
-function guardarLocal() {
-  localStorage.setItem('embarque_goofy_v18', JSON.stringify({
-    camiones: camiones,
-    embarqueData: embarqueData,
-    ajusteBodegas: ajusteBodegas,
-    rateManual: rateManual
-  }));
-}
-
-function cargarDatosLocal() {
-  var guardado = localStorage.getItem('embarque_goofy_v18');
-  if (guardado) {
-    var data = JSON.parse(guardado);
-    camiones = data.camiones || [];
-    embarqueData = data.embarqueData || { inicio: null, fin: null, detenciones: [], giras: [], atrasos: [], remates: {} };
-    ajusteBodegas = data.ajusteBodegas || ajusteBodegas;
-    rateManual = data.rateManual || rateManual;
-    actualizarUI();
-  }
-}
-
-window.modalBorrarTodo = function() {
-  document.getElementById('modalBorrar').classList.add('active');
-};
-
-window.confirmarBorrarTodo = function() {
-  var pass = document.getElementById('passBorrar').value;
-  if (pass !== PASSWORD_ADMIN) {
-    mostrarToast('❌ Contraseña incorrecta', 'error');
-    document.getElementById('passBorrar').value = '';
-    return;
-  }
-  if (!confirm('¿ESTÁS SEGURO? Se borrarán TODOS los datos permanentemente.')) return;
-  camiones = [];
-  embarqueData = { inicio: null, fin: null, detenciones: [], giras: [], atrasos: [], remates: {} };
-  // Resetear ajustes a valores por defecto
-  ajusteBodegas = {
-    1: { toneladas: 0, camiones: 0 },
-    2: { toneladas: 4280.30, camiones: 109 },
-    3: { toneladas: 11845.00, camiones: 547 },
-    5: { toneladas: 0, camiones: 0 }
-  };
-  rateManual = {
-    rateDia: 8055.937,
-    rateHora: 1006.992,
-    horasTrabajadas: 48.04,
-    tonelajeTotal: 16125.30
-  };
-  if (db) {
-    var embarqueRef = ref(db, 'embarques/goofy_v18');
-    remove(embarqueRef).then(function() {
-      mostrarToast('✅ Todos los datos eliminados', 'success');
-    }).catch(function(err) {
-      console.error(err);
-      mostrarToast('❌ Error al borrar en Firebase', 'error');
-    });
-  }
-  localStorage.removeItem('embarque_goofy_v18');
-  actualizarUI();
-  actualizarPanelSupervisor();
-  document.getElementById('passBorrar').value = '';
-  cerrarModalSup();
-};
-
-function actualizarUI() {
-  actualizarMetricas();
-  actualizarBodegas();
-  actualizarTabla();
-  actualizarBodegasCompact();
-}
-
-function calcularToneladasTotales() {
-  // Usar ajuste manual + camiones registrados
-  var totalAjuste = Object.values(ajusteBodegas).reduce(function(sum, b) { return sum + b.toneladas; }, 0);
-  var totalCamiones = camiones.reduce(function(sum, c) { return sum + c.cargaNeta; }, 0);
-  return totalAjuste + totalCamiones;
-}
-
-function calcularCamionesTotales() {
-  var totalAjuste = Object.values(ajusteBodegas).reduce(function(sum, b) { return sum + b.camiones; }, 0);
-  return totalAjuste + camiones.length;
-}
-
-function calcularHorasEfectivas(turno) {
-  // Usar rate manual si está configurado
-  if (rateManual && rateManual.horasTrabajadas > 0) {
-    return rateManual.horasTrabajadas;
-  }
-  var horas = 8;
-  var t = turno || currentTurno;
-  var detencionesTurno = embarqueData.detenciones.filter(function(d) { return d.turno === t; });
-  var minDetenciones = detencionesTurno.reduce(function(sum, d) { return sum + (d.minutos || 0); }, 0);
-  var atrasosTurno = embarqueData.atrasos.filter(function(a) { return a.turno === t; });
-  var minAtrasos = atrasosTurno.reduce(function(sum, a) { return sum + (a.minutos || 0); }, 0);
-  var minTotal = minDetenciones + minAtrasos;
-  horas -= (minTotal / 60);
-  return Math.max(horas, 0.1);
-}
-
-function actualizarMetricas() {
-  var totalCamiones = calcularCamionesTotales();
-  var totalToneladas = calcularToneladasTotales();
-
-  // Usar rate manual si está configurado
-  var rateHora = rateManual.rateHora;
-  var rateDia = rateManual.rateDia;
-
-  // Si no hay rate manual, calcular
-  if (!rateHora || rateHora <= 0) {
-    var horasEfectivas = calcularHorasEfectivas();
-    rateHora = horasEfectivas > 0 ? (totalToneladas / horasEfectivas) : 0;
-    rateDia = rateHora * 8; // Rate día = rate hora * 8 (turnos de 8 hrs)
-  }
-
-  document.getElementById('truckCount').textContent = totalCamiones;
-  document.getElementById('loadedDisplay').textContent = totalToneladas.toFixed(1);
-  document.getElementById('totalProgress').textContent = totalToneladas.toFixed(1) + ' / 43,700 MT';
-  document.getElementById('rateHoraDisplay').textContent = rateHora.toFixed(2);
-  document.getElementById('rateDiaDisplay').textContent = rateDia.toFixed(2);
-
-  // Tiempo basado en horas trabajadas
-  if (rateManual.horasTrabajadas > 0) {
-    var h = Math.floor(rateManual.horasTrabajadas);
-    var m = Math.floor((rateManual.horasTrabajadas - h) * 60);
-    document.getElementById('timeDisplay').textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-  } else if (embarqueData.inicio) {
-    var diff = new Date() - new Date(embarqueData.inicio);
-    var h = Math.floor(diff / 3600000);
-    var m = Math.floor((diff % 3600000) / 60000);
-    document.getElementById('timeDisplay').textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-  }
-}
-
-function actualizarBodegas() {
-  var horasEfectivas = calcularHorasEfectivas();
-  [1, 2, 3, 5].forEach(function(b) {
-    // Usar ajuste manual + camiones registrados
-    var tonAjuste = ajusteBodegas[b] ? ajusteBodegas[b].toneladas : 0;
-    var camAjuste = ajusteBodegas[b] ? ajusteBodegas[b].camiones : 0;
-    var lista = camiones.filter(function(c) { return c.bodega === b; });
-    var ton = tonAjuste + lista.reduce(function(s, c) { return s + c.cargaNeta; }, 0);
-    var cam = camAjuste + lista.length;
-    var cap = CAPACIDADES[b];
-    var pct = Math.min((ton / cap) * 100, 100);
-    var faltan = Math.max(cap - ton, 0);
-    var card = document.getElementById('cardBodega' + b);
-    var remate = embarqueData.remates[b];
-    if (remate) {
-      pct = 100;
-      faltan = 0;
-      card.classList.add('bodega-rematada');
-      document.getElementById('remateReal' + b).style.display = 'block';
-      document.getElementById('remateRealText' + b).textContent = formatearFechaHora(remate.hora);
-      document.getElementById('remateInfo' + b).style.display = 'none';
-    } else {
-      card.classList.remove('bodega-rematada');
-      document.getElementById('remateReal' + b).style.display = 'none';
-      if (ton > 0 && horasEfectivas > 0) {
-        var rateB = ton / horasEfectivas;
-        if (rateB > 0 && faltan > 0) {
-          var horasFaltan = faltan / rateB;
-          var fechaEst = new Date();
-          fechaEst.setHours(fechaEst.getHours() + horasFaltan);
-          document.getElementById('remateEst' + b).textContent = formatearFechaHora(fechaEst.toISOString());
-          document.getElementById('remateInfo' + b).style.display = 'block';
-        } else {
-          document.getElementById('remateInfo' + b).style.display = 'none';
+    // Datos iniciales
+    let ships = JSON.parse(localStorage.getItem('htp_ships')) || [
+        {
+            id: 'ship-1', name: 'MV Pacific Star', operation: 'Carga', totalTonnage: 50000,
+            currentTonnage: 23500, startDate: '2026-06-01T08:00', endDate: '2026-06-10T18:00',
+            bodegas: ['B1', 'B2'], status: 'active', closed: false,
+            detentions: [], truckTurns: [], notes: 'Operación normal'
+        },
+        {
+            id: 'ship-2', name: 'MV Atlantic Hope', operation: 'Descarga', totalTonnage: 35000,
+            currentTonnage: 12000, startDate: '2026-06-05T06:00', endDate: '2026-06-12T20:00',
+            bodegas: ['B3'], status: 'active', closed: false,
+            detentions: [{ type: 'Clima', start: '2026-06-07T14:00', end: '2026-06-07T18:00', notes: 'Viento fuerte' }],
+            truckTurns: [], notes: ''
+        },
+        {
+            id: 'ship-3', name: 'MV Southern Cross', operation: 'Carga', totalTonnage: 45000,
+            currentTonnage: 45000, startDate: '2026-05-20T10:00', endDate: '2026-05-28T16:00',
+            bodegas: ['B4', 'B5'], status: 'completed', closed: true, closeDate: '2026-05-28T16:00',
+            detentions: [], truckTurns: [], notes: 'Buque completado sin novedades'
         }
-      } else {
-        document.getElementById('remateInfo' + b).style.display = 'none';
-      }
+    ];
+
+    let bodegas = JSON.parse(localStorage.getItem('htp_bodegas')) || [
+        { id: 'B1', name: 'B1', capacity: 15000, occupied: true, shipId: 'ship-1' },
+        { id: 'B2', name: 'B2', capacity: 15000, occupied: true, shipId: 'ship-1' },
+        { id: 'B3', name: 'B3', capacity: 12000, occupied: true, shipId: 'ship-2' },
+        { id: 'B4', name: 'B4', capacity: 10000, occupied: false, shipId: null },
+        { id: 'B5', name: 'B5', capacity: 10000, occupied: false, shipId: null }
+    ];
+
+    let turnos = JSON.parse(localStorage.getItem('htp_turnos')) || [
+        { id: 'T1', name: 'Turno A', start: '08:00', end: '16:00', active: true },
+        { id: 'T2', name: 'Turno B', start: '16:00', end: '00:00', active: true },
+        { id: 'T3', name: 'Turno C', start: '00:00', end: '08:00', active: true }
+    ];
+
+    let detentionTypes = JSON.parse(localStorage.getItem('htp_detentionTypes')) || [
+        'Clima', 'Marea', 'Avería Equipo', 'Falta de Personal', 'Espera de Camiones',
+        'Maniobra de Buque', 'Falla Eléctrica', 'Mantenimiento', 'Otro'
+    ];
+
+    let config = JSON.parse(localStorage.getItem('htp_config')) || {
+        companyName: 'Huachipato Terminal Portuario',
+        subtitle: 'Una empresa del Grupo CAP',
+        timezone: 'America/Santiago'
+    };
+
+    let currentShip = null;
+    let currentTurno = null;
+    let selectedBodegas = [];
+
+    // ==================== INICIALIZACIÓN ====================
+    function init() {
+        // Configurar modo
+        document.getElementById('modeBadge').textContent = MODES[APP_MODE];
+        document.getElementById('modeBadge').className = 'mode-badge mode-' + APP_MODE;
+
+        // Fecha actual
+        updateCurrentDate();
+        setInterval(updateCurrentDate, 60000);
+
+        // Configurar navegación según modo
+        setupNavigation();
+
+        // Renderizar contenido inicial
+        renderDashboard();
+        renderShips();
+        renderBodegas();
+        renderTurnosConfig();
+        renderDetentionTypes();
+        renderOperations();
+
+        // Configurar modales
+        setupModals();
+
+        // Cargar configuración
+        document.getElementById('configCompanyName').value = config.companyName;
+        document.getElementById('configSubtitle').value = config.subtitle;
+        document.getElementById('configTimezone').value = config.timezone;
     }
-    document.getElementById('bar' + b).style.width = pct.toFixed(1) + '%';
-    document.getElementById('bar' + b).textContent = pct.toFixed(1) + '%';
-    document.getElementById('pct' + b).textContent = pct.toFixed(1) + '%';
-    document.getElementById('ton' + b).textContent = ton.toFixed(1);
-    document.getElementById('cam' + b).textContent = cam;
-    document.getElementById('faltan' + b).textContent = faltan.toFixed(1);
-    var rateB = horasEfectivas > 0 ? (ton / horasEfectivas).toFixed(1) : '0';
-    document.getElementById('rate' + b).textContent = rateB;
-  });
-}
 
-function actualizarBodegasCompact() {
-  [1, 2, 3, 5].forEach(function(b) {
-    var tonAjuste = ajusteBodegas[b] ? ajusteBodegas[b].toneladas : 0;
-    var lista = camiones.filter(function(c) { return c.bodega === b; });
-    var ton = tonAjuste + lista.reduce(function(s, c) { return s + c.cargaNeta; }, 0);
-    var cap = CAPACIDADES[b];
-    var pct = Math.min((ton / cap) * 100, 100);
-    var faltan = Math.max(cap - ton, 0);
-    var remate = embarqueData.remates[b];
-    if (remate) { pct = 100; faltan = 0; }
-    document.getElementById('opPct' + b).textContent = pct.toFixed(1) + '%';
-    document.getElementById('opTon' + b).textContent = ton.toFixed(1) + ' / ' + cap.toLocaleString() + ' MT';
-    document.getElementById('opFaltan' + b).textContent = 'Faltan: ' + faltan.toFixed(1) + ' MT';
-  });
-}
+    function updateCurrentDate() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('es-CL', options);
+    }
 
-function actualizarTabla() {
-  var tbody = document.getElementById('tablaCamiones');
-  if (camiones.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#5c6bc0; padding:20px;">Sin camiones registrados</td></tr>';
-    return;
-  }
-  var recientes = camiones.slice().reverse().slice(0, 20);
-  tbody.innerHTML = recientes.map(function(c) {
-    return '<tr class="fade-in"><td>' + formatearHoraSimple(c.hora) + '</td><td><strong>' + c.patente + '</strong></td><td><span class="badge-b' + c.bodega + '">B' + c.bodega + '</span></td><td><strong style="color:#00e676;">' + c.cargaNeta.toFixed(2) + '</strong></td><td>' + c.turno + '°</td></tr>';
-  }).join('');
-}
+    function setupNavigation() {
+        const navTabs = document.getElementById('navTabs');
+        const tabs = navTabs.querySelectorAll('.nav-tab');
 
-function actualizarPanelSupervisor() {
-  if (isOperator) return;
-  var supInicio = document.getElementById('supInicioEmbarque');
-  var supTiempo = document.getElementById('supTiempoTotal');
-  var supMinDet = document.getElementById('supMinDetencion');
-  var supMinAtraso = document.getElementById('supMinAtraso');
-  var supHorasEf = document.getElementById('supHorasEfectivas');
-  var supRateDia = document.getElementById('supRateDia');
-  var detencionList = document.getElementById('detencionList');
+        // Ocultar/mostrar tabs según modo
+        if (APP_MODE === 'tarja') {
+            tabs.forEach(t => {
+                const section = t.dataset.section;
+                if (section === 'management') t.style.display = 'none';
+            });
+        } else if (APP_MODE === 'gerencia') {
+            // Gerencia ve todo
+        }
+    }
 
-  if (embarqueData.inicio) {
-    var fecha = new Date(embarqueData.inicio);
-    supInicio.textContent = fecha.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-  } else {
-    supInicio.textContent = '--';
-  }
+    function showSection(sectionId) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
 
-  // Usar horas trabajadas del rate manual
-  if (rateManual.horasTrabajadas > 0) {
-    var h = Math.floor(rateManual.horasTrabajadas);
-    var m = Math.floor((rateManual.horasTrabajadas - h) * 60);
-    supTiempo.textContent = h + 'h ' + m + 'm';
-  } else if (embarqueData.inicio) {
-    var diff = new Date() - new Date(embarqueData.inicio);
-    var dias = Math.floor(diff / 86400000);
-    var h = Math.floor((diff % 86400000) / 3600000);
-    var m = Math.floor((diff % 3600000) / 60000);
-    supTiempo.textContent = dias > 0 ? dias + 'd ' + h + 'h ' + m + 'm' : h + 'h ' + m + 'm';
-  } else {
-    supTiempo.textContent = '--';
-  }
+        const section = document.getElementById(sectionId);
+        if (section) section.classList.add('active');
 
-  var totalMinDet = embarqueData.detenciones.reduce(function(sum, d) { return sum + (d.minutos || 0); }, 0);
-  supMinDet.textContent = totalMinDet;
-  var totalMinAtraso = embarqueData.atrasos.reduce(function(sum, a) { return sum + (a.minutos || 0); }, 0);
-  supMinAtraso.textContent = totalMinAtraso;
+        const tab = document.querySelector(`.nav-tab[data-section="${sectionId}"]`);
+        if (tab) tab.classList.add('active');
 
-  // Horas efectivas del rate manual
-  var horasEf = rateManual.horasTrabajadas || 48.04;
-  supHorasEf.textContent = horasEf.toFixed(2) + ' hrs';
+        // Renderizar contenido específico
+        if (sectionId === 'dashboard') renderDashboard();
+        if (sectionId === 'ships') renderShips();
+        if (sectionId === 'pastShips') renderPastShips();
+        if (sectionId === 'operations') renderOperations();
+        if (sectionId === 'management') { renderBodegas(); renderTurnosConfig(); renderDetentionTypes(); }
+    }
 
-  // Rate día del rate manual
-  var rateDia = rateManual.rateDia || 8055.937;
-  supRateDia.textContent = rateDia.toLocaleString('es-CL', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ton/día';
+    // ==================== DASHBOARD ====================
+    function renderDashboard() {
+        const activeShips = ships.filter(s => !s.closed);
+        const totalTons = activeShips.reduce((sum, s) => sum + (s.currentTonnage || 0), 0);
+        const totalTrucks = activeShips.reduce((sum, s) => sum + (s.truckTurns ? s.truckTurns.length : 0), 0);
+        const efficiency = activeShips.length > 0
+            ? Math.round(activeShips.reduce((sum, s) => sum + ((s.currentTonnage / s.totalTonnage) * 100), 0) / activeShips.length)
+            : 0;
 
-  if (embarqueData.detenciones.length === 0 && embarqueData.atrasos.length === 0) {
-    detencionList.innerHTML = '<div style="text-align:center; color:#5c6bc0; padding:10px; font-size:0.75rem;">Sin detenciones ni atrasos registrados</div>';
-  } else {
-    var html = '';
-    embarqueData.detenciones.slice().reverse().forEach(function(d) {
-      html += '<div class="detencion-item"><div><div class="time">' + formatearHoraSimple(d.horaInicio) + ' (T' + d.turno + ')</div><div class="reason">' + (d.motivo || 'Sin motivo') + '</div></div><div class="mins">' + d.minutos + ' min</div></div>';
-    });
-    embarqueData.atrasos.slice().reverse().forEach(function(a) {
-      html += '<div class="detencion-item" style="background:rgba(255,145,0,0.08); border-color:rgba(255,145,0,0.2);"><div><div class="time" style="color:#ff9100;">' + formatearHoraSimple(a.horaInicio) + ' (T' + a.turno + ')</div><div class="reason">' + (a.motivo || 'Sin motivo') + '</div></div><div class="mins" style="color:#ff9100;">' + a.minutos + ' min atr</div></div>';
-    });
-    detencionList.innerHTML = html;
-  }
-}
+        document.getElementById('statActiveShips').textContent = activeShips.length;
+        document.getElementById('statTotalTons').textContent = totalTons.toLocaleString();
+        document.getElementById('statTrucksToday').textContent = totalTrucks;
+        document.getElementById('statEfficiency').textContent = efficiency + '%';
 
-window.modalInicioEmbarque = function() { document.getElementById('modalInicioEmb').classList.add('active'); };
-window.modalDetencion = function() { document.getElementById('modalDetencion').classList.add('active'); };
-window.modalFinEmbarque = function() { document.getElementById('modalFinEmb').classList.add('active'); };
-window.modalGira = function() { document.getElementById('modalGira').classList.add('active'); };
-window.modalAtraso = function() { document.getElementById('modalAtraso').classList.add('active'); };
-window.modalRemateBodega = function() { document.getElementById('modalRemateBodega').classList.add('active'); };
-window.cerrarModalSup = function() { document.querySelectorAll('.modal-overlay').forEach(function(m) { m.classList.remove('active'); }); };
+        // Renderizar buques activos en dashboard
+        const dashboardShips = document.getElementById('dashboardShips');
+        if (activeShips.length === 0) {
+            dashboardShips.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-ship"></i>
+                    <h3>No hay buques activos</h3>
+                    <p>Los buques en operación aparecerán aquí</p>
+                </div>`;
+        } else {
+            dashboardShips.innerHTML = activeShips.map(ship => `
+                <div class="ship-card" style="margin-bottom:12px;" onclick="showShipDetail('${ship.id}')">
+                    <div class="ship-name">${ship.name}</div>
+                    <div class="ship-detail">${ship.operation} | ${ship.bodegas.join(', ')}</div>
+                    <div class="ship-progress">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width:${(ship.currentTonnage/ship.totalTonnage*100)}%;background:var(--htp-blue);"></div>
+                        </div>
+                    </div>
+                    <div class="ship-stats">
+                        <div class="ship-stat">
+                            <div class="ship-stat-value">${ship.currentTonnage.toLocaleString()}</div>
+                            <div class="ship-stat-label">Prog.</div>
+                        </div>
+                        <div class="ship-stat">
+                            <div class="ship-stat-value">${ship.totalTonnage.toLocaleString()}</div>
+                            <div class="ship-stat-label">Total</div>
+                        </div>
+                        <div class="ship-stat">
+                            <div class="ship-stat-value">${ship.truckTurns ? ship.truckTurns.length : 0}</div>
+                            <div class="ship-stat-label">Camiones</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
 
-window.guardarInicioEmbarque = function() {
-  var fecha = document.getElementById('inicioEmbarqueInput').value;
-  var obs = document.getElementById('inicioObservacion').value;
-  if (!fecha) { mostrarToast('❌ Ingrese fecha y hora', 'error'); return; }
-  embarqueData.inicio = new Date(fecha).toISOString();
-  embarqueData.obsInicio = obs;
-  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
-  mostrarToast('✅ Inicio de embarque registrado', 'success');
-};
+    // ==================== BARCOS / SHIPS ====================
+    function renderShips() {
+        const grid = document.getElementById('shipsGrid');
+        const activeShips = ships.filter(s => !s.closed);
+        const search = document.getElementById('shipSearch')?.value?.toLowerCase() || '';
+        const filtered = activeShips.filter(s => s.name.toLowerCase().includes(search));
 
-window.guardarDetencion = function() {
-  var hora = document.getElementById('detencionInicioInput').value;
-  var turnoDet = document.getElementById('detencionTurno').value;
-  var minutos = parseInt(document.getElementById('detencionMinutos').value);
-  var motivo = document.getElementById('detencionMotivo').value;
-  if (!hora || !minutos || minutos <= 0) { mostrarToast('❌ Complete todos los campos', 'error'); return; }
-  embarqueData.detenciones.push({ horaInicio: new Date(hora).toISOString(), minutos: minutos, motivo: motivo, turno: turnoDet, registradoPor: 'supervisor' });
-  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
-  mostrarToast('✅ Detención de ' + minutos + ' min registrada', 'success');
-};
+        if (filtered.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-state" style="grid-column: 1/-1;">
+                    <i class="fas fa-ship"></i>
+                    <h3>No hay buques activos</h3>
+                    <p>Cree un nuevo buque para comenzar</p>
+                </div>`;
+            return;
+        }
 
-window.guardarFinEmbarque = function() {
-  var fecha = document.getElementById('finEmbarqueInput').value;
-  var obs = document.getElementById('finObservacion').value;
-  if (!fecha) { mostrarToast('❌ Ingrese fecha y hora', 'error'); return; }
-  embarqueData.fin = new Date(fecha).toISOString();
-  embarqueData.obsFin = obs;
-  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
-  mostrarToast('✅ Fin de embarque registrado', 'success');
-};
+        grid.innerHTML = filtered.map(ship => {
+            const progress = Math.min(100, (ship.currentTonnage / ship.totalTonnage) * 100);
+            const progressColor = progress >= 90 ? 'var(--htp-green)' : progress >= 50 ? 'var(--htp-accent)' : 'var(--htp-orange)';
+            return `
+                <div class="ship-card ${ship.closed ? 'closed' : ''}" onclick="showShipDetail('${ship.id}')">
+                    <div class="ship-name">${ship.name}</div>
+                    <div class="ship-detail"><i class="fas fa-anchor"></i> ${ship.operation}</div>
+                    <div class="ship-detail"><i class="fas fa-warehouse"></i> ${ship.bodegas.join(', ')}</div>
+                    <div class="ship-detail"><i class="fas fa-calendar"></i> ${formatDate(ship.startDate)} - ${formatDate(ship.endDate)}</div>
+                    <div class="ship-progress">
+                        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-bottom:4px;">
+                            <span>Progreso</span>
+                            <span>${progress.toFixed(1)}%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width:${progress}%;background:${progressColor};"></div>
+                        </div>
+                    </div>
+                    <div class="ship-stats">
+                        <div class="ship-stat">
+                            <div class="ship-stat-value">${ship.currentTonnage.toLocaleString()}</div>
+                            <div class="ship-stat-label">Prog. (t)</div>
+                        </div>
+                        <div class="ship-stat">
+                            <div class="ship-stat-value">${ship.totalTonnage.toLocaleString()}</div>
+                            <div class="ship-stat-label">Total (t)</div>
+                        </div>
+                        <div class="ship-stat">
+                            <div class="ship-stat-value">${ship.truckTurns ? ship.truckTurns.length : 0}</div>
+                            <div class="ship-stat-label">Vueltas</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
 
-window.guardarGira = function() {
-  var tipo = document.getElementById('giraTipo').value;
-  var hora = document.getElementById('giraHoraInput').value;
-  var obs = document.getElementById('giraObservacion').value;
-  if (!hora) { mostrarToast('❌ Ingrese fecha y hora', 'error'); return; }
-  embarqueData.giras.push({ tipo: tipo, hora: new Date(hora).toISOString(), observacion: obs, turno: currentTurno });
-  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
-  mostrarToast('✅ ' + (tipo === 'salida' ? 'Salida' : 'Retorno') + ' de gira registrado', 'success');
-};
+    function filterShips() { renderShips(); }
 
-window.guardarAtraso = function() {
-  var hora = document.getElementById('atrasoInicioInput').value;
-  var turnoAtr = document.getElementById('atrasoTurno').value;
-  var minutos = parseInt(document.getElementById('atrasoMinutos').value);
-  var motivo = document.getElementById('atrasoMotivo').value;
-  if (!hora || !minutos || minutos <= 0) { mostrarToast('❌ Complete todos los campos', 'error'); return; }
-  embarqueData.atrasos.push({ horaInicio: new Date(hora).toISOString(), minutos: minutos, motivo: motivo, turno: turnoAtr, registradoPor: 'supervisor' });
-  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
-  mostrarToast('✅ Atraso de ' + minutos + ' min registrado', 'success');
-};
+    function showShipDetail(shipId) {
+        const ship = ships.find(s => s.id === shipId);
+        if (!ship) return;
+        currentShip = ship;
 
-window.guardarRemateBodega = function() {
-  var bodega = document.getElementById('remateBodegaSelect').value;
-  var hora = document.getElementById('remateHoraInput').value;
-  var obs = document.getElementById('remateObservacion').value;
-  if (!bodega || !hora) { mostrarToast('❌ Seleccione bodega y fecha', 'error'); return; }
-  embarqueData.remates[bodega] = { hora: new Date(hora).toISOString(), observacion: obs, registradoPor: 'supervisor' };
-  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
-  mostrarToast('✅ Remate B' + bodega + ' registrado', 'success');
-};
+        document.getElementById('shipDetailTitle').innerHTML = `<i class="fas fa-ship"></i> ${ship.name}`;
 
-window.mostrarResumen = function() {
-  document.getElementById('modalResumen').classList.add('active');
-  seleccionarTurno(currentTurno || '2', document.querySelector('.turno-tab'));
-};
-window.cerrarModal = function() { document.getElementById('modalResumen').classList.remove('active'); };
-window.seleccionarTurno = function(turno, btn) {
-  document.querySelectorAll('.turno-tab').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
-  generarReporte(turno);
-};
+        const progress = Math.min(100, (ship.currentTonnage / ship.totalTonnage) * 100);
+        const detentionsCount = ship.detentions ? ship.detentions.length : 0;
+        const detentionsTime = ship.detentions ? ship.detentions.reduce((sum, d) => {
+            const start = new Date(d.start);
+            const end = new Date(d.end);
+            return sum + (end - start) / (1000 * 60 * 60);
+        }, 0) : 0;
 
-function filtrarPorTurno(lista, turno) {
-  if (turno === 'todos') return lista;
-  return lista.filter(function(c) { return c.turno === turno; });
-}
+        let actions = '';
+        if (!ship.closed) {
+            if (APP_MODE === 'supervisor' || APP_MODE === 'gerencia') {
+                actions += `<button class="btn btn-primary" onclick="closeModal('modalShipDetail'); showModal('modalAdjustTonnage'); setupAdjustTonnageModal()"><i class="fas fa-weight-hanging"></i> Ajustar Tonelaje</button>`;
+                actions += `<button class="btn btn-warning" onclick="closeModal('modalShipDetail'); showModal('modalDetention'); setupDetentionModal()"><i class="fas fa-exclamation-triangle"></i> Detención</button>`;
+                actions += `<button class="btn btn-danger" onclick="closeModal('modalShipDetail'); showModal('modalCloseShip'); setupCloseShipModal()"><i class="fas fa-lock"></i> Cerrar</button>`;
+            }
+            if (APP_MODE === 'gerencia') {
+                actions += `<button class="btn btn-danger" onclick="closeModal('modalShipDetail'); showModal('modalDeleteShip'); setupDeleteShipModal()"><i class="fas fa-trash"></i> Eliminar</button>`;
+            }
+        }
 
-function generarReporte(turno) {
-  var filtrados = filtrarPorTurno(camiones, turno);
-  var totalCamiones = filtrados.length;
-  var totalToneladas = filtrados.reduce(function(s, c) { return s + c.cargaNeta; }, 0);
+        document.getElementById('shipDetailBody').innerHTML = `
+            <div class="grid-2" style="margin-bottom:20px;">
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">Operación</label>
+                        <div class="form-input" style="background:#f7fafc;">${ship.operation}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bodegas</label>
+                        <div class="form-input" style="background:#f7fafc;">${ship.bodegas.join(', ')}</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha Inicio</label>
+                        <div class="form-input" style="background:#f7fafc;">${formatDate(ship.startDate)}</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha Término Est.</label>
+                        <div class="form-input" style="background:#f7fafc;">${formatDate(ship.endDate)}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Progreso</label>
+                <div class="progress-bar-bg" style="height:20px;">
+                    <div class="progress-bar-fill" style="width:${progress}%;background:var(--htp-blue);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:600;">${progress.toFixed(1)}%</div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--text-light);">
+                    <span>${ship.currentTonnage.toLocaleString()} t</span>
+                    <span>${ship.totalTonnage.toLocaleString()} t</span>
+                </div>
+            </div>
+            <div class="grid-3" style="margin-top:16px;">
+                <div class="stat-card" style="padding:16px;">
+                    <div class="stat-label">Detenciones</div>
+                    <div class="stat-value" style="font-size:20px;">${detentionsCount}</div>
+                </div>
+                <div class="stat-card orange" style="padding:16px;">
+                    <div class="stat-label">Tiempo Perdido</div>
+                    <div class="stat-value" style="font-size:20px;">${detentionsTime.toFixed(1)}h</div>
+                </div>
+                <div class="stat-card green" style="padding:16px;">
+                    <div class="stat-label">Vueltas Camión</div>
+                    <div class="stat-value" style="font-size:20px;">${ship.truckTurns ? ship.truckTurns.length : 0}</div>
+                </div>
+            </div>
+            ${ship.notes ? `<div class="form-group mt-2"><label class="form-label">Observaciones</label><div style="padding:12px;background:#f7fafc;border-radius:8px;font-size:13px;">${ship.notes}</div></div>` : ''}
+            ${ship.detentions && ship.detentions.length > 0 ? `
+                <div class="mt-2">
+                    <label class="form-label">Detenciones Registradas</label>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>Tipo</th><th>Inicio</th><th>Término</th><th>Duración</th><th>Notas</th></tr></thead>
+                            <tbody>
+                                ${ship.detentions.map(d => {
+                                    const start = new Date(d.start);
+                                    const end = new Date(d.end);
+                                    const hours = ((end - start) / (1000 * 60 * 60)).toFixed(1);
+                                    return `<tr><td><span class="badge badge-red">${d.type}</span></td><td>${formatDate(d.start)}</td><td>${formatDate(d.end)}</td><td>${hours}h</td><td>${d.notes || '-'}</td></tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ` : ''}
+        `;
 
-  // Agregar ajuste manual al reporte
-  var tonAjusteTotal = Object.values(ajusteBodegas).reduce(function(sum, b) { return sum + b.toneladas; }, 0);
-  var camAjusteTotal = Object.values(ajusteBodegas).reduce(function(sum, b) { return sum + b.camiones; }, 0;
+        document.getElementById('shipDetailFooter').innerHTML = `
+            <button class="btn btn-outline" onclick="closeModal('modalShipDetail')">Cerrar</button>
+            ${actions}
+        `;
 
-  if (turno === 'todos') {
-    totalCamiones += camAjusteTotal;
-    totalToneladas += tonAjusteTotal;
-  }
+        showModal('modalShipDetail');
+    }
 
-  var horasEfectivas = 8;
-  if (turno !== 'todos') {
-    var detencionesTurno = embarqueData.detenciones.filter(function(d) { return d.turno === turno; });
-    var atrasosTurno = embarqueData.atrasos.filter(function(a) { return a.turno === turno; });
-    var minDet = detencionesTurno.reduce(function(sum, d) { return sum + (d.minutos || 0); }, 0);
-    var minAtr = atrasosTurno.reduce(function(sum, a) { return sum + (a.minutos || 0); }, 0);
-    horasEfectivas = Math.max(8 - ((minDet + minAtr) / 60), 0.1);
-  } else {
-    // Para "todos", usar las horas totales del rate manual
-    horasEfectivas = rateManual.horasTrabajadas || 48.04;
-  }
+    // ==================== BARCOS PASADOS ====================
+    function renderPastShips(filter = 'all') {
+        const tbody = document.getElementById('pastShipsTable');
+        let pastShips = ships.filter(s => s.closed);
 
-  var rateHora = horasEfectivas > 0 ? (totalToneladas / horasEfectivas).toFixed(2) : '0.00';
-  var rateDia = (parseFloat(rateHora) * 8).toFixed(2); // Rate día = rate hora * 8
+        if (filter === 'with-detentions') pastShips = pastShips.filter(s => s.detentions && s.detentions.length > 0);
+        if (filter === 'no-detentions') pastShips = pastShips.filter(s => !s.detentions || s.detentions.length === 0);
 
-  document.getElementById('reportGrid').innerHTML = 
-    '<div class="report-item"><div class="num">' + totalCamiones + '</div><div class="lbl">Camiones</div></div>' +
-    '<div class="report-item"><div class="num">' + totalToneladas.toFixed(1) + '</div><div class="lbl">Toneladas</div></div>' +
-    '<div class="report-item"><div class="num">' + rateHora + '</div><div class="lbl">Rate ton/hr</div></div>' +
-    '<div class="report-item"><div class="num">' + rateDia + '</div><div class="lbl">Rate día</div></div>';
+        if (pastShips.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="padding:24px;color:var(--text-light);">No hay buques en el historial</td></tr>`;
+            return;
+        }
 
-  var divCamiones = document.getElementById('reporteCamiones');
-  if (filtrados.length === 0 && turno !== 'todos') {
-    divCamiones.innerHTML = '<div style="text-align:center; color:#5c6bc0; padding:18px;">Sin camiones</div>';
-  } else {
-    divCamiones.innerHTML = '<table style="min-width:500px;"><thead><tr><th>Hora</th><th>Patente</th><th>Bod</th><th>Carga</th><th>Turno</th></tr></thead><tbody>' +
-      filtrados.map(function(c) {
-        return '<tr><td>' + formatearHoraSimple(c.hora) + '</td><td><strong>' + c.patente + '</strong></td>' +
-        '<td><span class="badge-b' + c.bodega + '">B' + c.bodega + '</span></td>' +
-        '<td><strong style="color:#00e676;">' + c.cargaNeta.toFixed(2) + '</strong></td>' +
-        '<td>' + c.turno + '°</td></tr>';
-      }).join('') + '</tbody></table>';
-  }
+        tbody.innerHTML = pastShips.map(ship => {
+            const detentionsCount = ship.detentions ? ship.detentions.length : 0;
+            return `
+                <tr>
+                    <td><strong>${ship.name}</strong></td>
+                    <td>${ship.operation}</td>
+                    <td>${formatDate(ship.startDate)}</td>
+                    <td>${formatDate(ship.closeDate || ship.endDate)}</td>
+                    <td>${(ship.closeFinalTonnage || ship.currentTonnage).toLocaleString()} t</td>
+                    <td>${detentionsCount > 0 ? `<span class="badge badge-red">${detentionsCount}</span>` : '<span class="badge badge-green">0</span>'}</td>
+                    <td><span class="badge badge-gray">Cerrado</span></td>
+                </tr>
+            `;
+        }).join('');
+    }
 
-  var htmlB = '<table style="min-width:500px;"><thead><tr><th>Bod</th><th>Cap</th><th>Cargado</th><th>%</th><th>Cam</th><th>Rate</th><th>Faltan</th></tr></thead><tbody>';
-  [1, 2, 3, 5].forEach(function(b) {
-    var tonAjuste = ajusteBodegas[b] ? ajusteBodegas[b].toneladas : 0;
-    var camAjuste = ajusteBodegas[b] ? ajusteBodegas[b].camiones : 0;
-    var lista = filtrados.filter(function(c) { return c.bodega === b; });
-    var ton = tonAjuste + lista.reduce(function(s, c) { return s + c.cargaNeta; }, 0);
-    var cam = camAjuste + lista.length;
-    var cap = CAPACIDADES[b];
-    var pct = Math.min((ton / cap) * 100, 100).toFixed(1);
-    var faltan = Math.max(cap - ton, 0).toFixed(1);
-    var rateB = horasEfectivas > 0 ? (ton / horasEfectivas).toFixed(1) : '0.0';
-    var color = b===1 ? '#00e5ff' : b===2 ? '#ff9100' : b===3 ? '#00e676' : '#b388ff';
-    var remate = embarqueData.remates[b];
-    if (remate) { pct = '100.0'; faltan = '0.0'; }
-    htmlB += '<tr><td><span class="badge-b' + b + '">B' + b + '</span></td><td>' + cap.toLocaleString() + '</td>' +
-      '<td><strong>' + ton.toFixed(1) + '</strong></td><td><strong style="color:' + color + '">' + pct + '%</strong></td>' +
-      '<td>' + cam + '</td><td>' + rateB + '</td><td>' + faltan + '</td></tr>';
-  });
-  htmlB += '</tbody></table>';
-  document.getElementById('reporteBodegas').innerHTML = htmlB;
+    function filterPastShips(filter) {
+        document.querySelectorAll('#pastShips .sub-tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        renderPastShips(filter);
+    }
 
-  var htmlR = '<table style="min-width:500px;"><thead><tr><th>Bodega</th><th>Capacidad</th><th>Estado</th><th>Remate Real</th><th>Observación</th></tr></thead><tbody>';
-  [1, 2, 3, 5].forEach(function(b) {
-    var cap = CAPACIDADES[b];
-    var remate = embarqueData.remates[b];
-    var estado = remate ? '<span style="color:#ffd700; font-weight:700;">✅ REMATADA</span>' : '<span style="color:#5c6bc0;">En progreso</span>';
-    var horaRem = remate ? formatearFechaHora(remate.hora) : '--';
-    var obs = remate ? (remate.observacion || '--') : '--';
-    htmlR += '<tr><td><span class="badge-b' + b + '">B' + b + '</span></td><td>' + cap.toLocaleString() + '</td>' +
-      '<td>' + estado + '</td><td>' + horaRem + '</td><td>' + obs + '</td></tr>';
-  });
-  htmlR += '</tbody></table>';
-  document.getElementById('reporteRemates').innerHTML = htmlR;
-}
+    // ==================== CREAR NUEVO BUQUE ====================
+    function toggleBodegaSelection(el) {
+        const bodega = el.dataset.bodega;
+        if (selectedBodegas.includes(bodega)) {
+            selectedBodegas = selectedBodegas.filter(b => b !== bodega);
+            el.classList.remove('selected');
+        } else {
+            selectedBodegas.push(bodega);
+            el.classList.add('selected');
+        }
+    }
 
-function descargarCSV(csv, nombre) {
-  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  var link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = nombre;
-  link.click();
-}
+    function createNewShip() {
+        const name = document.getElementById('newShipName').value.trim();
+        const operation = document.getElementById('newShipOperation').value;
+        const tonnage = parseFloat(document.getElementById('newShipTonnage').value) || 0;
+        const start = document.getElementById('newShipStart').value;
+        const end = document.getElementById('newShipEnd').value;
+        const notes = document.getElementById('newShipNotes').value;
 
-window.exportarDatos = function() {
-  if (camiones.length === 0 && Object.values(ajusteBodegas).every(b => b.toneladas === 0)) { 
-    mostrarToast('❌ No hay datos', 'error'); return; 
-  }
-  var csv = 'Hora,Patente,Bodega,Carga Neta (MT),Turno,Fecha
-';
-  camiones.forEach(function(c) {
-    csv += formatearHoraSimple(c.hora) + ',' + c.patente + ',' + c.bodega + ',' + c.cargaNeta.toFixed(2) + ',' + c.turno + ',' + c.fecha + '
-';
-  });
-  // Agregar línea de ajuste manual
-  csv += '
-AJUSTE MANUAL POR BODEGA
-';
-  csv += 'Bodega,Toneladas,Camiones
-';
-  [1,2,3,5].forEach(function(b) {
-    csv += 'B' + b + ',' + (ajusteBodegas[b]?.toneladas || 0) + ',' + (ajusteBodegas[b]?.camiones || 0) + '
-';
-  });
-  descargarCSV(csv, 'MV_GOOFY_Voy18_Completo.csv');
-  mostrarToast('✅ Exportado', 'success');
-};
+        if (!name) { alert('Ingrese el nombre del buque'); return; }
+        if (selectedBodegas.length === 0) { alert('Seleccione al menos una bodega'); return; }
+        if (!start || !end) { alert('Ingrese las fechas de inicio y término'); return; }
 
-window.exportarResumen = function() {
-  var activeTab = document.querySelector('.turno-tab.active');
-  var turno = 'todos';
-  if (activeTab.textContent.indexOf('1°') >= 0) turno = '1';
-  else if (activeTab.textContent.indexOf('2°') >= 0) turno = '2';
-  else if (activeTab.textContent.indexOf('3°') >= 0) turno = '3';
-  var filtrados = filtrarPorTurno(camiones, turno);
-  if (filtrados.length === 0 && turno !== 'todos') { mostrarToast('❌ Sin datos', 'error'); return; }
+        // Verificar bodegas disponibles
+        for (const bodegaId of selectedBodegas) {
+            const bodega = bodegas.find(b => b.id === bodegaId);
+            if (bodega && bodega.occupied) {
+                alert(`La bodega ${bodegaId} ya está ocupada`);
+                return;
+            }
+        }
 
-  var csv = 'MV GOOFY - VOYAGE 18 - RESUMEN TURNO: ' + (turno === 'todos' ? 'TODOS' : TURNOS[turno].nombre) + '
+        const newShip = {
+            id: 'ship-' + Date.now(),
+            name, operation, totalTonnage: tonnage, currentTonnage: 0,
+            startDate: start, endDate: end, bodegas: [...selectedBodegas],
+            status: 'active', closed: false, detentions: [], truckTurns: [], notes
+        };
 
-';
-  csv += '=== CAMIONES ===
-Hora,Patente,Bodega,Carga Neta,Turno
-';
-  filtrados.forEach(function(c) {
-    csv += formatearHoraSimple(c.hora) + ',' + c.patente + ',' + c.bodega + ',' + c.cargaNeta.toFixed(2) + ',' + c.turno + '
-';
-  });
+        ships.push(newShip);
 
-  csv += '
-=== AJUSTE MANUAL POR BODEGA ===
-Bodega,Toneladas,Camiones
-';
-  [1,2,3,5].forEach(function(b) {
-    csv += 'B' + b + ',' + (ajusteBodegas[b]?.toneladas || 0) + ',' + (ajusteBodegas[b]?.camiones || 0) + '
-';
-  });
+        // Ocupar bodegas
+        selectedBodegas.forEach(bodegaId => {
+            const bodega = bodegas.find(b => b.id === bodegaId);
+            if (bodega) { bodega.occupied = true; bodega.shipId = newShip.id; }
+        });
 
-  csv += '
-=== BODEGAS ===
-Bodega,Capacidad,Cargado,%,Camiones,Rate,Faltan,Remate
-';
-  var horasEf = turno !== 'todos' ? 8 : (rateManual.horasTrabajadas || 48.04);
+        saveData();
+        selectedBodegas = [];
+        closeModal('modalNewShip');
+        renderShips();
+        renderDashboard();
+        renderBodegas();
+        alert('Buque creado exitosamente');
+    }
 
-  [1, 2, 3, 5].forEach(function(b) {
-    var tonAjuste = ajusteBodegas[b] ? ajusteBodegas[b].toneladas : 0;
-    var camAjuste = ajusteBodegas[b] ? ajusteBodegas[b].camiones : 0;
-    var lista = filtrados.filter(function(c) { return c.bodega === b; });
-    var ton = tonAjuste + lista.reduce(function(s, c) { return s + c.cargaNeta; }, 0);
-    var cam = camAjuste + lista.length;
-    var cap = CAPACIDADES[b];
-    var pct = Math.min((ton / cap) * 100, 100).toFixed(1);
-    var faltan = Math.max(cap - ton, 0).toFixed(1);
-    var rateB = horasEf > 0 ? (ton / horasEf).toFixed(1) : '0.0';
-    var remate = embarqueData.remates[b];
-    var remateStr = remate ? formatearFechaHora(remate.hora) : 'Pendiente';
-    if (remate) { pct = '100.0'; faltan = '0.0'; }
-    csv += 'B' + b + ',' + cap + ',' + ton.toFixed(1) + ',' + pct + '%,' + cam + ',' + rateB + ',' + faltan + ',' + remateStr + '
-';
-  });
+    // ==================== AJUSTAR TONELAJE ====================
+    function setupAdjustTonnageModal() {
+        if (!currentShip) return;
+        document.getElementById('adjustTonnageShip').value = currentShip.name;
+        document.getElementById('adjustTonnageCurrent').value = currentShip.currentTonnage;
+        document.getElementById('adjustTonnageNew').value = currentShip.currentTonnage;
+        document.getElementById('adjustTonnageReason').value = '';
+    }
 
-  csv += '
-=== RATE MANUAL ===
-Rate Dia,Rate Hora,Horas Trabajadas,Tonelaje Total
-';
-  csv += rateManual.rateDia + ',' + rateManual.rateHora + ',' + rateManual.horasTrabajadas + ',' + rateManual.tonelajeTotal + '
-';
+    function saveTonnageAdjustment() {
+        if (!currentShip) return;
+        const newTonnage = parseFloat(document.getElementById('adjustTonnageNew').value);
+        const reason = document.getElementById('adjustTonnageReason').value;
 
-  csv += '
-=== DETENCIONES ===
-Hora,Turno,Minutos,Motivo
-';
-  var dets = turno !== 'todos' ? embarqueData.detenciones.filter(function(d) { return d.turno === turno; }) : embarqueData.detenciones;
-  dets.forEach(function(d) {
-    csv += formatearFechaHora(d.horaInicio) + ',' + d.turno + ',' + d.minutos + ',' + (d.motivo || '') + '
-';
-  });
+        if (isNaN(newTonnage) || newTonnage < 0) { alert('Ingrese un tonelaje válido'); return; }
 
-  csv += '
-=== ATRASOS ===
-Hora,Turno,Minutos,Motivo
-';
-  var atrs = turno !== 'todos' ? embarqueData.atrasos.filter(function(a) { return a.turno === turno; }) : embarqueData.atrasos;
-  atrs.forEach(function(a) {
-    csv += formatearFechaHora(a.horaInicio) + ',' + a.turno + ',' + a.minutos + ',' + (a.motivo || '') + '
-';
-  });
+        currentShip.currentTonnage = newTonnage;
+        if (reason) currentShip.notes = (currentShip.notes ? currentShip.notes + '\n' : '') + `Ajuste tonelaje: ${reason}`;
 
-  descargarCSV(csv, 'MV_GOOFY_Voy18_Resumen_' + turno + '.csv');
-  mostrarToast('✅ Resumen exportado', 'success');
-};
+        saveData();
+        closeModal('modalAdjustTonnage');
+        renderShips();
+        renderDashboard();
+        alert('Tonelaje ajustado exitosamente');
+    }
 
-function formatearHoraSimple(fecha) {
-  if (!fecha) return '--:--';
-  var d = new Date(fecha);
-  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-}
+    // ==================== DETENCIONES ====================
+    function setupDetentionModal() {
+        if (!currentShip) return;
+        document.getElementById('detentionShip').value = currentShip.name;
+        const select = document.getElementById('detentionType');
+        select.innerHTML = '<option value="">Seleccionar tipo...</option>' +
+            detentionTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+        document.getElementById('detentionStart').value = formatDateTimeLocal(new Date());
+        document.getElementById('detentionEnd').value = '';
+        document.getElementById('detentionNotes').value = '';
+    }
 
-function formatearFechaHora(fecha) {
-  if (!fecha) return '--';
-  var d = new Date(fecha);
-  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + ' ' + 
-    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-}
+    function saveDetention() {
+        if (!currentShip) return;
+        const type = document.getElementById('detentionType').value;
+        const start = document.getElementById('detentionStart').value;
+        const end = document.getElementById('detentionEnd').value;
+        const notes = document.getElementById('detentionNotes').value;
 
-function mostrarToast(mensaje, tipo) {
-  var toast = document.getElementById('toast');
-  toast.className = 'toast toast-' + tipo;
-  toast.textContent = mensaje;
-  toast.classList.add('show');
-  setTimeout(function() { toast.classList.remove('show'); }, 3000);
-}
+        if (!type) { alert('Seleccione el tipo de detención'); return; }
+        if (!start || !end) { alert('Ingrese las fechas de inicio y término'); return; }
 
-window.scrollToSection = function(id) {
-  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-};
+        if (!currentShip.detentions) currentShip.detentions = [];
+        currentShip.detentions.push({ type, start, end, notes });
 
-init();
-</script>
+        saveData();
+        closeModal('modalDetention');
+        alert('Detención registrada exitosamente');
+    }
+
+    // ==================== CERRAR BUQUE ====================
+    function setupCloseShipModal() {
+        if (!currentShip) return;
+        document.getElementById('closeShipName').value = currentShip.name;
+        document.getElementById('closeShipDate').value = formatDateTimeLocal(new Date());
+        document.getElementById('closeShipFinalTonnage').value = currentShip.currentTonnage;
+        document.getElementById('closeShipNotes').value = '';
+    }
+
+    function confirmCloseShip() {
+        if (!currentShip) return;
+        const closeDate = document.getElementById('closeShipDate').value;
+        const finalTonnage = parseFloat(document.getElementById('closeShipFinalTonnage').value);
+        const notes = document.getElementById('closeShipNotes').value;
+
+        if (!closeDate) { alert('Ingrese la fecha de cierre'); return; }
+
+        currentShip.closed = true;
+        currentShip.closeDate = closeDate;
+        currentShip.closeFinalTonnage = finalTonnage;
+        currentShip.status = 'completed';
+        if (notes) currentShip.notes += '\n[Cierre: ' + notes + ']';
+
+        // Liberar bodegas
+        currentShip.bodegas.forEach(bodegaId => {
+            const bodega = bodegas.find(b => b.id === bodegaId);
+            if (bodega) { bodega.occupied = false; bodega.shipId = null; }
+        });
+
+        saveData();
+        closeModal('modalCloseShip');
+        renderShips();
+        renderDashboard();
+        renderBodegas();
+        alert('Buque cerrado exitosamente');
+    }
+
+    // ==================== ELIMINAR BUQUE ====================
+    function setupDeleteShipModal() {
+        if (!currentShip) return;
+        document.getElementById('deleteShipName').textContent = currentShip.name;
+        document.getElementById('deleteShipConfirm').value = '';
+    }
+
+    function confirmDeleteShip() {
+        if (!currentShip) return;
+        const confirm = document.getElementById('deleteShipConfirm').value;
+        if (confirm !== 'ELIMINAR') { alert('Escriba ELIMINAR para confirmar'); return; }
+
+        // Liberar bodegas
+        currentShip.bodegas.forEach(bodegaId => {
+            const bodega = bodegas.find(b => b.id === bodegaId);
+            if (bodega) { bodega.occupied = false; bodega.shipId = null; }
+        });
+
+        ships = ships.filter(s => s.id !== currentShip.id);
+        currentShip = null;
+
+        saveData();
+        closeModal('modalDeleteShip');
+        renderShips();
+        renderDashboard();
+        renderBodegas();
+        alert('Buque eliminado permanentemente');
+    }
+
+    // ==================== BODEGAS ====================
+    function renderBodegas() {
+        const grid = document.getElementById('bodegasGrid');
+        grid.innerHTML = bodegas.map(b => `
+            <div class="bodega-card ${b.occupied ? 'occupied' : ''}">
+                <div class="bodega-name">${b.name}</div>
+                <div class="bodega-status">
+                    <span class="badge ${b.occupied ? 'badge-orange' : 'badge-green'}">${b.occupied ? 'Ocupada' : 'Libre'}</span>
+                </div>
+                <div class="bodega-capacity">Cap: ${b.capacity.toLocaleString()} t</div>
+                ${b.occupied && b.shipId ? `<div class="bodega-capacity" style="font-size:10px;">${ships.find(s => s.id === b.shipId)?.name || ''}</div>` : ''}
+            </div>
+        `).join('');
+    }
+
+    function saveBodegasConfig() {
+        saveData();
+        alert('Configuración de bodegas guardada');
+    }
+
+    // ==================== TURNOS ====================
+    function renderTurnosConfig() {
+        const container = document.getElementById('turnosConfig');
+        container.innerHTML = turnos.map((t, i) => `
+            <div class="turno-card ${t.active ? '' : 'selected'}" style="opacity:${t.active ? 1 : 0.6};">
+                <div class="turno-header">
+                    <div class="turno-name">${t.name}</div>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
+                        <input type="checkbox" ${t.active ? 'checked' : ''} onchange="toggleTurno('${t.id}')"> Activo
+                    </label>
+                </div>
+                <div class="turno-time"><i class="fas fa-clock"></i> ${t.start} - ${t.end}</div>
+            </div>
+        `).join('');
+    }
+
+    function toggleTurno(turnoId) {
+        const turno = turnos.find(t => t.id === turnoId);
+        if (turno) turno.active = !turno.active;
+        renderTurnosConfig();
+    }
+
+    function saveTurnosConfig() {
+        saveData();
+        alert('Configuración de turnos guardada');
+    }
+
+    // ==================== TIPOS DE DETENCIÓN ====================
+    function renderDetentionTypes() {
+        const tbody = document.getElementById('detentionTypesTable');
+        tbody.innerHTML = detentionTypes.map((t, i) => `
+            <tr>
+                <td>${t}</td>
+                <td>
+                    <button class="btn btn-sm btn-danger" onclick="removeDetentionType(${i})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function addDetentionType() {
+        const input = document.getElementById('newDetentionType');
+        const value = input.value.trim();
+        if (!value) return;
+        if (detentionTypes.includes(value)) { alert('Este tipo ya existe'); return; }
+        detentionTypes.push(value);
+        input.value = '';
+        saveData();
+        renderDetentionTypes();
+    }
+
+    function removeDetentionType(index) {
+        detentionTypes.splice(index, 1);
+        saveData();
+        renderDetentionTypes();
+    }
+
+    // ==================== OPERACIONES (TARJA) ====================
+    function renderOperations() {
+        const container = document.getElementById('operationsContent');
+
+        if (APP_MODE === 'tarja') {
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-truck"></i> Registro de Vueltas de Camión</div>
+                        <button class="btn btn-success" onclick="showModal('modalTruckTurn'); setupTruckTurnModal()">
+                            <i class="fas fa-plus"></i> Nueva Vuelta
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group" style="max-width:300px;">
+                            <select class="form-select" id="truckTurnFilterShip" onchange="renderTruckTurnsTable()">
+                                <option value="">Todos los buques</option>
+                                ${ships.filter(s => !s.closed).map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr><th>Hora</th><th>Buque</th><th>Patente</th><th>Bodega</th><th>Toneladas</th><th>Turno</th></tr>
+                                </thead>
+                                <tbody id="truckTurnsTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderTruckTurnsTable();
+        } else if (APP_MODE === 'supervisor') {
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-cogs"></i> Panel de Operaciones - Supervisor</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="grid-2">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-exclamation-triangle" style="font-size:32px;color:var(--htp-orange);margin-bottom:12px;"></i>
+                                    <h3 style="font-size:15px;margin-bottom:8px;">Registrar Detención</h3>
+                                    <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Registre una detención en un buque activo</p>
+                                    <select class="form-select mb-1" id="quickDetentionShip">
+                                        <option value="">Seleccionar buque...</option>
+                                        ${ships.filter(s => !s.closed).map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                                    </select>
+                                    <button class="btn btn-warning" onclick="quickDetention()">
+                                        <i class="fas fa-plus"></i> Registrar Detención
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-weight-hanging" style="font-size:32px;color:var(--htp-blue);margin-bottom:12px;"></i>
+                                    <h3 style="font-size:15px;margin-bottom:8px;">Ajustar Tonelaje</h3>
+                                    <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Ajuste el tonelaje de un buque</p>
+                                    <select class="form-select mb-1" id="quickAdjustShip">
+                                        <option value="">Seleccionar buque...</option>
+                                        ${ships.filter(s => !s.closed).map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                                    </select>
+                                    <button class="btn btn-primary" onclick="quickAdjustTonnage()">
+                                        <i class="fas fa-edit"></i> Ajustar Tonelaje
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mt-2">
+                            <div class="card-header">
+                                <div class="card-title"><i class="fas fa-truck"></i> Últimas Vueltas de Camión</div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr><th>Hora</th><th>Buque</th><th>Patente</th><th>Bodega</th><th>Toneladas</th><th>Turno</th></tr>
+                                        </thead>
+                                        <tbody id="supervisorTruckTurnsTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderSupervisorTruckTurns();
+        } else {
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-chart-line"></i> Panel de Gerencia</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="grid-2">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 style="font-size:14px;margin-bottom:12px;color:var(--htp-blue);"><i class="fas fa-ship"></i> Resumen de Buques</h3>
+                                    <div class="table-container">
+                                        <table>
+                                            <thead><tr><th>Buque</th><th>Estado</th><th>Progreso</th><th>Detenciones</th></tr></thead>
+                                            <tbody>
+                                                ${ships.map(s => {
+                                                    const progress = Math.min(100, (s.currentTonnage / s.totalTonnage) * 100).toFixed(1);
+                                                    return `<tr>
+                                                        <td>${s.name}</td>
+                                                        <td><span class="badge ${s.closed ? 'badge-gray' : 'badge-green'}">${s.closed ? 'Cerrado' : 'Activo'}</span></td>
+                                                        <td>${progress}%</td>
+                                                        <td>${s.detentions ? s.detentions.length : 0}</td>
+                                                    </tr>`;
+                                                }).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 style="font-size:14px;margin-bottom:12px;color:var(--htp-blue);"><i class="fas fa-exclamation-triangle"></i> Detenciones Recientes</h3>
+                                    <div class="timeline">
+                                        ${ships.flatMap(s => (s.detentions || []).map(d => ({...d, ship: s.name}))).sort((a,b) => new Date(b.start) - new Date(a.start)).slice(0, 5).map(d => `
+                                            <div class="timeline-item">
+                                                <div class="timeline-dot red"></div>
+                                                <div class="timeline-content">
+                                                    <div class="timeline-time">${d.ship} - ${formatDate(d.start)}</div>
+                                                    <div class="timeline-text"><span class="badge badge-red">${d.type}</span> ${d.notes || ''}</div>
+                                                </div>
+                                            </div>
+                                        `).join('') || '<p style="color:var(--text-light);font-size:13px;">No hay detenciones registradas</p>'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function setupTruckTurnModal() {
+        const shipSelect = document.getElementById('truckTurnShip');
+        shipSelect.innerHTML = ships.filter(s => !s.closed).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+        const turnoSelect = document.getElementById('truckTurnShift');
+        turnoSelect.innerHTML = turnos.filter(t => t.active).map(t => `<option value="${t.id}">${t.name} (${t.start}-${t.end})</option>`).join('');
+
+        document.getElementById('truckTurnPlate').value = '';
+        document.getElementById('truckTurnBodega').value = 'B1';
+        document.getElementById('truckTurnTons').value = '';
+        document.getElementById('truckTurnTime').value = formatDateTimeLocal(new Date());
+    }
+
+    function saveTruckTurn() {
+        const shipId = document.getElementById('truckTurnShip').value;
+        const plate = document.getElementById('truckTurnPlate').value.trim();
+        const bodega = document.getElementById('truckTurnBodega').value;
+        const tons = parseFloat(document.getElementById('truckTurnTons').value);
+        const turnoId = document.getElementById('truckTurnShift').value;
+        const time = document.getElementById('truckTurnTime').value;
+
+        if (!shipId) { alert('Seleccione un buque'); return; }
+        if (!plate) { alert('Ingrese la patente del camión'); return; }
+        if (isNaN(tons) || tons <= 0) { alert('Ingrese las toneladas'); return; }
+        if (!time) { alert('Ingrese la hora'); return; }
+
+        const ship = ships.find(s => s.id === shipId);
+        if (!ship) return;
+
+        if (!ship.truckTurns) ship.truckTurns = [];
+        ship.truckTurns.push({ plate, bodega, tons, turnoId, time, id: Date.now() });
+        ship.currentTonnage = (ship.currentTonnage || 0) + tons;
+
+        saveData();
+        closeModal('modalTruckTurn');
+        renderTruckTurnsTable();
+        renderDashboard();
+        alert('Vuelta registrada exitosamente');
+    }
+
+    function renderTruckTurnsTable() {
+        const filterShipId = document.getElementById('truckTurnFilterShip')?.value;
+        const tbody = document.getElementById('truckTurnsTable');
+        if (!tbody) return;
+
+        let allTurns = [];
+        ships.forEach(s => {
+            if (s.truckTurns) {
+                s.truckTurns.forEach(t => {
+                    allTurns.push({ ...t, shipName: s.name, shipId: s.id });
+                });
+            }
+        });
+
+        if (filterShipId) allTurns = allTurns.filter(t => t.shipId === filterShipId);
+        allTurns.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+        if (allTurns.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:24px;color:var(--text-light);">No hay vueltas registradas</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = allTurns.map(t => `
+            <tr>
+                <td>${formatDate(t.time)}</td>
+                <td>${t.shipName}</td>
+                <td><strong>${t.plate}</strong></td>
+                <td>${t.bodega}</td>
+                <td>${t.tons.toFixed(1)} t</td>
+                <td>${turnos.find(tr => tr.id === t.turnoId)?.name || t.turnoId}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderSupervisorTruckTurns() {
+        const tbody = document.getElementById('supervisorTruckTurnsTable');
+        if (!tbody) return;
+
+        let allTurns = [];
+        ships.forEach(s => {
+            if (s.truckTurns) {
+                s.truckTurns.forEach(t => {
+                    allTurns.push({ ...t, shipName: s.name });
+                });
+            }
+        });
+        allTurns.sort((a, b) => new Date(b.time) - new Date(a.time));
+        const recent = allTurns.slice(0, 20);
+
+        if (recent.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:24px;color:var(--text-light);">No hay vueltas registradas</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = recent.map(t => `
+            <tr>
+                <td>${formatDate(t.time)}</td>
+                <td>${t.shipName}</td>
+                <td><strong>${t.plate}</strong></td>
+                <td>${t.bodega}</td>
+                <td>${t.tons.toFixed(1)} t</td>
+                <td>${turnos.find(tr => tr.id === t.turnoId)?.name || t.turnoId}</td>
+            </tr>
+        `).join('');
+    }
+
+    function quickDetention() {
+        const shipId = document.getElementById('quickDetentionShip').value;
+        if (!shipId) { alert('Seleccione un buque'); return; }
+        currentShip = ships.find(s => s.id === shipId);
+        showModal('modalDetention');
+        setupDetentionModal();
+    }
+
+    function quickAdjustTonnage() {
+        const shipId = document.getElementById('quickAdjustShip').value;
+        if (!shipId) { alert('Seleccione un buque'); return; }
+        currentShip = ships.find(s => s.id === shipId);
+        showModal('modalAdjustTonnage');
+        setupAdjustTonnageModal();
+    }
+
+    // ==================== EXPORTACIONES EXCEL ====================
+    function exportTruckTurns() {
+        let allTurns = [];
+        ships.forEach(s => {
+            if (s.truckTurns) {
+                s.truckTurns.forEach(t => {
+                    allTurns.push({
+                        'Buque': s.name,
+                        'Patente Camión': t.plate,
+                        'Bodega': t.bodega,
+                        'Toneladas': t.tons,
+                        'Turno': turnos.find(tr => tr.id === t.turnoId)?.name || t.turnoId,
+                        'Fecha/Hora': formatDate(t.time)
+                    });
+                });
+            }
+        });
+
+        if (allTurns.length === 0) { alert('No hay vueltas para exportar'); return; }
+
+        const ws = XLSX.utils.json_to_sheet(allTurns);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Vueltas por Camión');
+        XLSX.writeFile(wb, 'HTP_Vueltas_Camion_' + formatFileDate() + '.xlsx');
+    }
+
+    function exportShipsSummary() {
+        const data = ships.map(s => ({
+            'Nombre': s.name,
+            'Operación': s.operation,
+            'Estado': s.closed ? 'Cerrado' : 'Activo',
+            'Tonelaje Total': s.totalTonnage,
+            'Tonelaje Progreso': s.currentTonnage,
+            'Progreso %': ((s.currentTonnage / s.totalTonnage) * 100).toFixed(1) + '%',
+            'Bodegas': s.bodegas.join(', '),
+            'Fecha Inicio': formatDate(s.startDate),
+            'Fecha Término': formatDate(s.endDate),
+            'Detenciones': s.detentions ? s.detentions.length : 0,
+            'Vueltas Camión': s.truckTurns ? s.truckTurns.length : 0
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Resumen Buques');
+        XLSX.writeFile(wb, 'HTP_Resumen_Buques_' + formatFileDate() + '.xlsx');
+    }
+
+    function exportEfficiencyReport() {
+        const data = ships.filter(s => !s.closed).map(s => {
+            const progress = (s.currentTonnage / s.totalTonnage) * 100;
+            const detentionsCount = s.detentions ? s.detentions.length : 0;
+            const detentionsTime = s.detentions ? s.detentions.reduce((sum, d) => {
+                return sum + (new Date(d.end) - new Date(d.start)) / (1000 * 60 * 60);
+            }, 0) : 0;
+            return {
+                'Buque': s.name,
+                'Operación': s.operation,
+                'Tonelaje Total': s.totalTonnage,
+                'Tonelaje Actual': s.currentTonnage,
+                'Progreso %': progress.toFixed(1),
+                'Detenciones': detentionsCount,
+                'Horas Perdidas': detentionsTime.toFixed(1),
+                'Vueltas Camión': s.truckTurns ? s.truckTurns.length : 0,
+                'Eficiencia Est.': Math.max(0, 100 - (detentionsTime * 2)).toFixed(1) + '%'
+            };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Eficiencia');
+        XLSX.writeFile(wb, 'HTP_Eficiencia_' + formatFileDate() + '.xlsx');
+    }
+
+    function exportDetentionsReport() {
+        let allDetentions = [];
+        ships.forEach(s => {
+            if (s.detentions) {
+                s.detentions.forEach(d => {
+                    const hours = ((new Date(d.end) - new Date(d.start)) / (1000 * 60 * 60)).toFixed(1);
+                    allDetentions.push({
+                        'Buque': s.name,
+                        'Tipo': d.type,
+                        'Inicio': formatDate(d.start),
+                        'Término': formatDate(d.end),
+                        'Duración (horas)': hours,
+                        'Observaciones': d.notes || ''
+                    });
+                });
+            }
+        });
+
+        if (allDetentions.length === 0) { alert('No hay detenciones para exportar'); return; }
+
+        const ws = XLSX.utils.json_to_sheet(allDetentions);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Detenciones');
+        XLSX.writeFile(wb, 'HTP_Detenciones_' + formatFileDate() + '.xlsx');
+    }
+
+    // ==================== CONFIGURACIÓN ====================
+    function saveConfig() {
+        config.companyName = document.getElementById('configCompanyName').value;
+        config.subtitle = document.getElementById('configSubtitle').value;
+        config.timezone = document.getElementById('configTimezone').value;
+        saveData();
+        closeModal('modalConfig');
+        alert('Configuración guardada');
+    }
+
+    // ==================== MODALES ====================
+    function showModal(modalId) {
+        document.getElementById(modalId).classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function setupModals() {
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) closeModal(this.id);
+            });
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(m => closeModal(m.id));
+            }
+        });
+    }
+
+    // ==================== UTILIDADES ====================
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        return d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatDateTimeLocal(date) {
+        const pad = n => n.toString().padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function formatFileDate() {
+        const now = new Date();
+        const pad = n => n.toString().padStart(2, '0');
+        return `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+    }
+
+    function saveData() {
+        localStorage.setItem('htp_ships', JSON.stringify(ships));
+        localStorage.setItem('htp_bodegas', JSON.stringify(bodegas));
+        localStorage.setItem('htp_turnos', JSON.stringify(turnos));
+        localStorage.setItem('htp_detentionTypes', JSON.stringify(detentionTypes));
+        localStorage.setItem('htp_config', JSON.stringify(config));
+    }
+
+    // ==================== INICIAR ====================
+    document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>

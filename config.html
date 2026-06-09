@@ -3,357 +3,474 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cargar Flota - HTP</title>
+    <title>HTP - Configuración de Flota</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --htp-blue: #1a365d;
+            --htp-light: #2c5282;
+            --htp-accent: #3182ce;
+            --htp-gold: #d69e2e;
+            --htp-red: #c53030;
+            --htp-green: #38a169;
+            --htp-orange: #dd6b20;
+            --bg: #f7fafc;
+            --card-bg: #ffffff;
+            --text: #2d3748;
+            --text-light: #718096;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #0a1628;
-            color: #e8eaf6;
-            min-height: 100vh;
-        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
         .header {
-            background: #0f1d33;
-            border-bottom: 1px solid rgba(30, 77, 139, 0.3);
-            padding: 16px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            background: linear-gradient(135deg, var(--htp-blue) 0%, var(--htp-light) 100%);
+            color: white; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+            box-shadow: var(--shadow-lg); position: sticky; top: 0; z-index: 100;
         }
-        .logo-small {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .logo-section { display: flex; align-items: center; gap: 12px; }
         .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #1e4d8b 0%, #e85d3e 100%);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 14px;
-            color: white;
+            width: 48px; height: 48px; background: white; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-weight: 800;
+            color: var(--htp-blue); font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-        .logo-text {
-            font-size: 14px;
-            font-weight: 600;
+        .logo-text h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+        .logo-text p { font-size: 11px; opacity: 0.85; font-weight: 400; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .header-btn {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+            color: white; padding: 8px 14px; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+            text-decoration: none;
         }
-        .logo-text span {
-            font-size: 11px;
-            color: #8b9dc3;
-            display: block;
-            font-weight: 400;
-        }
-        .btn-back {
-            background: transparent;
-            border: 1px solid rgba(30, 77, 139, 0.4);
-            color: #8b9dc3;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        .btn-back:hover {
-            border-color: #1e4d8b;
-            color: #e8eaf6;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-        .page-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        .page-subtitle {
-            color: #8b9dc3;
-            margin-bottom: 32px;
-        }
+        .header-btn:hover { background: rgba(255,255,255,0.25); }
+
+        .main-content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
         .card {
-            background: #0f1d33;
-            border: 1px solid rgba(30, 77, 139, 0.3);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
+            background: var(--card-bg); border-radius: 12px; box-shadow: var(--shadow);
+            border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px;
         }
-        .card-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .card-header {
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
         }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr auto;
-            gap: 12px;
+        .card-title { font-size: 15px; font-weight: 700; color: var(--htp-blue); display: flex; align-items: center; gap: 8px; }
+        .card-body { padding: 20px; }
+
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .form-input, .form-select {
+            width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+            font-size: 14px; font-family: inherit; transition: all 0.2s; background: white;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none; border-color: var(--htp-accent); box-shadow: 0 0 0 3px rgba(49,130,206,0.1);
+        }
+
+        .btn {
+            padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s; display: inline-flex;
+            align-items: center; gap: 8px; font-family: inherit;
+        }
+        .btn-primary { background: var(--htp-blue); color: white; }
+        .btn-primary:hover { background: var(--htp-light); }
+        .btn-success { background: var(--htp-green); color: white; }
+        .btn-success:hover { background: #2f855a; }
+        .btn-danger { background: var(--htp-red); color: white; }
+        .btn-danger:hover { background: #9b2c2c; }
+        .btn-outline {
+            background: transparent; border: 1.5px solid var(--border); color: var(--text);
+        }
+        .btn-outline:hover { border-color: var(--htp-blue); color: var(--htp-blue); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        .bodega-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+        .bodega-card {
+            background: white; border: 2px solid var(--border); border-radius: 10px; padding: 16px;
+            text-align: center; transition: all 0.2s;
+        }
+        .bodega-card.occupied { border-color: var(--htp-orange); background: #fffaf0; }
+        .bodega-name { font-size: 20px; font-weight: 800; color: var(--htp-blue); margin-bottom: 4px; }
+        .bodega-status { font-size: 11px; font-weight: 600; }
+        .bodega-capacity { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+        .badge {
+            padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block;
+        }
+        .badge-green { background: #c6f6d5; color: #22543d; }
+        .badge-orange { background: #feebc8; color: #7c2d12; }
+
+        .turno-card {
+            background: white; border: 2px solid var(--border); border-radius: 10px; padding: 16px;
             margin-bottom: 12px;
-            align-items: end;
         }
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            color: #8b9dc3;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .turno-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .turno-name { font-weight: 700; font-size: 14px; color: var(--htp-blue); }
+        .turno-time { font-size: 12px; color: var(--text-light); }
+
+        .alert {
+            padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;
+            display: flex; align-items: center; gap: 10px;
         }
-        .form-group input {
-            width: 100%;
-            padding: 12px 14px;
-            background: #0a1628;
-            border: 1px solid rgba(30, 77, 139, 0.4);
-            border-radius: 10px;
-            color: #e8eaf6;
-            font-size: 15px;
-            outline: none;
-            transition: all 0.2s;
+        .alert-success { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th {
+            background: var(--htp-blue); color: white; padding: 12px 14px; text-align: left;
+            font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
         }
-        .form-group input:focus {
-            border-color: #1e4d8b;
-        }
-        .btn-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        .btn-add {
-            background: rgba(0, 200, 83, 0.15);
-            color: #00c853;
-        }
-        .btn-add:hover {
-            background: rgba(0, 200, 83, 0.25);
-        }
-        .btn-remove {
-            background: rgba(255, 23, 68, 0.15);
-            color: #ff1744;
-        }
-        .btn-remove:hover {
-            background: rgba(255, 23, 68, 0.25);
-        }
-        .btn-primary {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #1e4d8b 0%, #2a6bc6 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 8px;
-        }
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(30, 77, 139, 0.4);
-        }
-        .btn-secondary {
-            width: 100%;
-            padding: 14px;
-            background: transparent;
-            color: #8b9dc3;
-            border: 1px solid rgba(30, 77, 139, 0.3);
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 12px;
-        }
-        .btn-secondary:hover {
-            border-color: #1e4d8b;
-            color: #e8eaf6;
-        }
-        .flota-list {
-            margin-top: 20px;
-        }
-        .flota-item {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr auto;
-            gap: 12px;
-            padding: 12px;
-            background: #0a1628;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            align-items: center;
-        }
-        .flota-item span {
-            font-size: 14px;
-        }
-        .flota-item .patente {
-            font-weight: 600;
-            color: #e85d3e;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #8b9dc3;
-        }
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-            opacity: 0.5;
-        }
-        .success-msg {
-            background: rgba(0, 200, 83, 0.15);
-            border: 1px solid rgba(0, 200, 83, 0.3);
-            color: #00c853;
-            padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 16px;
-            display: none;
-            font-size: 14px;
-        }
-        .success-msg.active { display: block; }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+        tr:hover td { background: #f7fafc; }
+
+        .empty-state { text-align: center; padding: 48px 20px; color: var(--text-light); }
+        .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+
+        .flex { display: flex; }
+        .gap-1 { gap: 8px; }
+        .mt-2 { margin-top: 16px; }
+        .mb-2 { margin-bottom: 16px; }
+        .text-center { text-align: center; }
     </style>
 <base target="_blank">
 </head>
 <body>
-    <div class="header">
-        <div class="logo-small">
-            <div class="logo-icon">HTP</div>
-            <div class="logo-text">
-                Control de Transferencia
-                <span>Muelle HTP</span>
+    <header class="header">
+        <div class="header-left">
+            <div class="logo-section">
+                <div class="logo-icon">HTP</div>
+                <div class="logo-text">
+                    <h1>Huachipato Terminal Portuario</h1>
+                    <p>Una empresa del Grupo CAP</p>
+                </div>
             </div>
         </div>
-        <button class="btn-back" onclick="window.location.href='app.html?mode=supervisor'">← Volver</button>
-    </div>
+        <div class="header-right">
+            <a href="app.html?mode=gerencia" class="header-btn">
+                <i class="fas fa-arrow-left"></i> Volver a la App
+            </a>
+            <a href="index.html" class="header-btn">
+                <i class="fas fa-home"></i> Inicio
+            </a>
+        </div>
+    </header>
 
-    <div class="container">
-        <h1 class="page-title">🚛 Cargar Flota de Camiones</h1>
-        <p class="page-subtitle">Ingrese las patentes y pesos de los camiones disponibles</p>
+    <main class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-cogs"></i> Configuración General del Sistema</div>
+            </div>
+            <div class="card-body">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Nombre de la Empresa</label>
+                        <input type="text" class="form-input" id="configCompanyName" value="Huachipato Terminal Portuario">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Subtítulo</label>
+                        <input type="text" class="form-input" id="configSubtitle" value="Una empresa del Grupo CAP">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Zona Horaria</label>
+                    <select class="form-select" id="configTimezone">
+                        <option value="America/Santiago">Santiago, Chile (CLT)</option>
+                        <option value="America/Buenos_Aires">Buenos Aires (ART)</option>
+                        <option value="America/Lima">Lima (PET)</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="saveGeneralConfig()">
+                    <i class="fas fa-save"></i> Guardar Configuración General
+                </button>
+            </div>
+        </div>
 
-        <div class="success-msg" id="successMsg">
-            ✅ Flota guardada correctamente
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-warehouse"></i> Configuración de Bodegas</div>
+                </div>
+                <div class="card-body">
+                    <div class="bodega-grid" id="bodegasGrid"></div>
+                    <div class="mt-2">
+                        <button class="btn btn-primary" onclick="saveBodegasConfig()">
+                            <i class="fas fa-save"></i> Guardar Bodegas
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-users-cog"></i> Configuración de Turnos</div>
+                </div>
+                <div class="card-body">
+                    <div id="turnosConfig"></div>
+                    <button class="btn btn-primary mt-2" onclick="saveTurnosConfig()">
+                        <i class="fas fa-save"></i> Guardar Turnos
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="card">
-            <div class="card-title">➕ Agregar Camión</div>
-            <div class="form-row">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-exclamation-circle"></i> Tipos de Detención</div>
+            </div>
+            <div class="card-body">
                 <div class="form-group">
-                    <label>Patente</label>
-                    <input type="text" id="patente" placeholder="AB-CD-12" maxlength="8">
+                    <label class="form-label">Agregar nuevo tipo de detención</label>
+                    <div class="flex gap-1">
+                        <input type="text" class="form-input" id="newDetentionType" placeholder="Nombre del tipo de detención">
+                        <button class="btn btn-primary" onclick="addDetentionType()">
+                            <i class="fas fa-plus"></i> Agregar
+                        </button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Tara Vacía (kg)</label>
-                    <input type="number" id="tara" placeholder="15200" min="0">
+                <div class="table-container mt-2">
+                    <table>
+                        <thead>
+                            <tr><th>Tipo de Detención</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody id="detentionTypesTable"></tbody>
+                    </table>
                 </div>
-                <div class="form-group">
-                    <label>Tara Llena (kg)</label>
-                    <input type="number" id="taraLlena" placeholder="39100" min="0">
-                </div>
-                <button class="btn-icon btn-add" onclick="addCamion()">+</button>
             </div>
         </div>
 
         <div class="card">
-            <div class="card-title">📋 Flota Actual</div>
-            <div class="flota-list" id="flotaList">
-                <div class="empty-state">
-                    <div class="empty-state-icon">🚛</div>
-                    <p>No hay camiones registrados</p>
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-database"></i> Administración de Datos</div>
+            </div>
+            <div class="card-body">
+                <div class="grid-3">
+                    <div class="card" style="border:1px dashed var(--htp-red);">
+                        <div class="card-body text-center">
+                            <i class="fas fa-trash" style="font-size:28px;color:var(--htp-red);margin-bottom:12px;"></i>
+                            <h3 style="font-size:14px;margin-bottom:8px;">Limpiar Datos de Prueba</h3>
+                            <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Elimina todos los buques de ejemplo y reinicia el sistema</p>
+                            <button class="btn btn-danger" onclick="clearAllData()">
+                                <i class="fas fa-exclamation-triangle"></i> Limpiar Todo
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card" style="border:1px dashed var(--htp-blue);">
+                        <div class="card-body text-center">
+                            <i class="fas fa-download" style="font-size:28px;color:var(--htp-blue);margin-bottom:12px;"></i>
+                            <h3 style="font-size:14px;margin-bottom:8px;">Exportar Configuración</h3>
+                            <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Descarga un archivo JSON con toda la configuración</p>
+                            <button class="btn btn-primary" onclick="exportConfig()">
+                                <i class="fas fa-download"></i> Exportar JSON
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card" style="border:1px dashed var(--htp-green);">
+                        <div class="card-body text-center">
+                            <i class="fas fa-upload" style="font-size:28px;color:var(--htp-green);margin-bottom:12px;"></i>
+                            <h3 style="font-size:14px;margin-bottom:8px;">Importar Configuración</h3>
+                            <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Carga una configuración previamente exportada</p>
+                            <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importConfig(this)">
+                            <button class="btn btn-success" onclick="document.getElementById('importFile').click()">
+                                <i class="fas fa-upload"></i> Importar JSON
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <button class="btn-primary" onclick="saveFlota()">💾 Guardar Flota</button>
-        <button class="btn-secondary" onclick="clearFlota()">🗑️ Limpiar Todo</button>
-    </div>
+    </main>
 
     <script>
-        let flota = JSON.parse(localStorage.getItem('htp_flota') || '[]');
+    let bodegas = JSON.parse(localStorage.getItem('htp_bodegas')) || [
+        { id: 'B1', name: 'B1', capacity: 15000, occupied: true, shipId: 'ship-1' },
+        { id: 'B2', name: 'B2', capacity: 15000, occupied: true, shipId: 'ship-1' },
+        { id: 'B3', name: 'B3', capacity: 12000, occupied: true, shipId: 'ship-2' },
+        { id: 'B4', name: 'B4', capacity: 10000, occupied: false, shipId: null },
+        { id: 'B5', name: 'B5', capacity: 10000, occupied: false, shipId: null }
+    ];
 
-        function renderFlota() {
-            const list = document.getElementById('flotaList');
-            if (flota.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🚛</div>
-                        <p>No hay camiones registrados</p>
-                    </div>
-                `;
-                return;
-            }
+    let turnos = JSON.parse(localStorage.getItem('htp_turnos')) || [
+        { id: 'T1', name: 'Turno A', start: '08:00', end: '16:00', active: true },
+        { id: 'T2', name: 'Turno B', start: '16:00', end: '00:00', active: true },
+        { id: 'T3', name: 'Turno C', start: '00:00', end: '08:00', active: true }
+    ];
 
-            list.innerHTML = flota.map((c, i) => `
-                <div class="flota-item">
-                    <span class="patente">${c.patente}</span>
-                    <span>${c.tara.toLocaleString()} kg</span>
-                    <span>${c.taraLlena.toLocaleString()} kg</span>
-                    <button class="btn-icon btn-remove" onclick="removeCamion(${i})">×</button>
+    let detentionTypes = JSON.parse(localStorage.getItem('htp_detentionTypes')) || [
+        'Clima', 'Marea', 'Avería Equipo', 'Falta de Personal', 'Espera de Camiones',
+        'Maniobra de Buque', 'Falla Eléctrica', 'Mantenimiento', 'Otro'
+    ];
+
+    let config = JSON.parse(localStorage.getItem('htp_config')) || {
+        companyName: 'Huachipato Terminal Portuario',
+        subtitle: 'Una empresa del Grupo CAP',
+        timezone: 'America/Santiago'
+    };
+
+    function init() {
+        document.getElementById('configCompanyName').value = config.companyName;
+        document.getElementById('configSubtitle').value = config.subtitle;
+        document.getElementById('configTimezone').value = config.timezone;
+        renderBodegas();
+        renderTurnos();
+        renderDetentionTypes();
+    }
+
+    function renderBodegas() {
+        const grid = document.getElementById('bodegasGrid');
+        grid.innerHTML = bodegas.map((b, i) => `
+            <div class="bodega-card ${b.occupied ? 'occupied' : ''}">
+                <div class="bodega-name">${b.name}</div>
+                <div class="bodega-status">
+                    <span class="badge ${b.occupied ? 'badge-orange' : 'badge-green'}">${b.occupied ? 'Ocupada' : 'Libre'}</span>
                 </div>
-            `).join('');
-        }
+                <div class="form-group" style="margin-top:8px;margin-bottom:0;">
+                    <input type="number" class="form-input" style="text-align:center;font-size:12px;padding:6px;"
+                        value="${b.capacity}" onchange="updateBodegaCapacity(${i}, this.value)" placeholder="Capacidad">
+                </div>
+            </div>
+        `).join('');
+    }
 
-        function addCamion() {
-            const patente = document.getElementById('patente').value.trim().toUpperCase();
-            const tara = parseInt(document.getElementById('tara').value) || 0;
-            const taraLlena = parseInt(document.getElementById('taraLlena').value) || 0;
+    function updateBodegaCapacity(index, value) {
+        bodegas[index].capacity = parseInt(value) || 0;
+    }
 
-            if (!patente) {
-                alert('Ingrese la patente');
-                return;
+    function saveBodegasConfig() {
+        localStorage.setItem('htp_bodegas', JSON.stringify(bodegas));
+        alert('Configuración de bodegas guardada');
+    }
+
+    function renderTurnos() {
+        const container = document.getElementById('turnosConfig');
+        container.innerHTML = turnos.map((t, i) => `
+            <div class="turno-card">
+                <div class="turno-header">
+                    <div class="turno-name">${t.name}</div>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
+                        <input type="checkbox" ${t.active ? 'checked' : ''} onchange="toggleTurno(${i})"> Activo
+                    </label>
+                </div>
+                <div class="flex gap-1">
+                    <div class="form-group" style="flex:1;margin-bottom:0;">
+                        <input type="time" class="form-input" value="${t.start}" onchange="updateTurno(${i}, 'start', this.value)">
+                    </div>
+                    <div class="form-group" style="flex:1;margin-bottom:0;">
+                        <input type="time" class="form-input" value="${t.end}" onchange="updateTurno(${i}, 'end', this.value)">
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function toggleTurno(index) {
+        turnos[index].active = !turnos[index].active;
+        renderTurnos();
+    }
+
+    function updateTurno(index, field, value) {
+        turnos[index][field] = value;
+    }
+
+    function saveTurnosConfig() {
+        localStorage.setItem('htp_turnos', JSON.stringify(turnos));
+        alert('Configuración de turnos guardada');
+    }
+
+    function renderDetentionTypes() {
+        const tbody = document.getElementById('detentionTypesTable');
+        tbody.innerHTML = detentionTypes.map((t, i) => `
+            <tr>
+                <td>${t}</td>
+                <td>
+                    <button class="btn btn-sm btn-danger" onclick="removeDetentionType(${i})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function addDetentionType() {
+        const input = document.getElementById('newDetentionType');
+        const value = input.value.trim();
+        if (!value) return;
+        if (detentionTypes.includes(value)) { alert('Este tipo ya existe'); return; }
+        detentionTypes.push(value);
+        input.value = '';
+        localStorage.setItem('htp_detentionTypes', JSON.stringify(detentionTypes));
+        renderDetentionTypes();
+    }
+
+    function removeDetentionType(index) {
+        detentionTypes.splice(index, 1);
+        localStorage.setItem('htp_detentionTypes', JSON.stringify(detentionTypes));
+        renderDetentionTypes();
+    }
+
+    function saveGeneralConfig() {
+        config.companyName = document.getElementById('configCompanyName').value;
+        config.subtitle = document.getElementById('configSubtitle').value;
+        config.timezone = document.getElementById('configTimezone').value;
+        localStorage.setItem('htp_config', JSON.stringify(config));
+        alert('Configuración general guardada');
+    }
+
+    function clearAllData() {
+        if (!confirm('¿Está seguro de eliminar TODOS los datos? Esta acción no se puede deshacer.')) return;
+        localStorage.removeItem('htp_ships');
+        localStorage.removeItem('htp_bodegas');
+        localStorage.removeItem('htp_turnos');
+        localStorage.removeItem('htp_detentionTypes');
+        localStorage.removeItem('htp_config');
+        alert('Todos los datos han sido eliminados. La página se recargará.');
+        location.reload();
+    }
+
+    function exportConfig() {
+        const data = {
+            bodegas, turnos, detentionTypes, config,
+            ships: JSON.parse(localStorage.getItem('htp_ships')) || [],
+            exportDate: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'HTP_Config_' + new Date().toISOString().slice(0,10) + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importConfig(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.bodegas) { bodegas = data.bodegas; localStorage.setItem('htp_bodegas', JSON.stringify(bodegas)); }
+                if (data.turnos) { turnos = data.turnos; localStorage.setItem('htp_turnos', JSON.stringify(turnos)); }
+                if (data.detentionTypes) { detentionTypes = data.detentionTypes; localStorage.setItem('htp_detentionTypes', JSON.stringify(detentionTypes)); }
+                if (data.config) { config = data.config; localStorage.setItem('htp_config', JSON.stringify(config)); }
+                if (data.ships) { localStorage.setItem('htp_ships', JSON.stringify(data.ships)); }
+                alert('Configuración importada exitosamente');
+                location.reload();
+            } catch (err) {
+                alert('Error al importar: archivo JSON inválido');
             }
-            if (tara <= 0 || taraLlena <= 0) {
-                alert('Ingrese pesos válidos');
-                return;
-            }
-            if (taraLlena <= tara) {
-                alert('Tara llena debe ser mayor que tara vacía');
-                return;
-            }
+        };
+        reader.readAsText(file);
+    }
 
-            flota.push({ patente, tara, taraLlena });
-            document.getElementById('patente').value = '';
-            document.getElementById('tara').value = '';
-            document.getElementById('taraLlena').value = '';
-            document.getElementById('patente').focus();
-            renderFlota();
-        }
-
-        function removeCamion(index) {
-            flota.splice(index, 1);
-            renderFlota();
-        }
-
-        function saveFlota() {
-            localStorage.setItem('htp_flota', JSON.stringify(flota));
-            document.getElementById('successMsg').classList.add('active');
-            setTimeout(() => {
-                document.getElementById('successMsg').classList.remove('active');
-            }, 3000);
-        }
-
-        function clearFlota() {
-            if (confirm('¿Está seguro de eliminar toda la flota?')) {
-                flota = [];
-                localStorage.removeItem('htp_flota');
-                renderFlota();
-            }
-        }
-
-        document.getElementById('taraLlena').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') addCamion();
-        });
-
-        renderFlota();
+    document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
