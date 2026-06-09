@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargar Flota - HTP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a1628;
+            color: #e8eaf6;
+            min-height: 100vh;
+        }
+        .header {
+            background: #0f1d33;
+            border-bottom: 1px solid rgba(30, 77, 139, 0.3);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo-small {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #1e4d8b 0%, #e85d3e 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            color: white;
+        }
+        .logo-text {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .logo-text span {
+            font-size: 11px;
+            color: #8b9dc3;
+            display: block;
+            font-weight: 400;
+        }
+        .btn-back {
+            background: transparent;
+            border: 1px solid rgba(30, 77, 139, 0.4);
+            color: #8b9dc3;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-back:hover {
+            border-color: #1e4d8b;
+            color: #e8eaf6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .page-subtitle {
+            color: #8b9dc3;
+            margin-bottom: 32px;
+        }
+        .card {
+            background: #0f1d33;
+            border: 1px solid rgba(30, 77, 139, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: end;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #8b9dc3;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            background: #0a1628;
+            border: 1px solid rgba(30, 77, 139, 0.4);
+            border-radius: 10px;
+            color: #e8eaf6;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .form-group input:focus {
+            border-color: #1e4d8b;
+        }
+        .btn-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-add {
+            background: rgba(0, 200, 83, 0.15);
+            color: #00c853;
+        }
+        .btn-add:hover {
+            background: rgba(0, 200, 83, 0.25);
+        }
+        .btn-remove {
+            background: rgba(255, 23, 68, 0.15);
+            color: #ff1744;
+        }
+        .btn-remove:hover {
+            background: rgba(255, 23, 68, 0.25);
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1e4d8b 0%, #2a6bc6 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(30, 77, 139, 0.4);
+        }
+        .btn-secondary {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: #8b9dc3;
+            border: 1px solid rgba(30, 77, 139, 0.3);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 12px;
+        }
+        .btn-secondary:hover {
+            border-color: #1e4d8b;
+            color: #e8eaf6;
+        }
+        .flota-list {
+            margin-top: 20px;
+        }
+        .flota-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 12px;
+            padding: 12px;
+            background: #0a1628;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .flota-item span {
+            font-size: 14px;
+        }
+        .flota-item .patente {
+            font-weight: 600;
+            color: #e85d3e;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #8b9dc3;
+        }
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        .success-msg {
+            background: rgba(0, 200, 83, 0.15);
+            border: 1px solid rgba(0, 200, 83, 0.3);
+            color: #00c853;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            display: none;
+            font-size: 14px;
+        }
+        .success-msg.active { display: block; }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="header">
+        <div class="logo-small">
+            <div class="logo-icon">HTP</div>
+            <div class="logo-text">
+                Control de Transferencia
+                <span>Muelle HTP</span>
+            </div>
+        </div>
+        <button class="btn-back" onclick="window.location.href='app.html?mode=supervisor'">← Volver</button>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title">🚛 Cargar Flota de Camiones</h1>
+        <p class="page-subtitle">Ingrese las patentes y pesos de los camiones disponibles</p>
+
+        <div class="success-msg" id="successMsg">
+            ✅ Flota guardada correctamente
+        </div>
+
+        <div class="card">
+            <div class="card-title">➕ Agregar Camión</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Patente</label>
+                    <input type="text" id="patente" placeholder="AB-CD-12" maxlength="8">
+                </div>
+                <div class="form-group">
+                    <label>Tara Vacía (kg)</label>
+                    <input type="number" id="tara" placeholder="15200" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Tara Llena (kg)</label>
+                    <input type="number" id="taraLlena" placeholder="39100" min="0">
+                </div>
+                <button class="btn-icon btn-add" onclick="addCamion()">+</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📋 Flota Actual</div>
+            <div class="flota-list" id="flotaList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🚛</div>
+                    <p>No hay camiones registrados</p>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-primary" onclick="saveFlota()">💾 Guardar Flota</button>
+        <button class="btn-secondary" onclick="clearFlota()">🗑️ Limpiar Todo</button>
+    </div>
+
+    <script>
+        let flota = JSON.parse(localStorage.getItem('htp_flota') || '[]');
+
+        function renderFlota() {
+            const list = document.getElementById('flotaList');
+            if (flota.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🚛</div>
+                        <p>No hay camiones registrados</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = flota.map((c, i) => `
+                <div class="flota-item">
+                    <span class="patente">${c.patente}</span>
+                    <span>${c.tara.toLocaleString()} kg</span>
+                    <span>${c.taraLlena.toLocaleString()} kg</span>
+                    <button class="btn-icon btn-remove" onclick="removeCamion(${i})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function addCamion() {
+            const patente = document.getElementById('patente').value.trim().toUpperCase();
+            const tara = parseInt(document.getElementById('tara').value) || 0;
+            const taraLlena = parseInt(document.getElementById('taraLlena').value) || 0;
+
+            if (!patente) {
+                alert('Ingrese la patente');
+                return;
+            }
+            if (tara <= 0 || taraLlena <= 0) {
+                alert('Ingrese pesos válidos');
+                return;
+            }
+            if (taraLlena <= tara) {
+                alert('Tara llena debe ser mayor que tara vacía');
+                return;
+            }
+
+            flota.push({ patente, tara, taraLlena });
+            document.getElementById('patente').value = '';
+            document.getElementById('tara').value = '';
+            document.getElementById('taraLlena').value = '';
+            document.getElementById('patente').focus();
+            renderFlota();
+        }
+
+        function removeCamion(index) {
+            flota.splice(index, 1);
+            renderFlota();
+        }
+
+        function saveFlota() {
+            localStorage.setItem('htp_flota', JSON.stringify(flota));
+            document.getElementById('successMsg').classList.add('active');
+            setTimeout(() => {
+                document.getElementById('successMsg').classList.remove('active');
+            }, 3000);
+        }
+
+        function clearFlota() {
+            if (confirm('¿Está seguro de eliminar toda la flota?')) {
+                flota = [];
+                localStorage.removeItem('htp_flota');
+                renderFlota();
+            }
+        }
+
+        document.getElementById('taraLlena').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addCamion();
+        });
+
+        renderFlota();
+    </script>
+</body>
+</html>

@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>MV GOOFY Voy 18 - Control de Embarque</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0a0e27;
+    min-height: 100vh;
+    color: #e8eaf6;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  body { padding-bottom: 80px; }
+
+  .header {
+    background: linear-gradient(135deg, #0d1b3e, #1a237e);
+    padding: 14px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .header-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #00e5ff, #7c4dff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .mode-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .mode-operator { background: rgba(0,230,118,0.2); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
+  .mode-supervisor { background: rgba(0,229,255,0.2); color: #00e5ff; border: 1px solid rgba(0,229,255,0.3); }
+
+  .header-info {
+    display: flex;
+    gap: 12px;
+    font-size: 0.72rem;
+    color: #9fa8da;
+    flex-wrap: wrap;
+  }
+  .header-info span { display: flex; align-items: center; gap: 4px; }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: #00e676;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    display: inline-block;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .scroll-container { padding: 12px 14px; }
+
+  .metrics-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 14px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .metrics-scroll::-webkit-scrollbar { display: none; }
+  .metric-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 12px 14px;
+    min-width: 130px;
+    flex-shrink: 0;
+  }
+  .metric-card h4 {
+    font-size: 0.65rem;
+    color: #9fa8da;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .metric-card .value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .metric-card .sub {
+    font-size: 0.65rem;
+    color: #5c6bc0;
+    margin-top: 2px;
+  }
+
+  .bodegas-section { margin-bottom: 14px; }
+  .section-title {
+    font-size: 0.8rem;
+    color: #9fa8da;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bodega-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .bodega-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .bodega-1::before { background: #00e5ff; }
+  .bodega-2::before { background: #ff9100; }
+  .bodega-3::before { background: #00e676; }
+  .bodega-5::before { background: #7c4dff; }
+  .bodega-rematada { border-color: #ffd700 !important; }
+  .bodega-rematada::before { background: #ffd700 !important; }
+
+  .bodega-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .bodega-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+  .bodega-pct {
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+  .bodega-1 .bodega-pct { color: #00e5ff; }
+  .bodega-2 .bodega-pct { color: #ff9100; }
+  .bodega-3 .bodega-pct { color: #00e676; }
+  .bodega-5 .bodega-pct { color: #b388ff; }
+  .bodega-rematada .bodega-pct { color: #ffd700 !important; }
+
+  .progress-track {
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    height: 22px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .bodega-1 .progress-fill { background: linear-gradient(90deg, #00e5ff, #0091ea); }
+  .bodega-2 .progress-fill { background: linear-gradient(90deg, #ff9100, #ff6d00); }
+  .bodega-3 .progress-fill { background: linear-gradient(90deg, #00e676, #00c853); }
+  .bodega-5 .progress-fill { background: linear-gradient(90deg, #7c4dff, #651fff); }
+  .bodega-rematada .progress-fill { background: linear-gradient(90deg, #ffd700, #ffab00) !important; }
+
+  .bodega-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .stat-item {
+    text-align: center;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 8px 4px;
+  }
+  .stat-item .num { font-size: 1rem; font-weight: 700; color: #fff; }
+  .stat-item .lbl { font-size: 0.6rem; color: #9fa8da; text-transform: uppercase; }
+
+  .bodega-remaining {
+    font-size: 0.72rem;
+    color: #9fa8da;
+    margin-top: 8px;
+    text-align: center;
+  }
+  .bodega-remaining span { color: #00e676; font-weight: 600; }
+  .remate-info {
+    font-size: 0.72rem;
+    color: #ffd700;
+    margin-top: 6px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .remate-real {
+    font-size: 0.7rem;
+    color: #00e676;
+    margin-top: 4px;
+    text-align: center;
+  }
+
+  .form-section {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .form-section h3 {
+    font-size: 0.9rem;
+    color: #00e5ff;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+  .form-group { margin-bottom: 12px; }
+  .form-group label {
+    display: block;
+    font-size: 0.75rem;
+    color: #9fa8da;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 14px 12px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    background: rgba(0,0,0,0.3);
+    color: #fff;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.3s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: #00e5ff;
+    box-shadow: 0 0 15px rgba(0,229,255,0.15);
+  }
+  .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239fa8da' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+  .patente-found { border-color: #00e5ff !important; background: rgba(0,229,255,0.05) !important; }
+  .patente-notfound { border-color: #ff1744 !important; background: rgba(255,23,68,0.05) !important; }
+
+  .tara-info {
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    color: #c5cae9;
+    margin-top: 6px;
+    border-left: 3px solid #00e5ff;
+    display: none;
+  }
+  .tara-info.show { display: block; }
+  .tara-info.error { border-left-color: #ff1744; color: #ff8a80; }
+  .tara-info .label { color: #9fa8da; font-size: 0.7rem; }
+  .tara-info .val { color: #00e5ff; font-weight: 700; }
+
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #00e5ff, #0091ea);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(0,229,255,0.3);
+  }
+  .btn-success {
+    background: linear-gradient(135deg, #00e676, #00c853);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(0,230,118,0.3);
+  }
+  .btn-warning {
+    background: linear-gradient(135deg, #ff9100, #ff6d00);
+    color: #fff;
+  }
+  .btn-danger {
+    background: linear-gradient(135deg, #ff1744, #d50000);
+    color: #fff;
+  }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #9fa8da;
+  }
+
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .btn-row .btn { font-size: 0.85rem; padding: 12px; }
+
+  .table-section {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+    overflow-x: auto;
+  }
+  .table-section h3 {
+    font-size: 0.85rem;
+    color: #00e5ff;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 500px; }
+  th {
+    background: rgba(0,0,0,0.3);
+    color: #00e5ff;
+    padding: 10px 8px;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #c5cae9; white-space: nowrap; }
+  tr:hover { background: rgba(0,229,255,0.03); }
+  .badge-b1 { background: rgba(0,229,255,0.15); color: #00e5ff; padding: 2px 6px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; }
+  .badge-b2 { background: rgba(255,145,0,0.15); color: #ff9100; padding: 2px 6px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; }
+  .badge-b3 { background: rgba(0,230,118,0.15); color: #00e676; padding: 2px 6px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; }
+  .badge-b5 { background: rgba(124,77,255,0.15); color: #b388ff; padding: 2px 6px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; }
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10,14,39,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0;
+    z-index: 100;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 16px;
+    color: #5c6bc0;
+    text-decoration: none;
+    font-size: 0.65rem;
+    font-weight: 500;
+    transition: all 0.3s;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+  }
+  .nav-item.active { color: #00e5ff; }
+  .nav-item .icon { font-size: 1.3rem; }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-sheet {
+    background: linear-gradient(180deg, #0d1b3e, #0a0e27);
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .modal-header h2 { font-size: 1.1rem; color: #00e5ff; }
+  .close-btn {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: #fff;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .turno-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .turno-tabs::-webkit-scrollbar { display: none; }
+  .turno-tab {
+    padding: 8px 14px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.3);
+    color: #9fa8da;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .turno-tab.active {
+    background: linear-gradient(135deg, #00e5ff, #0091ea);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .report-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .report-item {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .report-item .num { font-size: 1.6rem; font-weight: 700; color: #00e5ff; }
+  .report-item .lbl { font-size: 0.7rem; color: #9fa8da; margin-top: 4px; }
+
+  .toast {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    padding: 12px 24px;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.88rem;
+    z-index: 300;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    text-align: center;
+    max-width: 90vw;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast-success { background: linear-gradient(135deg, #00e676, #00c853); }
+  .toast-error { background: linear-gradient(135deg, #ff1744, #d50000); }
+  .toast-info { background: linear-gradient(135deg, #00e5ff, #0091ea); }
+
+  .loading-screen {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #0a0e27;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+  .loading-screen.hidden { display: none; }
+  .spinner {
+    width: 50px; height: 50px;
+    border: 3px solid rgba(0,229,255,0.2);
+    border-top-color: #00e5ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { color: #9fa8da; font-size: 0.9rem; }
+
+  .supervisor-view .form-section { display: none; }
+  .supervisor-view .btn-row { display: none; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .fade-in { animation: fadeIn 0.4s ease; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.2); border-radius: 2px; }
+
+  .supervisor-panel {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .supervisor-panel h3 {
+    font-size: 0.9rem;
+    color: #ff9100;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+  .supervisor-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .supervisor-info-item {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .supervisor-info-item .label {
+    font-size: 0.65rem;
+    color: #9fa8da;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .supervisor-info-item .value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .supervisor-info-item .value.highlight { color: #ff9100; }
+  .supervisor-info-item .value.success { color: #00e676; }
+  .supervisor-info-item .value.danger { color: #ff1744; }
+
+  .detencion-list {
+    margin-top: 10px;
+  }
+  .detencion-item {
+    background: rgba(255,23,68,0.08);
+    border: 1px solid rgba(255,23,68,0.2);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .detencion-item .time { font-size: 0.75rem; color: #ff8a80; }
+  .detencion-item .reason { font-size: 0.72rem; color: #c5cae9; }
+  .detencion-item .mins { font-size: 0.8rem; font-weight: 700; color: #ff1744; }
+
+  .modal-form-group {
+    margin-bottom: 12px;
+  }
+  .modal-form-group label {
+    display: block;
+    font-size: 0.75rem;
+    color: #9fa8da;
+    margin-bottom: 5px;
+  }
+  .modal-form-group input, .modal-form-group select, .modal-form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    background: rgba(0,0,0,0.3);
+    color: #fff;
+    font-size: 0.9rem;
+    font-family: inherit;
+  }
+  .modal-form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+  .modal-form-group input:focus, .modal-form-group select:focus, .modal-form-group textarea:focus {
+    outline: none;
+    border-color: #ff9100;
+  }
+
+  .add-camion-form {
+    background: rgba(0,230,118,0.05);
+    border: 1px solid rgba(0,230,118,0.2);
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 10px;
+    display: none;
+  }
+  .add-camion-form.show { display: block; }
+
+  .turno-select-section {
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .turno-select-section h3 {
+    font-size: 0.9rem;
+    color: #00e5ff;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  .turno-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .turno-btn-select {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px 6px;
+    cursor: pointer;
+    text-align: center;
+    color: #9fa8da;
+    font-family: inherit;
+    transition: all 0.3s;
+  }
+  .turno-btn-select .icon { font-size: 1.3rem; display: block; margin-bottom: 3px; }
+  .turno-btn-select .label { font-size: 0.7rem; font-weight: 600; }
+  .turno-btn-select .hours { font-size: 0.6rem; color: #5c6bc0; margin-top: 2px; }
+  .turno-btn-select:hover { border-color: rgba(0,229,255,0.4); }
+  .turno-btn-select.selected {
+    background: linear-gradient(135deg, #00e5ff, #0091ea);
+    border-color: transparent;
+    color: #fff;
+  }
+  .turno-btn-select.selected .hours { color: rgba(255,255,255,0.7); }
+
+  .operator-bodega-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .op-bod-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .op-bod-card .name { font-size: 0.75rem; font-weight: 600; margin-bottom: 4px; }
+  .op-bod-card .pct { font-size: 1.1rem; font-weight: 800; }
+  .op-bod-card .ton { font-size: 0.7rem; color: #9fa8da; }
+  .op-bod-card .faltan { font-size: 0.65rem; color: #5c6bc0; }
+
+  /* NUEVO: Panel de ajuste por bodega para supervisor */
+  .ajuste-bodega-panel {
+    background: rgba(255,145,0,0.08);
+    border: 1px solid rgba(255,145,0,0.2);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .ajuste-bodega-panel h3 {
+    font-size: 0.9rem;
+    color: #ff9100;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+  .ajuste-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .ajuste-item {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .ajuste-item label {
+    font-size: 0.7rem;
+    color: #9fa8da;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .ajuste-item input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    background: rgba(0,0,0,0.3);
+    color: #fff;
+    font-size: 0.9rem;
+    font-family: inherit;
+  }
+  .ajuste-item input:focus {
+    outline: none;
+    border-color: #ff9100;
+  }
+
+  /* NUEVO: Panel de rate manual */
+  .rate-panel {
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .rate-panel h3 {
+    font-size: 0.9rem;
+    color: #00e5ff;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+  .rate-info {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 0.8rem;
+    color: #c5cae9;
+  }
+  .rate-info strong { color: #00e5ff; }
+
+  @media (min-width: 768px) {
+    body { padding-bottom: 0; }
+    .scroll-container { max-width: 800px; margin: 0 auto; padding: 20px; }
+    .bottom-nav { display: none; }
+  }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">Conectando al sistema...</div>
+</div>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-title">🚢 MV GOOFY V18</div>
+    <div class="mode-badge" id="modeBadge">Cargando...</div>
+  </div>
+  <div class="header-info">
+    <span><span class="live-dot"></span> En vivo</span>
+    <span id="connectionStatus">Conectando...</span>
+    <span id="turnoDisplay">--</span>
+    <span id="totalProgress">16,125.30 / 43,700 MT</span>
+  </div>
+</div>
+
+<div class="scroll-container" id="mainContent">
+
+  <div class="turno-select-section" id="turnoSelectSection">
+    <h3>📅 Selecciona tu Turno</h3>
+    <div class="turno-grid">
+      <button class="turno-btn-select" data-turno="1" onclick="selectTurnoApp('1', this)">
+        <span class="icon">🌙</span>
+        <span class="label">1° Turno</span>
+        <span class="hours">00:00 - 08:00</span>
+      </button>
+      <button class="turno-btn-select" data-turno="2" onclick="selectTurnoApp('2', this)">
+        <span class="icon">🌅</span>
+        <span class="label">2° Turno</span>
+        <span class="hours">08:00 - 16:00</span>
+      </button>
+      <button class="turno-btn-select" data-turno="3" onclick="selectTurnoApp('3', this)">
+        <span class="icon">🌇</span>
+        <span class="label">3° Turno</span>
+        <span class="hours">16:00 - 00:00</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="metrics-scroll" id="metricsSection" style="display:none;">
+    <div class="metric-card"><h4>⏱️ Tiempo</h4><div class="value" id="timeDisplay">48:02</div><div class="sub">Transcurrido</div></div>
+    <div class="metric-card"><h4>⚡ Rate/Hora</h4><div class="value" id="rateHoraDisplay">1,006.99</div><div class="sub">ton/hr efectivo</div></div>
+    <div class="metric-card"><h4>📈 Rate/Día</h4><div class="value" id="rateDiaDisplay">8,055.94</div><div class="sub">ton/24hr</div></div>
+    <div class="metric-card"><h4>🚛 Camiones</h4><div class="value" id="truckCount">656</div><div class="sub">Total</div></div>
+    <div class="metric-card"><h4>📦 Cargado</h4><div class="value" id="loadedDisplay">16,125.30</div><div class="sub">MT</div></div>
+  </div>
+
+  <div class="ajuste-bodega-panel" id="ajusteBodegaPanel" style="display:none;">
+    <h3>🔧 Ajustar Tonelaje por Bodega</h3>
+    <div class="ajuste-grid">
+      <div class="ajuste-item">
+        <label style="color:#00e5ff;">Bodega 1 (NO.1)</label>
+        <input type="number" id="ajusteB1" placeholder="0.00" step="0.01" value="0">
+      </div>
+      <div class="ajuste-item">
+        <label style="color:#ff9100;">Bodega 2 (NO.2)</label>
+        <input type="number" id="ajusteB2" placeholder="0.00" step="0.01" value="4280.30">
+      </div>
+      <div class="ajuste-item">
+        <label style="color:#00e676;">Bodega 3 (NO.3)</label>
+        <input type="number" id="ajusteB3" placeholder="0.00" step="0.01" value="11845.00">
+      </div>
+      <div class="ajuste-item">
+        <label style="color:#b388ff;">Bodega 5 (NO.5)</label>
+        <input type="number" id="ajusteB5" placeholder="0.00" step="0.01" value="0">
+      </div>
+    </div>
+    <div class="ajuste-grid">
+      <div class="ajuste-item">
+        <label>Camiones B1</label>
+        <input type="number" id="ajusteCamionesB1" placeholder="0" min="0" value="0">
+      </div>
+      <div class="ajuste-item">
+        <label>Camiones B2</label>
+        <input type="number" id="ajusteCamionesB2" placeholder="0" min="0" value="109">
+      </div>
+      <div class="ajuste-item">
+        <label>Camiones B3</label>
+        <input type="number" id="ajusteCamionesB3" placeholder="0" min="0" value="547">
+      </div>
+      <div class="ajuste-item">
+        <label>Camiones B5</label>
+        <input type="number" id="ajusteCamionesB5" placeholder="0" min="0" value="0">
+      </div>
+    </div>
+    <button class="btn btn-warning" onclick="aplicarAjusteBodegas()" style="margin-top:8px; font-size:0.85rem; padding:12px;">✅ Aplicar Ajuste de Bodegas</button>
+    <p style="font-size:0.7rem; color:#9fa8da; margin-top:8px; text-align:center;">
+      Total ajustado: <span id="ajusteTotalPreview" style="color:#ff9100; font-weight:700;">16,125.30</span> MT
+    </p>
+  </div>
+
+  <div class="rate-panel" id="ratePanel" style="display:none;">
+    <h3>⚡ Configurar Rate Manual</h3>
+    <div class="rate-info">
+      <p><strong>Rate Día Actual:</strong> <span id="rateDiaActual">8,055.937</span> ton/día</p>
+      <p><strong>Rate Hora Actual:</strong> <span id="rateHoraActual">1,006.992</span> ton/hr</p>
+      <p style="margin-top:6px; font-size:0.75rem; color:#9fa8da;">
+        Total embarcado: 16,125.30 MT | Horas trabajadas: 48.04 | 8 turnos completados
+      </p>
+    </div>
+    <div class="modal-form-group">
+      <label>Rate Día (ton/día)</label>
+      <input type="number" id="rateDiaManual" value="8055.937" step="0.001">
+    </div>
+    <div class="modal-form-group">
+      <label>Horas Trabajadas Totales</label>
+      <input type="number" id="horasTrabajadasManual" value="48.04" step="0.01">
+    </div>
+    <div class="modal-form-group">
+      <label>Tonelaje Total Embarcado (MT)</label>
+      <input type="number" id="tonelajeTotalManual" value="16125.30" step="0.01">
+    </div>
+    <button class="btn btn-primary" onclick="aplicarRateManual()" style="font-size:0.85rem; padding:12px;">✅ Aplicar Rate Manual</button>
+  </div>
+
+  <div class="supervisor-panel" id="supervisorPanel" style="display:none;">
+    <h3>👁️ Panel de Control - Supervisor</h3>
+    <div class="supervisor-info">
+      <div class="supervisor-info-item"><div class="label">Inicio Embarque</div><div class="value" id="supInicioEmbarque">--</div></div>
+      <div class="supervisor-info-item"><div class="label">Tiempo Total</div><div class="value highlight" id="supTiempoTotal">48h 2m</div></div>
+      <div class="supervisor-info-item"><div class="label">Min Detención</div><div class="value danger" id="supMinDetencion">0</div></div>
+      <div class="supervisor-info-item"><div class="label">Min Atraso</div><div class="value danger" id="supMinAtraso">0</div></div>
+      <div class="supervisor-info-item"><div class="label">Horas Efectivas</div><div class="value success" id="supHorasEfectivas">48.04</div></div>
+      <div class="supervisor-info-item"><div class="label">Rate Día</div><div class="value success" id="supRateDia">8,055.94</div></div>
+    </div>
+    <div class="detencion-list" id="detencionList"></div>
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn btn-primary" onclick="modalInicioEmbarque()" style="font-size:0.8rem; padding:10px;">🚀 Inicio Embarque</button>
+      <button class="btn btn-warning" onclick="modalDetencion()" style="font-size:0.8rem; padding:10px;">⏸️ Detención</button>
+      <button class="btn btn-danger" onclick="modalFinEmbarque()" style="font-size:0.8rem; padding:10px;">🏁 Fin Embarque</button>
+      <button class="btn btn-outline" onclick="modalGira()" style="font-size:0.8rem; padding:10px;">🔄 Gira</button>
+    </div>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn btn-warning" onclick="modalAtraso()" style="font-size:0.8rem; padding:10px;">⏰ Min Atraso</button>
+      <button class="btn btn-primary" onclick="modalRemateBodega()" style="font-size:0.8rem; padding:10px;">🏭 Remate Bodega</button>
+    </div>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn btn-success" onclick="mostrarAjusteBodegas()" style="font-size:0.8rem; padding:10px;">🔧 Ajustar Bodegas</button>
+      <button class="btn btn-primary" onclick="mostrarRateManual()" style="font-size:0.8rem; padding:10px;">⚡ Ajustar Rate</button>
+    </div>
+    <div style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
+      <button class="btn btn-danger" onclick="modalBorrarTodo()" style="font-size:0.8rem; padding:10px; background:linear-gradient(135deg, #d50000, #b71c1c);">🗑️ Borrar Todos los Datos</button>
+    </div>
+  </div>
+
+  <div class="operator-bodega-compact" id="operatorBodegaCompact" style="display:none;">
+    <div class="op-bod-card" id="opBod1"><div class="name" style="color:#00e5ff;">Bodega 1</div><div class="pct" style="color:#00e5ff;" id="opPct1">0%</div><div class="ton" id="opTon1">0 / 12,830 MT</div><div class="faltan" id="opFaltan1">Faltan: 12,830 MT</div></div>
+    <div class="op-bod-card" id="opBod2"><div class="name" style="color:#ff9100;">Bodega 2</div><div class="pct" style="color:#ff9100;" id="opPct2">77.8%</div><div class="ton" id="opTon2">4,280.3 / 5,500 MT</div><div class="faltan" id="opFaltan2">Faltan: 1,219.7 MT</div></div>
+    <div class="op-bod-card" id="opBod3"><div class="name" style="color:#00e676;">Bodega 3</div><div class="pct" style="color:#00e676;" id="opPct3">89.7%</div><div class="ton" id="opTon3">11,845 / 13,200 MT</div><div class="faltan" id="opFaltan3">Faltan: 1,355 MT</div></div>
+    <div class="op-bod-card" id="opBod5"><div class="name" style="color:#b388ff;">Bodega 5</div><div class="pct" style="color:#b388ff;" id="opPct5">0%</div><div class="ton" id="opTon5">0 / 12,170 MT</div><div class="faltan" id="opFaltan5">Faltan: 12,170 MT</div></div>
+  </div>
+
+  <div class="bodegas-section" id="bodegasSection" style="display:none;">
+    <div class="section-title">🏭 Bodegas</div>
+
+    <div class="bodega-card bodega-1" id="cardBodega1">
+      <div class="bodega-header">
+        <span class="bodega-name">Bodega 1 (NO.1)</span>
+        <span class="bodega-pct" id="pct1">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="bar1" style="width:0%">0%</div></div>
+      <div class="bodega-remaining">Faltan: <span id="faltan1">12,830</span> MT</div>
+      <div class="remate-info" id="remateInfo1" style="display:none;">⏰ Remate estimado: <span id="remateEst1">--</span></div>
+      <div class="remate-real" id="remateReal1" style="display:none;">✅ Remate real: <span id="remateRealText1">--</span></div>
+      <div class="bodega-stats">
+        <div class="stat-item"><div class="num" id="ton1">0</div><div class="lbl">Toneladas</div></div>
+        <div class="stat-item"><div class="num" id="cam1">0</div><div class="lbl">Camiones</div></div>
+        <div class="stat-item"><div class="num" id="rate1">0</div><div class="lbl">ton/hr</div></div>
+      </div>
+    </div>
+
+    <div class="bodega-card bodega-2" id="cardBodega2">
+      <div class="bodega-header">
+        <span class="bodega-name">Bodega 2 (NO.2)</span>
+        <span class="bodega-pct" id="pct2">77.8%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="bar2" style="width:77.8%">77.8%</div></div>
+      <div class="bodega-remaining">Faltan: <span id="faltan2">1,219.7</span> MT</div>
+      <div class="remate-info" id="remateInfo2" style="display:none;">⏰ Remate estimado: <span id="remateEst2">--</span></div>
+      <div class="remate-real" id="remateReal2" style="display:none;">✅ Remate real: <span id="remateRealText2">--</span></div>
+      <div class="bodega-stats">
+        <div class="stat-item"><div class="num" id="ton2">4,280.3</div><div class="lbl">Toneladas</div></div>
+        <div class="stat-item"><div class="num" id="cam2">109</div><div class="lbl">Camiones</div></div>
+        <div class="stat-item"><div class="num" id="rate2">89.1</div><div class="lbl">ton/hr</div></div>
+      </div>
+    </div>
+
+    <div class="bodega-card bodega-3" id="cardBodega3">
+      <div class="bodega-header">
+        <span class="bodega-name">Bodega 3 (NO.3)</span>
+        <span class="bodega-pct" id="pct3">89.7%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="bar3" style="width:89.7%">89.7%</div></div>
+      <div class="bodega-remaining">Faltan: <span id="faltan3">1,355</span> MT</div>
+      <div class="remate-info" id="remateInfo3" style="display:none;">⏰ Remate estimado: <span id="remateEst3">--</span></div>
+      <div class="remate-real" id="remateReal3" style="display:none;">✅ Remate real: <span id="remateRealText3">--</span></div>
+      <div class="bodega-stats">
+        <div class="stat-item"><div class="num" id="ton3">11,845</div><div class="lbl">Toneladas</div></div>
+        <div class="stat-item"><div class="num" id="cam3">547</div><div class="lbl">Camiones</div></div>
+        <div class="stat-item"><div class="num" id="rate3">246.6</div><div class="lbl">ton/hr</div></div>
+      </div>
+    </div>
+
+    <div class="bodega-card bodega-5" id="cardBodega5">
+      <div class="bodega-header">
+        <span class="bodega-name">Bodega 5 (NO.5)</span>
+        <span class="bodega-pct" id="pct5">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="bar5" style="width:0%">0%</div></div>
+      <div class="bodega-remaining">Faltan: <span id="faltan5">12,170</span> MT</div>
+      <div class="remate-info" id="remateInfo5" style="display:none;">⏰ Remate estimado: <span id="remateEst5">--</span></div>
+      <div class="remate-real" id="remateReal5" style="display:none;">✅ Remate real: <span id="remateRealText5">--</span></div>
+      <div class="bodega-stats">
+        <div class="stat-item"><div class="num" id="ton5">0</div><div class="lbl">Toneladas</div></div>
+        <div class="stat-item"><div class="num" id="cam5">0</div><div class="lbl">Camiones</div></div>
+        <div class="stat-item"><div class="num" id="rate5">0</div><div class="lbl">ton/hr</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section" id="formSection" style="display:none;">
+    <h3>📝 Registrar Camión</h3>
+    <div id="turnoOperadorPanel">
+      <div class="form-group">
+        <label>Bodega de Destino</label>
+        <select id="bodegaSelect">
+          <option value="">Seleccionar bodega...</option>
+          <option value="1">Bodega 1 (NO.1)</option>
+          <option value="2">Bodega 2 (NO.2)</option>
+          <option value="3">Bodega 3 (NO.3)</option>
+          <option value="5">Bodega 5 (NO.5)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Patente del Camión</label>
+        <select id="patenteSelect"><option value="">Seleccionar patente...</option></select>
+        <div class="tara-info" id="taraInfo"><span class="label">Carga Neta:</span> <span class="val" id="cargaNetaDisplay">--</span> MT</div>
+        <div class="tara-info error" id="patenteError" style="display:none;">⚠️ Selecciona una patente válida</div>
+      </div>
+      <button class="btn btn-success" id="btnRegistrar" onclick="registrarCamion()" disabled>➕ Registrar Camión</button>
+      <div style="margin-top:12px; text-align:center;">
+        <button class="btn btn-outline" onclick="toggleAddCamion()" style="font-size:0.8rem; padding:10px;">➕ Agregar Nuevo Camión</button>
+      </div>
+      <div class="add-camion-form" id="addCamionForm">
+        <h4 style="color:#00e676; font-size:0.85rem; margin-bottom:10px;">Nuevo Camión</h4>
+        <div class="modal-form-group"><label>Patente</label><input type="text" id="newPatente" placeholder="Ej: AB-CD-12" maxlength="10"></div>
+        <div class="modal-form-group"><label>Carga Neta (MT)</label><input type="number" id="newCarga" placeholder="Ej: 23.90" step="0.01"></div>
+        <button class="btn btn-success" onclick="agregarNuevoCamion()" style="font-size:0.85rem; padding:12px;">💾 Guardar Camión</button>
+      </div>
+    </div>
+
+    <div id="cierreTurnoPanel" style="display:none; margin-top:16px; border-top:1px solid rgba(255,255,255,0.1); padding-top:16px;">
+      <h3 style="color:#ff9100; font-size:0.9rem; margin-bottom:12px;">🔒 Cierre de Turno</h3>
+      <div class="form-group"><label>Minutos de Detención (si hubo)</label><input type="number" id="minDetencionOperador" placeholder="0" min="0" value="0"></div>
+      <div class="form-group"><label>Observaciones</label><textarea id="observacionesOperador" placeholder="Observaciones del turno..." style="width:100%; padding:12px; border-radius:10px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.12); font-family:inherit; resize:vertical; min-height:60px;"></textarea></div>
+      <button class="btn btn-warning" onclick="cerrarTurnoOperador()">🔒 Cerrar Turno</button>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="iniciarTurno()" id="btnIniciarTurno">▶️ Iniciar Turno</button>
+      <button class="btn btn-outline" onclick="mostrarResumen()">📊 Resumen</button>
+    </div>
+  </div>
+
+  <div class="table-section" id="tableSection" style="display:none;">
+    <h3>📋 Últimos Camiones</h3>
+    <table>
+      <thead><tr><th>Hora</th><th>Patente</th><th>Bod</th><th>Carga</th><th>Turno</th></tr></thead>
+      <tbody id="tablaCamiones"><tr><td colspan="5" style="text-align:center; color:#5c6bc0; padding:20px;">Sin camiones registrados</td></tr></tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="bottom-nav" id="bottomNav">
+  <button class="nav-item active" onclick="scrollToSection('mainContent')"><span class="icon">🏭</span><span>Bodegas</span></button>
+  <button class="nav-item" onclick="mostrarResumen()"><span class="icon">📊</span><span>Resumen</span></button>
+  <button class="nav-item" onclick="exportarDatos()"><span class="icon">💾</span><span>Exportar</span></button>
+  <button class="nav-item" onclick="window.location.href='index.html'"><span class="icon">⚙️</span><span>Modo</span></button>
+</div>
+
+<div class="modal-overlay" id="modalResumen">
+  <div class="modal-sheet">
+    <div class="modal-header"><h2>📊 Resumen por Turno</h2><button class="close-btn" onclick="cerrarModal()">×</button></div>
+    <div class="turno-tabs">
+      <button class="turno-tab active" onclick="seleccionarTurno('1', this)">🌙 1° Turno</button>
+      <button class="turno-tab" onclick="seleccionarTurno('2', this)">🌅 2° Turno</button>
+      <button class="turno-tab" onclick="seleccionarTurno('3', this)">🌇 3° Turno</button>
+      <button class="turno-tab" onclick="seleccionarTurno('todos', this)">📅 Todo</button>
+    </div>
+    <div class="report-grid" id="reportGrid"></div>
+    <div style="margin-bottom:12px; font-size:0.8rem; color:#9fa8da; font-weight:600;">📋 Camiones del turno</div>
+    <div id="reporteCamiones" style="overflow-x:auto;"></div>
+    <div style="margin:16px 0 12px; font-size:0.8rem; color:#9fa8da; font-weight:600;">🏭 Bodegas del turno</div>
+    <div id="reporteBodegas" style="overflow-x:auto;"></div>
+    <div style="margin:16px 0 12px; font-size:0.8rem; color:#ffd700; font-weight:600;">🏭 Remates de Bodegas</div>
+    <div id="reporteRemates" style="overflow-x:auto;"></div>
+    <button class="btn btn-success" onclick="exportarResumen()" style="margin-top:16px;">📥 Descargar CSV</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalInicioEmb">
+  <div class="modal-sheet">
+    <div class="modal-header"><h2>🚀 Inicio de Embarque</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
+    <div class="modal-form-group"><label>Fecha y Hora de Inicio</label><input type="datetime-local" id="inicioEmbarqueInput"></div>
+    <div class="modal-form-group"><label>Observación</label><textarea id="inicioObservacion" placeholder="Observaciones..."></textarea></div>
+    <button class="btn btn-success" onclick="guardarInicioEmbarque()">💾 Guardar Inicio</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalDetencion">
+  <div class="modal-sheet">
+    <div class="modal-header"><h2>⏸️ Registrar Detención</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
+    <div class="modal-form-group"><label>Fecha y Hora de Inicio Detención</label><input type="datetime-local" id="detencionInicioInput"></div>
+    <div class="modal-form-group"><label>Turno Afectado</label><select id="detencionTurno"><option value="1">1° Turno (00:00 - 08:00)</option><option value="2">2° Turno (08:00 - 16:00)</option><option value="3">3° Turno (16:00 - 00:00)</option></select></div>
+    <div class="modal-form-group"><label>Duración (minutos)</label><input type="number" id="detencionMinutos" placeholder="Ej: 30" min="1"></div>
+    <div class="modal-form-group"><label>Motivo / Observación</label><textarea id="detencionMotivo" placeholder="Motivo de la detención..."></textarea></div>
+    <button class="btn btn-warning" onclick="guardarDetencion()">💾 Registrar Detención</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalFinEmb">
+  <div class="modal-sheet">
+    <div class="modal-header"><h2>🏁 Fin de Embarque</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
+    <div class="modal-form-group"><label>Fecha y Hora de Fin</label><input type="datetime-local" id="finEmbarqueInput"></div>
+    <div class="modal-form-group"><label>Observación</label><textarea id="finObservacion" placeholder="Observaciones finales..."></textarea></div>
+    <button class="btn btn-danger" onclick="guardarFinEmbarque()">🏁 Guardar Fin</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalGira">
+  <div class="modal-sheet">
+    <div class="modal-header"><h2>🔄 Registrar Gira</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
+    <div class="modal-form-group"><label>Tipo</label><select id="giraTipo"><option value="salida">Salida a Gira</option><option value="retorno">Retorno de Gira</option></select></div>
+    <div class="modal-form-group"><label>Fecha y Hora</label><input type="datetime-local" id="giraHoraInput"></div>
+    <div class="modal-form-group"><label>Observación</label><textarea id="giraObservacion" placeholder="Detalles de la gira..."></textarea></div>
+    <button class="btn btn-primary" onclick="guardarGira()">💾 Registrar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalAtraso">
+  <div class="modal-sheet">
+    <div class="modal-header"><h2>⏰ Registrar Minutos de Atraso</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
+    <div class="modal-form-group"><label>Fecha y Hora de Inicio del Atraso</label><input type="datetime-local" id="atrasoInicioInput"></div>
+    <div class="modal-form-group"><label>Turno Afectado</label><select id="atrasoTurno"><option value="1">1° Turno (00:00 - 08:00)</option><option value="2">2° Turno (08:00 - 16:00)</option><option value="3">3° Turno (16:00 - 00:00)</option></select></div>
+    <div class="modal-form-group"><label>Minutos de Atraso</label><input type="number" id="atrasoMinutos" placeholder="Ej: 15" min="1"></div>
+    <div class="modal-form-group"><label>Motivo / Observación</label><textarea id="atrasoMotivo" placeholder="Motivo del atraso..."></textarea></div>
+    <button class="btn btn-warning" onclick="guardarAtraso()">💾 Registrar Atraso</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalRemateBodega">
+  <div class="modal-sheet">
+    <div class="modal-header"><h2>🏭 Registrar Remate de Bodega</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
+    <div class="modal-form-group"><label>Bodega</label><select id="remateBodegaSelect"><option value="">Seleccionar bodega...</option><option value="1">Bodega 1 (NO.1)</option><option value="2">Bodega 2 (NO.2)</option><option value="3">Bodega 3 (NO.3)</option><option value="5">Bodega 5 (NO.5)</option></select></div>
+    <div class="modal-form-group"><label>Fecha y Hora de Remate Real</label><input type="datetime-local" id="remateHoraInput"></div>
+    <div class="modal-form-group"><label>Observación</label><textarea id="remateObservacion" placeholder="Detalles del remate..."></textarea></div>
+    <button class="btn btn-primary" onclick="guardarRemateBodega()">💾 Registrar Remate</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalBorrar">
+  <div class="modal-sheet">
+    <div class="modal-header"><h2>🗑️ Borrar Todos los Datos</h2><button class="close-btn" onclick="cerrarModalSup()">×</button></div>
+    <div style="background:rgba(255,23,68,0.1); border:1px solid rgba(255,23,68,0.3); border-radius:10px; padding:14px; margin-bottom:16px;">
+      <p style="color:#ff8a80; font-size:0.85rem; margin:0;">⚠️ <strong>ADVERTENCIA:</strong> Esta acción eliminará TODOS los camiones registrados, detenciones, giras, atrasos, remates e inicio de embarque. No se puede deshacer.</p>
+    </div>
+    <div class="modal-form-group"><label>Contraseña de Administrador</label><input type="password" id="passBorrar" placeholder="Ingrese contraseña..."></div>
+    <button class="btn btn-danger" onclick="confirmarBorrarTodo()">🗑️ Confirmar Eliminación</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAgxjXIa4GSuS0giN2UqDcAjSg2nYWtdxg",
+  authDomain: "mv-goofy-control.firebaseapp.com",
+  databaseURL: "https://mv-goofy-control-default-rtdb.firebaseio.com",
+  projectId: "mv-goofy-control",
+  storageBucket: "mv-goofy-control.firebasestorage.app",
+  messagingSenderId: "458041869026",
+  appId: "1:458041869026:web:9191f22091895158e7d4bb"
+};
+
+const CAPACIDADES = { 1: 12830, 2: 5500, 3: 13200, 5: 12170 };
+const TOTAL_PLAN = 43700;
+const PASSWORD_ADMIN = "GOOFY2024";
+
+const TURNOS = {
+  '1': { nombre: '1° Turno', inicio: 0, fin: 8, label: '00:00 - 08:00' },
+  '2': { nombre: '2° Turno', inicio: 8, fin: 16, label: '08:00 - 16:00' },
+  '3': { nombre: '3° Turno', inicio: 16, fin: 24, label: '16:00 - 00:00' }
+};
+
+// DATOS REALES DEL EMBARQUE - 8 TURNOS COMPLETADOS
+const TURNOS_HISTORICOS = [
+  { turno: '1', dia: '2do', hrsTrabajo: 1.92, hrsReales: 1.92, vueltas: 24, carga: 654.00 },
+  { turno: '2', dia: '3ro', hrsTrabajo: 8.00, hrsReales: 8.00, vueltas: 74, carga: 1980.74 },
+  { turno: '3', dia: '1ro', hrsTrabajo: 8.00, hrsReales: 8.00, vueltas: 90, carga: 2543.98 },
+  { turno: '1', dia: '2do', hrsTrabajo: 8.00, hrsReales: 8.00, vueltas: 109, carga: 2955.68 },
+  { turno: '2', dia: '3ro', hrsTrabajo: 8.00, hrsReales: 8.00, vueltas: 122, carga: 3221.92 },
+  { turno: '3', dia: '1ro', hrsTrabajo: 4.50, hrsReales: 4.50, vueltas: 70, carga: 488.68 },
+  { turno: '1', dia: '3ro', hrsTrabajo: 1.62, hrsReales: 1.62, vueltas: 32, carga: 818.81 },
+  { turno: '2', dia: '1ro', hrsTrabajo: 8.00, hrsReales: 8.00, vueltas: 135, carga: 3461.49 }
+];
+
+// AJUSTE MANUAL DE BODEGAS (valores iniciales)
+let ajusteBodegas = {
+  1: { toneladas: 0, camiones: 0 },
+  2: { toneladas: 4280.30, camiones: 109 },
+  3: { toneladas: 11845.00, camiones: 547 },
+  5: { toneladas: 0, camiones: 0 }
+};
+
+// RATE MANUAL (valores objetivo)
+let rateManual = {
+  rateDia: 8055.937,
+  rateHora: 1006.992,
+  horasTrabajadas: 48.04,
+  tonelajeTotal: 16125.30
+};
+
+let app, db;
+let isOperator = false;
+let currentTurno = '';
+let turnoActivo = false;
+let horaInicioTurno = null;
+let camiones = [];
+let flota = {};
+let embarqueData = {
+  inicio: null,
+  fin: null,
+  detenciones: [],
+  giras: [],
+  atrasos: [],
+  remates: {}
+};
+let isConnected = false;
+
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  isOperator = params.get('mode') === 'operator';
+
+  const modeBadge = document.getElementById('modeBadge');
+  const formSection = document.getElementById('formSection');
+  const supervisorPanel = document.getElementById('supervisorPanel');
+
+  if (isOperator) {
+    modeBadge.textContent = '📝 Operador';
+    modeBadge.className = 'mode-badge mode-operator';
+    formSection.style.display = 'none';
+    supervisorPanel.style.display = 'none';
+    document.getElementById('mainContent').classList.remove('supervisor-view');
+  } else {
+    modeBadge.textContent = '👁️ Supervisor';
+    modeBadge.className = 'mode-badge mode-supervisor';
+    formSection.style.display = 'none';
+    supervisorPanel.style.display = 'none';
+    document.getElementById('mainContent').classList.add('supervisor-view');
+  }
+
+  document.getElementById('metricsSection').style.display = 'none';
+  document.getElementById('bodegasSection').style.display = 'none';
+  document.getElementById('operatorBodegaCompact').style.display = 'none';
+  document.getElementById('tableSection').style.display = 'none';
+
+  try {
+    app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+    isConnected = true;
+    document.getElementById('connectionStatus').textContent = '🟢 Conectado';
+    setupRealtimeListeners();
+  } catch (e) {
+    console.error('Firebase error:', e);
+    document.getElementById('connectionStatus').textContent = '🔴 Offline';
+    cargarDatosLocal();
+  }
+
+  document.getElementById('bodegaSelect').addEventListener('change', validarFormulario);
+  document.getElementById('patenteSelect').addEventListener('change', onPatenteChange);
+
+  // Listeners para ajuste de bodegas
+  ['ajusteB1','ajusteB2','ajusteB3','ajusteB5'].forEach(id => {
+    document.getElementById(id).addEventListener('input', actualizarPreviewAjuste);
+  });
+
+  var now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  var nowStr = now.toISOString().slice(0, 16);
+  document.getElementById('inicioEmbarqueInput').value = nowStr;
+  document.getElementById('detencionInicioInput').value = nowStr;
+  document.getElementById('finEmbarqueInput').value = nowStr;
+  document.getElementById('giraHoraInput').value = nowStr;
+  document.getElementById('atrasoInicioInput').value = nowStr;
+  document.getElementById('remateHoraInput').value = nowStr;
+
+  setTimeout(function() {
+    document.getElementById('loadingScreen').classList.add('hidden');
+  }, 800);
+}
+
+function setupRealtimeListeners() {
+  onValue(ref(db, 'flota'), function(snapshot) {
+    flota = snapshot.val() || {};
+    actualizarSelectPatentes();
+  });
+
+  onValue(ref(db, 'embarques/goofy_v18'), function(snapshot) {
+    var data = snapshot.val() || {};
+    camiones = data.camiones ? Object.values(data.camiones) : [];
+    embarqueData = {
+      inicio: data.inicio || null,
+      fin: data.fin || null,
+      detenciones: data.detenciones ? Object.values(data.detenciones) : [],
+      giras: data.giras ? Object.values(data.giras) : [],
+      atrasos: data.atrasos ? Object.values(data.atrasos) : [],
+      remates: data.remates || {}
+    };
+    // Cargar ajustes si existen
+    if (data.ajusteBodegas) ajusteBodegas = data.ajusteBodegas;
+    if (data.rateManual) rateManual = data.rateManual;
+    actualizarUI();
+    actualizarPanelSupervisor();
+  });
+}
+
+function actualizarSelectPatentes() {
+  var select = document.getElementById('patenteSelect');
+  var currentVal = select.value;
+  select.innerHTML = '<option value="">Seleccionar patente...</option>';
+  Object.keys(flota).sort().forEach(function(pat) {
+    var opt = document.createElement('option');
+    opt.value = pat;
+    opt.textContent = pat;
+    select.appendChild(opt);
+  });
+  if (currentVal && flota[currentVal]) select.value = currentVal;
+}
+
+function onPatenteChange() {
+  var pat = document.getElementById('patenteSelect').value;
+  var taraInfo = document.getElementById('taraInfo');
+  var patenteError = document.getElementById('patenteError');
+  var select = document.getElementById('patenteSelect');
+  if (!pat) {
+    taraInfo.classList.remove('show');
+    patenteError.style.display = 'none';
+    select.className = '';
+    validarFormulario();
+    return;
+  }
+  var camion = flota[pat];
+  if (camion) {
+    var carga = camion.cargaNeta || (camion.taraLlena - camion.taraVacia);
+    document.getElementById('cargaNetaDisplay').textContent = carga.toFixed(2);
+    taraInfo.classList.add('show');
+    patenteError.style.display = 'none';
+    select.className = 'patente-found';
+  } else {
+    taraInfo.classList.remove('show');
+    patenteError.style.display = 'block';
+    select.className = 'patente-notfound';
+  }
+  validarFormulario();
+}
+
+function validarFormulario() {
+  var pat = document.getElementById('patenteSelect').value;
+  var bodega = document.getElementById('bodegaSelect').value;
+  var camion = flota[pat];
+  document.getElementById('btnRegistrar').disabled = !(camion && bodega && turnoActivo && isOperator);
+}
+
+window.selectTurnoApp = function(turno, btn) {
+  currentTurno = turno;
+  localStorage.setItem('mv_goofy_turno', turno);
+  document.querySelectorAll('.turno-btn-select').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  var tInfo = TURNOS[turno] || TURNOS['2'];
+  document.getElementById('turnoDisplay').textContent = '🕐 ' + tInfo.nombre;
+  document.getElementById('turnoSelectSection').style.display = 'none';
+  document.getElementById('metricsSection').style.display = 'flex';
+  document.getElementById('tableSection').style.display = 'block';
+  if (isOperator) {
+    document.getElementById('formSection').style.display = 'block';
+    document.getElementById('operatorBodegaCompact').style.display = 'grid';
+    document.getElementById('bodegasSection').style.display = 'none';
+  } else {
+    document.getElementById('supervisorPanel').style.display = 'block';
+    document.getElementById('bodegasSection').style.display = 'block';
+    document.getElementById('operatorBodegaCompact').style.display = 'none';
+  }
+  actualizarUI();
+  actualizarPanelSupervisor();
+  mostrarToast('✅ ' + tInfo.nombre + ' seleccionado', 'success');
+};
+
+window.toggleAddCamion = function() {
+  document.getElementById('addCamionForm').classList.toggle('show');
+};
+
+window.agregarNuevoCamion = function() {
+  var pat = document.getElementById('newPatente').value.trim().toUpperCase();
+  var carga = parseFloat(document.getElementById('newCarga').value);
+  if (!pat || isNaN(carga) || carga <= 0) {
+    mostrarToast('❌ Completa todos los campos correctamente', 'error');
+    return;
+  }
+  if (flota[pat]) {
+    mostrarToast('⚠️ Esta patente ya existe', 'error');
+    return;
+  }
+  if (db) {
+    var flotaRef = ref(db, 'flota/' + pat);
+    set(flotaRef, { cargaNeta: carga, fechaRegistro: new Date().toISOString() });
+  }
+  flota[pat] = { cargaNeta: carga, fechaRegistro: new Date().toISOString() };
+  actualizarSelectPatentes();
+  document.getElementById('newPatente').value = '';
+  document.getElementById('newCarga').value = '';
+  document.getElementById('addCamionForm').classList.remove('show');
+  document.getElementById('patenteSelect').value = pat;
+  onPatenteChange();
+  mostrarToast('✅ Camión ' + pat + ' agregado', 'success');
+};
+
+window.iniciarTurno = function() {
+  if (!isOperator) { mostrarToast('❌ Solo operadores', 'error'); return; }
+  if (turnoActivo) {
+    document.getElementById('turnoOperadorPanel').style.display = 'none';
+    document.getElementById('cierreTurnoPanel').style.display = 'block';
+    document.getElementById('btnIniciarTurno').textContent = '🔙 Volver';
+    document.getElementById('btnIniciarTurno').onclick = volverAlTurno;
+  } else {
+    horaInicioTurno = new Date();
+    turnoActivo = true;
+    document.getElementById('btnIniciarTurno').textContent = '🔒 Cerrar Turno';
+    document.getElementById('btnIniciarTurno').className = 'btn btn-warning';
+    mostrarToast('✅ ' + TURNOS[currentTurno].nombre + ' iniciado', 'success');
+    validarFormulario();
+  }
+};
+
+function volverAlTurno() {
+  document.getElementById('turnoOperadorPanel').style.display = 'block';
+  document.getElementById('cierreTurnoPanel').style.display = 'none';
+  document.getElementById('btnIniciarTurno').textContent = '🔒 Cerrar Turno';
+  document.getElementById('btnIniciarTurno').onclick = iniciarTurno;
+}
+
+window.cerrarTurnoOperador = function() {
+  var minDet = parseInt(document.getElementById('minDetencionOperador').value) || 0;
+  var obs = document.getElementById('observacionesOperador').value.trim();
+  var cierreData = {
+    turno: currentTurno,
+    horaInicio: horaInicioTurno ? horaInicioTurno.toISOString() : null,
+    horaFin: new Date().toISOString(),
+    minutosDetencion: minDet,
+    observaciones: obs,
+    camionesRegistrados: camiones.filter(function(c) { return c.turno === currentTurno; }).length
+  };
+  if (db) {
+    var cierreRef = ref(db, 'cierres/' + currentTurno + '_' + Date.now());
+    set(cierreRef, cierreData);
+  }
+  turnoActivo = false;
+  horaInicioTurno = null;
+  document.getElementById('turnoOperadorPanel').style.display = 'block';
+  document.getElementById('cierreTurnoPanel').style.display = 'none';
+  document.getElementById('btnIniciarTurno').textContent = '▶️ Iniciar Turno';
+  document.getElementById('btnIniciarTurno').className = 'btn btn-primary';
+  document.getElementById('btnIniciarTurno').onclick = iniciarTurno;
+  mostrarToast('✅ Turno cerrado correctamente', 'success');
+};
+
+window.registrarCamion = function() {
+  if (!isOperator) { mostrarToast('❌ Solo operadores', 'error'); return; }
+  if (!turnoActivo) { mostrarToast('⚠️ Inicie el turno primero', 'error'); return; }
+  var patente = document.getElementById('patenteSelect').value;
+  var bodega = parseInt(document.getElementById('bodegaSelect').value);
+  var camion = flota[patente];
+  if (!camion || !bodega) return;
+  var cargaNeta = camion.cargaNeta || (camion.taraLlena - camion.taraVacia);
+  var ahora = new Date();
+  camiones.push({
+    id: Date.now(),
+    patente: patente,
+    bodega: bodega,
+    cargaNeta: cargaNeta,
+    hora: ahora.toISOString(),
+    turno: currentTurno,
+    fecha: ahora.toISOString().split('T')[0]
+  });
+  document.getElementById('patenteSelect').value = '';
+  document.getElementById('bodegaSelect').value = '';
+  document.getElementById('taraInfo').classList.remove('show');
+  document.getElementById('patenteSelect').className = '';
+  document.getElementById('btnRegistrar').disabled = true;
+  guardarEnFirebase();
+  guardarLocal();
+  mostrarToast('✅ ' + patente + ' → B' + bodega + ' +' + cargaNeta.toFixed(2) + ' MT', 'success');
+};
+
+// NUEVO: Mostrar/ocultar panel de ajuste de bodegas
+window.mostrarAjusteBodegas = function() {
+  var panel = document.getElementById('ajusteBodegaPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+};
+
+// NUEVO: Mostrar/ocultar panel de rate manual
+window.mostrarRateManual = function() {
+  var panel = document.getElementById('ratePanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+};
+
+// NUEVO: Actualizar preview de ajuste
+window.actualizarPreviewAjuste = function() {
+  var total = 0;
+  [1, 2, 3, 5].forEach(function(b) {
+    var val = parseFloat(document.getElementById('ajusteB' + b).value) || 0;
+    total += val;
+  });
+  document.getElementById('ajusteTotalPreview').textContent = total.toLocaleString('es-CL', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+};
+
+// NUEVO: Aplicar ajuste de bodegas
+window.aplicarAjusteBodegas = function() {
+  [1, 2, 3, 5].forEach(function(b) {
+    var ton = parseFloat(document.getElementById('ajusteB' + b).value) || 0;
+    var cam = parseInt(document.getElementById('ajusteCamionesB' + b).value) || 0;
+    ajusteBodegas[b] = { toneladas: ton, camiones: cam };
+  });
+  guardarEnFirebase();
+  guardarLocal();
+  actualizarUI();
+  actualizarPanelSupervisor();
+  mostrarToast('✅ Ajuste de bodegas aplicado', 'success');
+};
+
+// NUEVO: Aplicar rate manual
+window.aplicarRateManual = function() {
+  rateManual = {
+    rateDia: parseFloat(document.getElementById('rateDiaManual').value) || 8055.937,
+    rateHora: parseFloat(document.getElementById('rateDiaManual').value) / 8 || 1006.992,
+    horasTrabajadas: parseFloat(document.getElementById('horasTrabajadasManual').value) || 48.04,
+    tonelajeTotal: parseFloat(document.getElementById('tonelajeTotalManual').value) || 16125.30
+  };
+  guardarEnFirebase();
+  guardarLocal();
+  actualizarUI();
+  actualizarPanelSupervisor();
+  mostrarToast('✅ Rate manual aplicado: ' + rateManual.rateDia.toFixed(3) + ' ton/día', 'success');
+};
+
+function guardarEnFirebase() {
+  if (!db) return;
+  var embarqueRef = ref(db, 'embarques/goofy_v18');
+  var detObj = {};
+  embarqueData.detenciones.forEach(function(d, i) { detObj[i] = d; });
+  var girObj = {};
+  embarqueData.giras.forEach(function(g, i) { girObj[i] = g; });
+  var atrObj = {};
+  embarqueData.atrasos.forEach(function(a, i) { atrObj[i] = a; });
+  var camObj = {};
+  camiones.forEach(function(c, i) { camObj[i] = c; });
+  set(embarqueRef, {
+    camiones: camObj,
+    inicio: embarqueData.inicio,
+    fin: embarqueData.fin,
+    detenciones: detObj,
+    giras: girObj,
+    atrasos: atrObj,
+    remates: embarqueData.remates,
+    ajusteBodegas: ajusteBodegas,
+    rateManual: rateManual,
+    lastUpdate: new Date().toISOString()
+  });
+}
+
+function guardarLocal() {
+  localStorage.setItem('embarque_goofy_v18', JSON.stringify({
+    camiones: camiones,
+    embarqueData: embarqueData,
+    ajusteBodegas: ajusteBodegas,
+    rateManual: rateManual
+  }));
+}
+
+function cargarDatosLocal() {
+  var guardado = localStorage.getItem('embarque_goofy_v18');
+  if (guardado) {
+    var data = JSON.parse(guardado);
+    camiones = data.camiones || [];
+    embarqueData = data.embarqueData || { inicio: null, fin: null, detenciones: [], giras: [], atrasos: [], remates: {} };
+    ajusteBodegas = data.ajusteBodegas || ajusteBodegas;
+    rateManual = data.rateManual || rateManual;
+    actualizarUI();
+  }
+}
+
+window.modalBorrarTodo = function() {
+  document.getElementById('modalBorrar').classList.add('active');
+};
+
+window.confirmarBorrarTodo = function() {
+  var pass = document.getElementById('passBorrar').value;
+  if (pass !== PASSWORD_ADMIN) {
+    mostrarToast('❌ Contraseña incorrecta', 'error');
+    document.getElementById('passBorrar').value = '';
+    return;
+  }
+  if (!confirm('¿ESTÁS SEGURO? Se borrarán TODOS los datos permanentemente.')) return;
+  camiones = [];
+  embarqueData = { inicio: null, fin: null, detenciones: [], giras: [], atrasos: [], remates: {} };
+  // Resetear ajustes a valores por defecto
+  ajusteBodegas = {
+    1: { toneladas: 0, camiones: 0 },
+    2: { toneladas: 4280.30, camiones: 109 },
+    3: { toneladas: 11845.00, camiones: 547 },
+    5: { toneladas: 0, camiones: 0 }
+  };
+  rateManual = {
+    rateDia: 8055.937,
+    rateHora: 1006.992,
+    horasTrabajadas: 48.04,
+    tonelajeTotal: 16125.30
+  };
+  if (db) {
+    var embarqueRef = ref(db, 'embarques/goofy_v18');
+    remove(embarqueRef).then(function() {
+      mostrarToast('✅ Todos los datos eliminados', 'success');
+    }).catch(function(err) {
+      console.error(err);
+      mostrarToast('❌ Error al borrar en Firebase', 'error');
+    });
+  }
+  localStorage.removeItem('embarque_goofy_v18');
+  actualizarUI();
+  actualizarPanelSupervisor();
+  document.getElementById('passBorrar').value = '';
+  cerrarModalSup();
+};
+
+function actualizarUI() {
+  actualizarMetricas();
+  actualizarBodegas();
+  actualizarTabla();
+  actualizarBodegasCompact();
+}
+
+function calcularToneladasTotales() {
+  // Usar ajuste manual + camiones registrados
+  var totalAjuste = Object.values(ajusteBodegas).reduce(function(sum, b) { return sum + b.toneladas; }, 0);
+  var totalCamiones = camiones.reduce(function(sum, c) { return sum + c.cargaNeta; }, 0);
+  return totalAjuste + totalCamiones;
+}
+
+function calcularCamionesTotales() {
+  var totalAjuste = Object.values(ajusteBodegas).reduce(function(sum, b) { return sum + b.camiones; }, 0);
+  return totalAjuste + camiones.length;
+}
+
+function calcularHorasEfectivas(turno) {
+  // Usar rate manual si está configurado
+  if (rateManual && rateManual.horasTrabajadas > 0) {
+    return rateManual.horasTrabajadas;
+  }
+  var horas = 8;
+  var t = turno || currentTurno;
+  var detencionesTurno = embarqueData.detenciones.filter(function(d) { return d.turno === t; });
+  var minDetenciones = detencionesTurno.reduce(function(sum, d) { return sum + (d.minutos || 0); }, 0);
+  var atrasosTurno = embarqueData.atrasos.filter(function(a) { return a.turno === t; });
+  var minAtrasos = atrasosTurno.reduce(function(sum, a) { return sum + (a.minutos || 0); }, 0);
+  var minTotal = minDetenciones + minAtrasos;
+  horas -= (minTotal / 60);
+  return Math.max(horas, 0.1);
+}
+
+function actualizarMetricas() {
+  var totalCamiones = calcularCamionesTotales();
+  var totalToneladas = calcularToneladasTotales();
+
+  // Usar rate manual si está configurado
+  var rateHora = rateManual.rateHora;
+  var rateDia = rateManual.rateDia;
+
+  // Si no hay rate manual, calcular
+  if (!rateHora || rateHora <= 0) {
+    var horasEfectivas = calcularHorasEfectivas();
+    rateHora = horasEfectivas > 0 ? (totalToneladas / horasEfectivas) : 0;
+    rateDia = rateHora * 8; // Rate día = rate hora * 8 (turnos de 8 hrs)
+  }
+
+  document.getElementById('truckCount').textContent = totalCamiones;
+  document.getElementById('loadedDisplay').textContent = totalToneladas.toFixed(1);
+  document.getElementById('totalProgress').textContent = totalToneladas.toFixed(1) + ' / 43,700 MT';
+  document.getElementById('rateHoraDisplay').textContent = rateHora.toFixed(2);
+  document.getElementById('rateDiaDisplay').textContent = rateDia.toFixed(2);
+
+  // Tiempo basado en horas trabajadas
+  if (rateManual.horasTrabajadas > 0) {
+    var h = Math.floor(rateManual.horasTrabajadas);
+    var m = Math.floor((rateManual.horasTrabajadas - h) * 60);
+    document.getElementById('timeDisplay').textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+  } else if (embarqueData.inicio) {
+    var diff = new Date() - new Date(embarqueData.inicio);
+    var h = Math.floor(diff / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    document.getElementById('timeDisplay').textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+  }
+}
+
+function actualizarBodegas() {
+  var horasEfectivas = calcularHorasEfectivas();
+  [1, 2, 3, 5].forEach(function(b) {
+    // Usar ajuste manual + camiones registrados
+    var tonAjuste = ajusteBodegas[b] ? ajusteBodegas[b].toneladas : 0;
+    var camAjuste = ajusteBodegas[b] ? ajusteBodegas[b].camiones : 0;
+    var lista = camiones.filter(function(c) { return c.bodega === b; });
+    var ton = tonAjuste + lista.reduce(function(s, c) { return s + c.cargaNeta; }, 0);
+    var cam = camAjuste + lista.length;
+    var cap = CAPACIDADES[b];
+    var pct = Math.min((ton / cap) * 100, 100);
+    var faltan = Math.max(cap - ton, 0);
+    var card = document.getElementById('cardBodega' + b);
+    var remate = embarqueData.remates[b];
+    if (remate) {
+      pct = 100;
+      faltan = 0;
+      card.classList.add('bodega-rematada');
+      document.getElementById('remateReal' + b).style.display = 'block';
+      document.getElementById('remateRealText' + b).textContent = formatearFechaHora(remate.hora);
+      document.getElementById('remateInfo' + b).style.display = 'none';
+    } else {
+      card.classList.remove('bodega-rematada');
+      document.getElementById('remateReal' + b).style.display = 'none';
+      if (ton > 0 && horasEfectivas > 0) {
+        var rateB = ton / horasEfectivas;
+        if (rateB > 0 && faltan > 0) {
+          var horasFaltan = faltan / rateB;
+          var fechaEst = new Date();
+          fechaEst.setHours(fechaEst.getHours() + horasFaltan);
+          document.getElementById('remateEst' + b).textContent = formatearFechaHora(fechaEst.toISOString());
+          document.getElementById('remateInfo' + b).style.display = 'block';
+        } else {
+          document.getElementById('remateInfo' + b).style.display = 'none';
+        }
+      } else {
+        document.getElementById('remateInfo' + b).style.display = 'none';
+      }
+    }
+    document.getElementById('bar' + b).style.width = pct.toFixed(1) + '%';
+    document.getElementById('bar' + b).textContent = pct.toFixed(1) + '%';
+    document.getElementById('pct' + b).textContent = pct.toFixed(1) + '%';
+    document.getElementById('ton' + b).textContent = ton.toFixed(1);
+    document.getElementById('cam' + b).textContent = cam;
+    document.getElementById('faltan' + b).textContent = faltan.toFixed(1);
+    var rateB = horasEfectivas > 0 ? (ton / horasEfectivas).toFixed(1) : '0';
+    document.getElementById('rate' + b).textContent = rateB;
+  });
+}
+
+function actualizarBodegasCompact() {
+  [1, 2, 3, 5].forEach(function(b) {
+    var tonAjuste = ajusteBodegas[b] ? ajusteBodegas[b].toneladas : 0;
+    var lista = camiones.filter(function(c) { return c.bodega === b; });
+    var ton = tonAjuste + lista.reduce(function(s, c) { return s + c.cargaNeta; }, 0);
+    var cap = CAPACIDADES[b];
+    var pct = Math.min((ton / cap) * 100, 100);
+    var faltan = Math.max(cap - ton, 0);
+    var remate = embarqueData.remates[b];
+    if (remate) { pct = 100; faltan = 0; }
+    document.getElementById('opPct' + b).textContent = pct.toFixed(1) + '%';
+    document.getElementById('opTon' + b).textContent = ton.toFixed(1) + ' / ' + cap.toLocaleString() + ' MT';
+    document.getElementById('opFaltan' + b).textContent = 'Faltan: ' + faltan.toFixed(1) + ' MT';
+  });
+}
+
+function actualizarTabla() {
+  var tbody = document.getElementById('tablaCamiones');
+  if (camiones.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#5c6bc0; padding:20px;">Sin camiones registrados</td></tr>';
+    return;
+  }
+  var recientes = camiones.slice().reverse().slice(0, 20);
+  tbody.innerHTML = recientes.map(function(c) {
+    return '<tr class="fade-in"><td>' + formatearHoraSimple(c.hora) + '</td><td><strong>' + c.patente + '</strong></td><td><span class="badge-b' + c.bodega + '">B' + c.bodega + '</span></td><td><strong style="color:#00e676;">' + c.cargaNeta.toFixed(2) + '</strong></td><td>' + c.turno + '°</td></tr>';
+  }).join('');
+}
+
+function actualizarPanelSupervisor() {
+  if (isOperator) return;
+  var supInicio = document.getElementById('supInicioEmbarque');
+  var supTiempo = document.getElementById('supTiempoTotal');
+  var supMinDet = document.getElementById('supMinDetencion');
+  var supMinAtraso = document.getElementById('supMinAtraso');
+  var supHorasEf = document.getElementById('supHorasEfectivas');
+  var supRateDia = document.getElementById('supRateDia');
+  var detencionList = document.getElementById('detencionList');
+
+  if (embarqueData.inicio) {
+    var fecha = new Date(embarqueData.inicio);
+    supInicio.textContent = fecha.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  } else {
+    supInicio.textContent = '--';
+  }
+
+  // Usar horas trabajadas del rate manual
+  if (rateManual.horasTrabajadas > 0) {
+    var h = Math.floor(rateManual.horasTrabajadas);
+    var m = Math.floor((rateManual.horasTrabajadas - h) * 60);
+    supTiempo.textContent = h + 'h ' + m + 'm';
+  } else if (embarqueData.inicio) {
+    var diff = new Date() - new Date(embarqueData.inicio);
+    var dias = Math.floor(diff / 86400000);
+    var h = Math.floor((diff % 86400000) / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    supTiempo.textContent = dias > 0 ? dias + 'd ' + h + 'h ' + m + 'm' : h + 'h ' + m + 'm';
+  } else {
+    supTiempo.textContent = '--';
+  }
+
+  var totalMinDet = embarqueData.detenciones.reduce(function(sum, d) { return sum + (d.minutos || 0); }, 0);
+  supMinDet.textContent = totalMinDet;
+  var totalMinAtraso = embarqueData.atrasos.reduce(function(sum, a) { return sum + (a.minutos || 0); }, 0);
+  supMinAtraso.textContent = totalMinAtraso;
+
+  // Horas efectivas del rate manual
+  var horasEf = rateManual.horasTrabajadas || 48.04;
+  supHorasEf.textContent = horasEf.toFixed(2) + ' hrs';
+
+  // Rate día del rate manual
+  var rateDia = rateManual.rateDia || 8055.937;
+  supRateDia.textContent = rateDia.toLocaleString('es-CL', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ton/día';
+
+  if (embarqueData.detenciones.length === 0 && embarqueData.atrasos.length === 0) {
+    detencionList.innerHTML = '<div style="text-align:center; color:#5c6bc0; padding:10px; font-size:0.75rem;">Sin detenciones ni atrasos registrados</div>';
+  } else {
+    var html = '';
+    embarqueData.detenciones.slice().reverse().forEach(function(d) {
+      html += '<div class="detencion-item"><div><div class="time">' + formatearHoraSimple(d.horaInicio) + ' (T' + d.turno + ')</div><div class="reason">' + (d.motivo || 'Sin motivo') + '</div></div><div class="mins">' + d.minutos + ' min</div></div>';
+    });
+    embarqueData.atrasos.slice().reverse().forEach(function(a) {
+      html += '<div class="detencion-item" style="background:rgba(255,145,0,0.08); border-color:rgba(255,145,0,0.2);"><div><div class="time" style="color:#ff9100;">' + formatearHoraSimple(a.horaInicio) + ' (T' + a.turno + ')</div><div class="reason">' + (a.motivo || 'Sin motivo') + '</div></div><div class="mins" style="color:#ff9100;">' + a.minutos + ' min atr</div></div>';
+    });
+    detencionList.innerHTML = html;
+  }
+}
+
+window.modalInicioEmbarque = function() { document.getElementById('modalInicioEmb').classList.add('active'); };
+window.modalDetencion = function() { document.getElementById('modalDetencion').classList.add('active'); };
+window.modalFinEmbarque = function() { document.getElementById('modalFinEmb').classList.add('active'); };
+window.modalGira = function() { document.getElementById('modalGira').classList.add('active'); };
+window.modalAtraso = function() { document.getElementById('modalAtraso').classList.add('active'); };
+window.modalRemateBodega = function() { document.getElementById('modalRemateBodega').classList.add('active'); };
+window.cerrarModalSup = function() { document.querySelectorAll('.modal-overlay').forEach(function(m) { m.classList.remove('active'); }); };
+
+window.guardarInicioEmbarque = function() {
+  var fecha = document.getElementById('inicioEmbarqueInput').value;
+  var obs = document.getElementById('inicioObservacion').value;
+  if (!fecha) { mostrarToast('❌ Ingrese fecha y hora', 'error'); return; }
+  embarqueData.inicio = new Date(fecha).toISOString();
+  embarqueData.obsInicio = obs;
+  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
+  mostrarToast('✅ Inicio de embarque registrado', 'success');
+};
+
+window.guardarDetencion = function() {
+  var hora = document.getElementById('detencionInicioInput').value;
+  var turnoDet = document.getElementById('detencionTurno').value;
+  var minutos = parseInt(document.getElementById('detencionMinutos').value);
+  var motivo = document.getElementById('detencionMotivo').value;
+  if (!hora || !minutos || minutos <= 0) { mostrarToast('❌ Complete todos los campos', 'error'); return; }
+  embarqueData.detenciones.push({ horaInicio: new Date(hora).toISOString(), minutos: minutos, motivo: motivo, turno: turnoDet, registradoPor: 'supervisor' });
+  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
+  mostrarToast('✅ Detención de ' + minutos + ' min registrada', 'success');
+};
+
+window.guardarFinEmbarque = function() {
+  var fecha = document.getElementById('finEmbarqueInput').value;
+  var obs = document.getElementById('finObservacion').value;
+  if (!fecha) { mostrarToast('❌ Ingrese fecha y hora', 'error'); return; }
+  embarqueData.fin = new Date(fecha).toISOString();
+  embarqueData.obsFin = obs;
+  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
+  mostrarToast('✅ Fin de embarque registrado', 'success');
+};
+
+window.guardarGira = function() {
+  var tipo = document.getElementById('giraTipo').value;
+  var hora = document.getElementById('giraHoraInput').value;
+  var obs = document.getElementById('giraObservacion').value;
+  if (!hora) { mostrarToast('❌ Ingrese fecha y hora', 'error'); return; }
+  embarqueData.giras.push({ tipo: tipo, hora: new Date(hora).toISOString(), observacion: obs, turno: currentTurno });
+  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
+  mostrarToast('✅ ' + (tipo === 'salida' ? 'Salida' : 'Retorno') + ' de gira registrado', 'success');
+};
+
+window.guardarAtraso = function() {
+  var hora = document.getElementById('atrasoInicioInput').value;
+  var turnoAtr = document.getElementById('atrasoTurno').value;
+  var minutos = parseInt(document.getElementById('atrasoMinutos').value);
+  var motivo = document.getElementById('atrasoMotivo').value;
+  if (!hora || !minutos || minutos <= 0) { mostrarToast('❌ Complete todos los campos', 'error'); return; }
+  embarqueData.atrasos.push({ horaInicio: new Date(hora).toISOString(), minutos: minutos, motivo: motivo, turno: turnoAtr, registradoPor: 'supervisor' });
+  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
+  mostrarToast('✅ Atraso de ' + minutos + ' min registrado', 'success');
+};
+
+window.guardarRemateBodega = function() {
+  var bodega = document.getElementById('remateBodegaSelect').value;
+  var hora = document.getElementById('remateHoraInput').value;
+  var obs = document.getElementById('remateObservacion').value;
+  if (!bodega || !hora) { mostrarToast('❌ Seleccione bodega y fecha', 'error'); return; }
+  embarqueData.remates[bodega] = { hora: new Date(hora).toISOString(), observacion: obs, registradoPor: 'supervisor' };
+  guardarEnFirebase(); guardarLocal(); cerrarModalSup();
+  mostrarToast('✅ Remate B' + bodega + ' registrado', 'success');
+};
+
+window.mostrarResumen = function() {
+  document.getElementById('modalResumen').classList.add('active');
+  seleccionarTurno(currentTurno || '2', document.querySelector('.turno-tab'));
+};
+window.cerrarModal = function() { document.getElementById('modalResumen').classList.remove('active'); };
+window.seleccionarTurno = function(turno, btn) {
+  document.querySelectorAll('.turno-tab').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  generarReporte(turno);
+};
+
+function filtrarPorTurno(lista, turno) {
+  if (turno === 'todos') return lista;
+  return lista.filter(function(c) { return c.turno === turno; });
+}
+
+function generarReporte(turno) {
+  var filtrados = filtrarPorTurno(camiones, turno);
+  var totalCamiones = filtrados.length;
+  var totalToneladas = filtrados.reduce(function(s, c) { return s + c.cargaNeta; }, 0);
+
+  // Agregar ajuste manual al reporte
+  var tonAjusteTotal = Object.values(ajusteBodegas).reduce(function(sum, b) { return sum + b.toneladas; }, 0);
+  var camAjusteTotal = Object.values(ajusteBodegas).reduce(function(sum, b) { return sum + b.camiones; }, 0;
+
+  if (turno === 'todos') {
+    totalCamiones += camAjusteTotal;
+    totalToneladas += tonAjusteTotal;
+  }
+
+  var horasEfectivas = 8;
+  if (turno !== 'todos') {
+    var detencionesTurno = embarqueData.detenciones.filter(function(d) { return d.turno === turno; });
+    var atrasosTurno = embarqueData.atrasos.filter(function(a) { return a.turno === turno; });
+    var minDet = detencionesTurno.reduce(function(sum, d) { return sum + (d.minutos || 0); }, 0);
+    var minAtr = atrasosTurno.reduce(function(sum, a) { return sum + (a.minutos || 0); }, 0);
+    horasEfectivas = Math.max(8 - ((minDet + minAtr) / 60), 0.1);
+  } else {
+    // Para "todos", usar las horas totales del rate manual
+    horasEfectivas = rateManual.horasTrabajadas || 48.04;
+  }
+
+  var rateHora = horasEfectivas > 0 ? (totalToneladas / horasEfectivas).toFixed(2) : '0.00';
+  var rateDia = (parseFloat(rateHora) * 8).toFixed(2); // Rate día = rate hora * 8
+
+  document.getElementById('reportGrid').innerHTML = 
+    '<div class="report-item"><div class="num">' + totalCamiones + '</div><div class="lbl">Camiones</div></div>' +
+    '<div class="report-item"><div class="num">' + totalToneladas.toFixed(1) + '</div><div class="lbl">Toneladas</div></div>' +
+    '<div class="report-item"><div class="num">' + rateHora + '</div><div class="lbl">Rate ton/hr</div></div>' +
+    '<div class="report-item"><div class="num">' + rateDia + '</div><div class="lbl">Rate día</div></div>';
+
+  var divCamiones = document.getElementById('reporteCamiones');
+  if (filtrados.length === 0 && turno !== 'todos') {
+    divCamiones.innerHTML = '<div style="text-align:center; color:#5c6bc0; padding:18px;">Sin camiones</div>';
+  } else {
+    divCamiones.innerHTML = '<table style="min-width:500px;"><thead><tr><th>Hora</th><th>Patente</th><th>Bod</th><th>Carga</th><th>Turno</th></tr></thead><tbody>' +
+      filtrados.map(function(c) {
+        return '<tr><td>' + formatearHoraSimple(c.hora) + '</td><td><strong>' + c.patente + '</strong></td>' +
+        '<td><span class="badge-b' + c.bodega + '">B' + c.bodega + '</span></td>' +
+        '<td><strong style="color:#00e676;">' + c.cargaNeta.toFixed(2) + '</strong></td>' +
+        '<td>' + c.turno + '°</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  var htmlB = '<table style="min-width:500px;"><thead><tr><th>Bod</th><th>Cap</th><th>Cargado</th><th>%</th><th>Cam</th><th>Rate</th><th>Faltan</th></tr></thead><tbody>';
+  [1, 2, 3, 5].forEach(function(b) {
+    var tonAjuste = ajusteBodegas[b] ? ajusteBodegas[b].toneladas : 0;
+    var camAjuste = ajusteBodegas[b] ? ajusteBodegas[b].camiones : 0;
+    var lista = filtrados.filter(function(c) { return c.bodega === b; });
+    var ton = tonAjuste + lista.reduce(function(s, c) { return s + c.cargaNeta; }, 0);
+    var cam = camAjuste + lista.length;
+    var cap = CAPACIDADES[b];
+    var pct = Math.min((ton / cap) * 100, 100).toFixed(1);
+    var faltan = Math.max(cap - ton, 0).toFixed(1);
+    var rateB = horasEfectivas > 0 ? (ton / horasEfectivas).toFixed(1) : '0.0';
+    var color = b===1 ? '#00e5ff' : b===2 ? '#ff9100' : b===3 ? '#00e676' : '#b388ff';
+    var remate = embarqueData.remates[b];
+    if (remate) { pct = '100.0'; faltan = '0.0'; }
+    htmlB += '<tr><td><span class="badge-b' + b + '">B' + b + '</span></td><td>' + cap.toLocaleString() + '</td>' +
+      '<td><strong>' + ton.toFixed(1) + '</strong></td><td><strong style="color:' + color + '">' + pct + '%</strong></td>' +
+      '<td>' + cam + '</td><td>' + rateB + '</td><td>' + faltan + '</td></tr>';
+  });
+  htmlB += '</tbody></table>';
+  document.getElementById('reporteBodegas').innerHTML = htmlB;
+
+  var htmlR = '<table style="min-width:500px;"><thead><tr><th>Bodega</th><th>Capacidad</th><th>Estado</th><th>Remate Real</th><th>Observación</th></tr></thead><tbody>';
+  [1, 2, 3, 5].forEach(function(b) {
+    var cap = CAPACIDADES[b];
+    var remate = embarqueData.remates[b];
+    var estado = remate ? '<span style="color:#ffd700; font-weight:700;">✅ REMATADA</span>' : '<span style="color:#5c6bc0;">En progreso</span>';
+    var horaRem = remate ? formatearFechaHora(remate.hora) : '--';
+    var obs = remate ? (remate.observacion || '--') : '--';
+    htmlR += '<tr><td><span class="badge-b' + b + '">B' + b + '</span></td><td>' + cap.toLocaleString() + '</td>' +
+      '<td>' + estado + '</td><td>' + horaRem + '</td><td>' + obs + '</td></tr>';
+  });
+  htmlR += '</tbody></table>';
+  document.getElementById('reporteRemates').innerHTML = htmlR;
+}
+
+function descargarCSV(csv, nombre) {
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = nombre;
+  link.click();
+}
+
+window.exportarDatos = function() {
+  if (camiones.length === 0 && Object.values(ajusteBodegas).every(b => b.toneladas === 0)) { 
+    mostrarToast('❌ No hay datos', 'error'); return; 
+  }
+  var csv = 'Hora,Patente,Bodega,Carga Neta (MT),Turno,Fecha
+';
+  camiones.forEach(function(c) {
+    csv += formatearHoraSimple(c.hora) + ',' + c.patente + ',' + c.bodega + ',' + c.cargaNeta.toFixed(2) + ',' + c.turno + ',' + c.fecha + '
+';
+  });
+  // Agregar línea de ajuste manual
+  csv += '
+AJUSTE MANUAL POR BODEGA
+';
+  csv += 'Bodega,Toneladas,Camiones
+';
+  [1,2,3,5].forEach(function(b) {
+    csv += 'B' + b + ',' + (ajusteBodegas[b]?.toneladas || 0) + ',' + (ajusteBodegas[b]?.camiones || 0) + '
+';
+  });
+  descargarCSV(csv, 'MV_GOOFY_Voy18_Completo.csv');
+  mostrarToast('✅ Exportado', 'success');
+};
+
+window.exportarResumen = function() {
+  var activeTab = document.querySelector('.turno-tab.active');
+  var turno = 'todos';
+  if (activeTab.textContent.indexOf('1°') >= 0) turno = '1';
+  else if (activeTab.textContent.indexOf('2°') >= 0) turno = '2';
+  else if (activeTab.textContent.indexOf('3°') >= 0) turno = '3';
+  var filtrados = filtrarPorTurno(camiones, turno);
+  if (filtrados.length === 0 && turno !== 'todos') { mostrarToast('❌ Sin datos', 'error'); return; }
+
+  var csv = 'MV GOOFY - VOYAGE 18 - RESUMEN TURNO: ' + (turno === 'todos' ? 'TODOS' : TURNOS[turno].nombre) + '
+
+';
+  csv += '=== CAMIONES ===
+Hora,Patente,Bodega,Carga Neta,Turno
+';
+  filtrados.forEach(function(c) {
+    csv += formatearHoraSimple(c.hora) + ',' + c.patente + ',' + c.bodega + ',' + c.cargaNeta.toFixed(2) + ',' + c.turno + '
+';
+  });
+
+  csv += '
+=== AJUSTE MANUAL POR BODEGA ===
+Bodega,Toneladas,Camiones
+';
+  [1,2,3,5].forEach(function(b) {
+    csv += 'B' + b + ',' + (ajusteBodegas[b]?.toneladas || 0) + ',' + (ajusteBodegas[b]?.camiones || 0) + '
+';
+  });
+
+  csv += '
+=== BODEGAS ===
+Bodega,Capacidad,Cargado,%,Camiones,Rate,Faltan,Remate
+';
+  var horasEf = turno !== 'todos' ? 8 : (rateManual.horasTrabajadas || 48.04);
+
+  [1, 2, 3, 5].forEach(function(b) {
+    var tonAjuste = ajusteBodegas[b] ? ajusteBodegas[b].toneladas : 0;
+    var camAjuste = ajusteBodegas[b] ? ajusteBodegas[b].camiones : 0;
+    var lista = filtrados.filter(function(c) { return c.bodega === b; });
+    var ton = tonAjuste + lista.reduce(function(s, c) { return s + c.cargaNeta; }, 0);
+    var cam = camAjuste + lista.length;
+    var cap = CAPACIDADES[b];
+    var pct = Math.min((ton / cap) * 100, 100).toFixed(1);
+    var faltan = Math.max(cap - ton, 0).toFixed(1);
+    var rateB = horasEf > 0 ? (ton / horasEf).toFixed(1) : '0.0';
+    var remate = embarqueData.remates[b];
+    var remateStr = remate ? formatearFechaHora(remate.hora) : 'Pendiente';
+    if (remate) { pct = '100.0'; faltan = '0.0'; }
+    csv += 'B' + b + ',' + cap + ',' + ton.toFixed(1) + ',' + pct + '%,' + cam + ',' + rateB + ',' + faltan + ',' + remateStr + '
+';
+  });
+
+  csv += '
+=== RATE MANUAL ===
+Rate Dia,Rate Hora,Horas Trabajadas,Tonelaje Total
+';
+  csv += rateManual.rateDia + ',' + rateManual.rateHora + ',' + rateManual.horasTrabajadas + ',' + rateManual.tonelajeTotal + '
+';
+
+  csv += '
+=== DETENCIONES ===
+Hora,Turno,Minutos,Motivo
+';
+  var dets = turno !== 'todos' ? embarqueData.detenciones.filter(function(d) { return d.turno === turno; }) : embarqueData.detenciones;
+  dets.forEach(function(d) {
+    csv += formatearFechaHora(d.horaInicio) + ',' + d.turno + ',' + d.minutos + ',' + (d.motivo || '') + '
+';
+  });
+
+  csv += '
+=== ATRASOS ===
+Hora,Turno,Minutos,Motivo
+';
+  var atrs = turno !== 'todos' ? embarqueData.atrasos.filter(function(a) { return a.turno === turno; }) : embarqueData.atrasos;
+  atrs.forEach(function(a) {
+    csv += formatearFechaHora(a.horaInicio) + ',' + a.turno + ',' + a.minutos + ',' + (a.motivo || '') + '
+';
+  });
+
+  descargarCSV(csv, 'MV_GOOFY_Voy18_Resumen_' + turno + '.csv');
+  mostrarToast('✅ Resumen exportado', 'success');
+};
+
+function formatearHoraSimple(fecha) {
+  if (!fecha) return '--:--';
+  var d = new Date(fecha);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function formatearFechaHora(fecha) {
+  if (!fecha) return '--';
+  var d = new Date(fecha);
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + ' ' + 
+    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function mostrarToast(mensaje, tipo) {
+  var toast = document.getElementById('toast');
+  toast.className = 'toast toast-' + tipo;
+  toast.textContent = mensaje;
+  toast.classList.add('show');
+  setTimeout(function() { toast.classList.remove('show'); }, 3000);
+}
+
+window.scrollToSection = function(id) {
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+};
+
+init();
+</script>
+</body>
+</html>
