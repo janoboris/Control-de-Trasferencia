@@ -1,1984 +1,586 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTP - Sistema de Gestión Portuaria</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        :root {
-            --htp-blue: #1a365d;
-            --htp-light: #2c5282;
-            --htp-accent: #3182ce;
-            --htp-gold: #d69e2e;
-            --htp-red: #c53030;
-            --htp-green: #38a169;
-            --htp-orange: #dd6b20;
-            --bg: #f7fafc;
-            --card-bg: #ffffff;
-            --text: #2d3748;
-            --text-light: #718096;
-            --border: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HTP - Configurar Buque</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0a1628;
+  color: #e8eaf6;
+  min-height: 100vh;
+  padding-bottom: 20px;
+}
+.header {
+  background: #0f1d33;
+  border-bottom: 1px solid rgba(30, 77, 139, 0.3);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, #1e4d8b, #e85d3e);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px; color: white;
+}
+.logo-text { font-size: 14px; font-weight: 600; }
+.logo-text span { font-size: 11px; color: #8b9dc3; display: block; font-weight: 400; }
 
-        /* HEADER */
-        .header {
-            background: linear-gradient(135deg, var(--htp-blue) 0%, var(--htp-light) 100%);
-            color: white; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
-            box-shadow: var(--shadow-lg); position: sticky; top: 0; z-index: 100;
-        }
-        .header-left { display: flex; align-items: center; gap: 16px; }
-        .logo-section { display: flex; align-items: center; gap: 12px; }
-        .logo-icon {
-            width: 48px; height: 48px; background: white; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center; font-weight: 800;
-            color: var(--htp-blue); font-size: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-        .logo-text h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
-        .logo-text p { font-size: 11px; opacity: 0.85; font-weight: 400; }
-        .mode-badge {
-            padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
-            text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .mode-supervisor { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); }
-        .mode-tarja { background: rgba(214,158,46,0.3); border: 1px solid var(--htp-gold); color: #fff; }
-        .mode-gerencia { background: rgba(56,161,105,0.3); border: 1px solid var(--htp-green); color: #fff; }
-        .header-right { display: flex; align-items: center; gap: 12px; }
-        .header-btn {
-            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
-            color: white; padding: 8px 14px; border-radius: 8px; cursor: pointer;
-            font-size: 13px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
-        }
-        .header-btn:hover { background: rgba(255,255,255,0.25); }
+.container { max-width: 800px; margin: 0 auto; padding: 20px; }
 
-        /* NAV */
-        .nav-tabs {
-            display: flex; background: white; border-bottom: 1px solid var(--border);
-            padding: 0 24px; gap: 4px; overflow-x: auto;
-        }
-        .nav-tab {
-            padding: 14px 20px; border: none; background: none; cursor: pointer;
-            font-size: 13px; font-weight: 600; color: var(--text-light);
-            border-bottom: 3px solid transparent; white-space: nowrap; transition: all 0.2s;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .nav-tab:hover { color: var(--htp-blue); }
-        .nav-tab.active { color: var(--htp-blue); border-bottom-color: var(--htp-blue); }
-        .nav-tab i { font-size: 14px; }
+.card {
+  background: #0f1d33;
+  border: 1px solid rgba(30, 77, 139, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 16px; font-weight: 700;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title .icon { font-size: 20px; }
 
-        /* MAIN */
-        .main-content { padding: 24px; max-width: 1400px; margin: 0 auto; }
-        .section { display: none; }
-        .section.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 12px; color: #8b9dc3;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 14px 16px;
+  background: #0a1628;
+  border: 1px solid rgba(30, 77, 139, 0.4);
+  border-radius: 12px;
+  color: #e8eaf6;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.2s;
+}
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #1e4d8b;
+  box-shadow: 0 0 0 3px rgba(30, 77, 139, 0.2);
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
 
-        /* CARDS */
-        .card {
-            background: var(--card-bg); border-radius: 12px; box-shadow: var(--shadow);
-            border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px;
-        }
-        .card-header {
-            padding: 16px 20px; border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .card-title { font-size: 15px; font-weight: 700; color: var(--htp-blue); display: flex; align-items: center; gap: 8px; }
-        .card-body { padding: 20px; }
+.bodega-config {
+  background: #0a1628;
+  border: 1px solid rgba(30, 77, 139, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.bodega-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.bodega-config-header h4 {
+  font-size: 14px; font-weight: 600;
+  color: #e85d3e;
+}
+.bodega-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bodega-toggle input[type="checkbox"] {
+  width: 20px; height: 20px;
+  accent-color: #e85d3e;
+}
+.bodega-toggle label {
+  font-size: 13px; color: #e8eaf6;
+}
 
-        /* GRID */
-        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-        @media (max-width: 1024px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } .grid-3 { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+.bodega-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.bodega-fields .form-group { margin-bottom: 0; }
+.bodega-fields .form-group label { font-size: 11px; }
+.bodega-fields .form-group input { padding: 10px 12px; font-size: 14px; }
 
-        /* STATS */
-        .stat-card {
-            background: linear-gradient(135deg, var(--htp-blue) 0%, var(--htp-light) 100%);
-            color: white; padding: 20px; border-radius: 12px; position: relative; overflow: hidden;
-        }
-        .stat-card::before {
-            content: ''; position: absolute; top: -20px; right: -20px; width: 80px; height: 80px;
-            background: rgba(255,255,255,0.08); border-radius: 50%;
-        }
-        .stat-card.green { background: linear-gradient(135deg, var(--htp-green) 0%, #2f855a 100%); }
-        .stat-card.orange { background: linear-gradient(135deg, var(--htp-orange) 0%, #c05621 100%); }
-        .stat-card.red { background: linear-gradient(135deg, var(--htp-red) 0%, #9b2c2c 100%); }
-        .stat-card.gold { background: linear-gradient(135deg, var(--htp-gold) 0%, #b7791f 100%); }
-        .stat-label { font-size: 12px; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-        .stat-value { font-size: 28px; font-weight: 800; }
-        .stat-sub { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+.btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary {
+  background: linear-gradient(135deg, #1e4d8b, #2a6bc6);
+  color: white;
+  box-shadow: 0 4px 16px rgba(30, 77, 139, 0.3);
+}
+.btn-success {
+  background: linear-gradient(135deg, #00c853, #00e676);
+  color: #0a1628;
+  box-shadow: 0 4px 16px rgba(0, 200, 83, 0.3);
+}
+.btn-danger {
+  background: linear-gradient(135deg, #ff1744, #d50000);
+  color: white;
+}
+.btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(30, 77, 139, 0.4);
+  color: #8b9dc3;
+}
 
-        /* FORMS */
-        .form-group { margin-bottom: 16px; }
-        .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
-        .form-input, .form-select, .form-textarea {
-            width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px;
-            font-size: 14px; font-family: inherit; transition: all 0.2s; background: white;
-        }
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            outline: none; border-color: var(--htp-accent); box-shadow: 0 0 0 3px rgba(49,130,206,0.1);
-        }
-        .form-textarea { min-height: 80px; resize: vertical; }
+.buque-list-item {
+  background: #0a1628;
+  border: 1px solid rgba(30, 77, 139, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.buque-list-item h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.buque-list-item p { font-size: 12px; color: #8b9dc3; }
+.badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-abierto { background: rgba(0, 200, 83, 0.15); color: #00c853; }
+.badge-cerrado { background: rgba(255, 23, 68, 0.15); color: #ff1744; }
+.badge-gira { background: rgba(255, 145, 0, 0.15); color: #ff9100; }
 
-        /* BUTTONS */
-        .btn {
-            padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
-            cursor: pointer; border: none; transition: all 0.2s; display: inline-flex;
-            align-items: center; gap: 8px; font-family: inherit;
-        }
-        .btn-primary { background: var(--htp-blue); color: white; }
-        .btn-primary:hover { background: var(--htp-light); transform: translateY(-1px); box-shadow: var(--shadow); }
-        .btn-success { background: var(--htp-green); color: white; }
-        .btn-success:hover { background: #2f855a; }
-        .btn-danger { background: var(--htp-red); color: white; }
-        .btn-danger:hover { background: #9b2c2c; }
-        .btn-warning { background: var(--htp-orange); color: white; }
-        .btn-warning:hover { background: #c05621; }
-        .btn-gold { background: var(--htp-gold); color: white; }
-        .btn-gold:hover { background: #b7791f; }
-        .btn-outline {
-            background: transparent; border: 1.5px solid var(--border); color: var(--text);
-        }
-        .btn-outline:hover { border-color: var(--htp-blue); color: var(--htp-blue); }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
-        .btn-lg { padding: 14px 28px; font-size: 15px; }
+.alert {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  display: none;
+  font-weight: 500;
+}
+.alert.active { display: block; }
+.alert-success { background: rgba(0, 200, 83, 0.15); border: 1px solid rgba(0, 200, 83, 0.3); color: #00c853; }
+.alert-error { background: rgba(255, 23, 68, 0.15); border: 1px solid rgba(255, 23, 68, 0.3); color: #ff1744; }
 
-        /* TABLES */
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th {
-            background: var(--htp-blue); color: white; padding: 12px 14px; text-align: left;
-            font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-        td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
-        tr:hover td { background: #f7fafc; }
-        tr:last-child td { border-bottom: none; }
-        .badge {
-            padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
-            display: inline-block;
-        }
-        .badge-green { background: #c6f6d5; color: #22543d; }
-        .badge-yellow { background: #fefcbf; color: #744210; }
-        .badge-red { background: #fed7d7; color: #742a2a; }
-        .badge-blue { background: #bee3f8; color: #2a4365; }
-        .badge-gray { background: #e2e8f0; color: #4a5568; }
+.hidden { display: none !important; }
 
-        /* SHIP CARDS */
-        .ship-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-        .ship-card {
-            background: white; border-radius: 12px; border: 2px solid var(--border);
-            padding: 20px; cursor: pointer; transition: all 0.2s; position: relative;
-        }
-        .ship-card:hover { border-color: var(--htp-accent); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-        .ship-card.selected { border-color: var(--htp-blue); box-shadow: 0 0 0 3px rgba(26,54,93,0.1); }
-        .ship-card.closed { opacity: 0.6; background: #f7fafc; }
-        .ship-card.closed::after {
-            content: 'CERRADO'; position: absolute; top: 12px; right: 12px;
-            background: var(--htp-red); color: white; padding: 2px 8px; border-radius: 4px;
-            font-size: 10px; font-weight: 700;
-        }
-        .ship-name { font-size: 16px; font-weight: 700; color: var(--htp-blue); margin-bottom: 4px; }
-        .ship-detail { font-size: 12px; color: var(--text-light); margin-bottom: 2px; }
-        .ship-progress { margin-top: 12px; }
-        .progress-bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
-        .ship-stats { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
-        .ship-stat { text-align: center; flex: 1; }
-        .ship-stat-value { font-size: 18px; font-weight: 700; color: var(--htp-blue); }
-        .ship-stat-label { font-size: 10px; color: var(--text-light); text-transform: uppercase; }
-
-        /* MODAL */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center; z-index: 1000;
-            opacity: 0; visibility: hidden; transition: all 0.3s;
-        }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal {
-            background: white; border-radius: 16px; width: 90%; max-width: 600px; max-height: 85vh;
-            overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-            transform: scale(0.95); transition: transform 0.3s;
-        }
-        .modal-overlay.active .modal { transform: scale(1); }
-        .modal-header {
-            padding: 20px 24px; border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .modal-title { font-size: 16px; font-weight: 700; color: var(--htp-blue); }
-        .modal-close { background: none; border: none; font-size: 20px; color: var(--text-light); cursor: pointer; }
-        .modal-body { padding: 24px; overflow-y: auto; max-height: 60vh; }
-        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
-
-        /* TABS */
-        .sub-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-        .sub-tab {
-            padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
-            cursor: pointer; border: none; background: none; color: var(--text-light); transition: all 0.2s;
-        }
-        .sub-tab:hover { background: #edf2f7; color: var(--text); }
-        .sub-tab.active { background: var(--htp-blue); color: white; }
-
-        /* ALERT */
-        .alert {
-            padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .alert-success { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
-        .alert-error { background: #fed7d7; color: #742a2a; border: 1px solid #fc8181; }
-        .alert-info { background: #bee3f8; color: #2a4365; border: 1px solid #90cdf4; }
-
-        /* TURNOS */
-        .turno-card {
-            background: white; border: 2px solid var(--border); border-radius: 10px; padding: 16px;
-            margin-bottom: 12px; cursor: pointer; transition: all 0.2s;
-        }
-        .turno-card:hover { border-color: var(--htp-accent); }
-        .turno-card.selected { border-color: var(--htp-blue); background: #ebf8ff; }
-        .turno-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .turno-name { font-weight: 700; font-size: 14px; color: var(--htp-blue); }
-        .turno-time { font-size: 12px; color: var(--text-light); }
-        .turno-stats { display: flex; gap: 20px; font-size: 12px; color: var(--text-light); }
-
-        /* BODEGAS */
-        .bodega-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-        .bodega-card {
-            background: white; border: 2px solid var(--border); border-radius: 10px; padding: 16px;
-            text-align: center; cursor: pointer; transition: all 0.2s;
-        }
-        .bodega-card:hover { border-color: var(--htp-accent); transform: translateY(-2px); }
-        .bodega-card.selected { border-color: var(--htp-blue); background: #ebf8ff; }
-        .bodega-card.occupied { border-color: var(--htp-orange); background: #fffaf0; }
-        .bodega-name { font-size: 20px; font-weight: 800; color: var(--htp-blue); margin-bottom: 4px; }
-        .bodega-status { font-size: 11px; font-weight: 600; }
-        .bodega-capacity { font-size: 12px; color: var(--text-light); margin-top: 4px; }
-
-        /* TIMELINE */
-        .timeline { position: relative; padding-left: 28px; }
-        .timeline::before {
-            content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--border);
-        }
-        .timeline-item { position: relative; margin-bottom: 16px; }
-        .timeline-dot {
-            position: absolute; left: -24px; top: 2px; width: 14px; height: 14px;
-            border-radius: 50%; background: var(--htp-blue); border: 2px solid white; box-shadow: 0 0 0 2px var(--htp-blue);
-        }
-        .timeline-dot.green { background: var(--htp-green); box-shadow: 0 0 0 2px var(--htp-green); }
-        .timeline-dot.red { background: var(--htp-red); box-shadow: 0 0 0 2px var(--htp-red); }
-        .timeline-dot.orange { background: var(--htp-orange); box-shadow: 0 0 0 2px var(--htp-orange); }
-        .timeline-content { background: white; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); }
-        .timeline-time { font-size: 11px; color: var(--text-light); margin-bottom: 4px; }
-        .timeline-text { font-size: 13px; }
-
-        /* CHART PLACEHOLDER */
-        .chart-container { height: 300px; background: #f7fafc; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-light); }
-
-        /* UTILS */
-        .text-center { text-align: center; }
-        .mb-0 { margin-bottom: 0; }
-        .mb-1 { margin-bottom: 8px; }
-        .mb-2 { margin-bottom: 16px; }
-        .mt-2 { margin-top: 16px; }
-        .flex { display: flex; }
-        .flex-between { justify-content: space-between; }
-        .flex-center { align-items: center; }
-        .gap-2 { gap: 16px; }
-        .gap-1 { gap: 8px; }
-        .w-full { width: 100%; }
-
-        /* RESPONSIVE */
-        @media (max-width: 768px) {
-            .header { flex-direction: column; gap: 10px; padding: 12px 16px; }
-            .main-content { padding: 16px; }
-            .bodega-grid { grid-template-columns: repeat(3, 1fr); }
-            .modal { width: 95%; margin: 16px; }
-        }
-
-        /* PRINT */
-        @media print {
-            .header, .nav-tabs, .header-right, .btn { display: none !important; }
-            .section { display: block !important; }
-            .card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
-        }
-
-        /* LOADING */
-        .loading {
-            display: inline-block; width: 20px; height: 20px;
-            border: 3px solid rgba(255,255,255,0.3); border-radius: 50%;
-            border-top-color: white; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* EMPTY STATE */
-        .empty-state { text-align: center; padding: 48px 20px; color: var(--text-light); }
-        .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-        .empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
-        .empty-state p { font-size: 13px; }
-    </style>
+@media (max-width: 480px) {
+  .form-row { grid-template-columns: 1fr; }
+  .bodega-fields { grid-template-columns: 1fr; }
+}
+</style>
 <base target="_blank">
 </head>
 <body>
-    <!-- HEADER -->
-    <header class="header">
-        <div class="header-left">
-            <div class="logo-section">
-                <div class="logo-icon">HTP</div>
-                <div class="logo-text">
-                    <h1>Huachipato Terminal Portuario</h1>
-                    <p>Una empresa del Grupo CAP</p>
-                </div>
-            </div>
-            <span class="mode-badge" id="modeBadge">SUPERVISOR</span>
-        </div>
-        <div class="header-right">
-            <span id="currentDate" style="font-size:13px;opacity:0.9;"></span>
-            <button class="header-btn" onclick="showModal('modalConfig')">
-                <i class="fas fa-cog"></i> Config
-            </button>
-            <button class="header-btn" onclick="window.location.href='index.html'">
-                <i class="fas fa-sign-out-alt"></i> Salir
-            </button>
-        </div>
-    </header>
 
-    <!-- NAV TABS -->
-    <nav class="nav-tabs" id="navTabs">
-        <button class="nav-tab active" data-section="dashboard" onclick="showSection('dashboard')">
-            <i class="fas fa-chart-line"></i> Dashboard
-        </button>
-        <button class="nav-tab" data-section="ships" onclick="showSection('ships')">
-            <i class="fas fa-ship"></i> Buques
-        </button>
-        <button class="nav-tab" data-section="operations" onclick="showSection('operations')">
-            <i class="fas fa-cogs"></i> Operaciones
-        </button>
-        <button class="nav-tab" data-section="reports" onclick="showSection('reports')">
-            <i class="fas fa-file-alt"></i> Reportes
-        </button>
-        <button class="nav-tab" data-section="management" onclick="showSection('management')">
-            <i class="fas fa-tools"></i> Gestión
-        </button>
-    </nav>
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">HTP</div>
+    <div class="logo-text">
+      Control de Transferencia
+      <span>Muelle HTP - Configuración</span>
+    </div>
+  </div>
+</div>
 
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
+<div class="container">
+  <div class="alert alert-success" id="alertSuccess"></div>
+  <div class="alert alert-error" id="alertError"></div>
 
-        <!-- DASHBOARD -->
-        <section id="dashboard" class="section active">
-            <div class="grid-4 mb-2">
-                <div class="stat-card">
-                    <div class="stat-label">Buques Activos</div>
-                    <div class="stat-value" id="statActiveShips">0</div>
-                    <div class="stat-sub">En operación actualmente</div>
-                </div>
-                <div class="stat-card green">
-                    <div class="stat-label">Tonelaje Total</div>
-                    <div class="stat-value" id="statTotalTons">0</div>
-                    <div class="stat-sub">Toneladas en proceso</div>
-                </div>
-                <div class="stat-card orange">
-                    <div class="stat-label">Camiones Hoy</div>
-                    <div class="stat-value" id="statTrucksToday">0</div>
-                    <div class="stat-sub">Vueltas registradas</div>
-                </div>
-                <div class="stat-card gold">
-                    <div class="stat-label">Eficiencia</div>
-                    <div class="stat-value" id="statEfficiency">0%</div>
-                    <div class="stat-sub">Promedio del período</div>
-                </div>
-            </div>
+  <!-- LISTA DE BUQUES ACTIVOS -->
+  <div class="card" id="listaBuquesCard">
+    <div class="card-title"><span class="icon">🚢</span> Buques Configurados</div>
+    <div id="listaBuques">
+      <p style="color:#8b9dc3; text-align:center; padding:20px;">No hay buques configurados</p>
+    </div>
+  </div>
 
-            <div class="grid-2">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-ship"></i> Buques en Operación</div>
-                        <button class="btn btn-sm btn-primary" onclick="showSection('ships')">Ver todos</button>
-                    </div>
-                    <div class="card-body" id="dashboardShips">
-                        <div class="empty-state">
-                            <i class="fas fa-ship"></i>
-                            <h3>No hay buques activos</h3>
-                            <p>Los buques en operación aparecerán aquí</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-clock"></i> Actividad Reciente</div>
-                    </div>
-                    <div class="card-body">
-                        <div class="timeline" id="dashboardTimeline">
-                            <div class="timeline-item">
-                                <div class="timeline-dot"></div>
-                                <div class="timeline-content">
-                                    <div class="timeline-time">Sistema iniciado</div>
-                                    <div class="timeline-text">Bienvenido al sistema HTP</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+  <!-- FORMULARIO NUEVO BUQUE -->
+  <div class="card">
+    <div class="card-title"><span class="icon">➕</span> Configurar Nuevo Buque</div>
 
-        <!-- SHIPS -->
-        <section id="ships" class="section">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><i class="fas fa-ship"></i> Gestión de Buques</div>
-                    <div class="flex gap-1">
-                        <button class="btn btn-primary" onclick="showModal('modalNewShip')">
-                            <i class="fas fa-plus"></i> Nuevo Buque
-                        </button>
-                        <button class="btn btn-outline" onclick="showSection('pastShips')">
-                            <i class="fas fa-history"></i> Historial
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="form-group" style="max-width:400px;">
-                        <input type="text" class="form-input" id="shipSearch" placeholder="🔍 Buscar buque..." onkeyup="filterShips()">
-                    </div>
-                    <div class="ship-grid" id="shipsGrid">
-                        <!-- Ships rendered by JS -->
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- PAST SHIPS -->
-        <section id="pastShips" class="section">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><i class="fas fa-history"></i> Buques Pasados</div>
-                    <button class="btn btn-outline" onclick="showSection('ships')">
-                        <i class="fas fa-arrow-left"></i> Volver
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="sub-tabs">
-                        <button class="sub-tab active" onclick="filterPastShips('all')">Todos</button>
-                        <button class="sub-tab" onclick="filterPastShips('with-detentions')">Con Detenciones</button>
-                        <button class="sub-tab" onclick="filterPastShips('no-detentions')">Sin Detenciones</button>
-                    </div>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Buque</th>
-                                    <th>Operación</th>
-                                    <th>Inicio</th>
-                                    <th>Término</th>
-                                    <th>Tonelaje</th>
-                                    <th>Detenciones</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pastShipsTable">
-                                <!-- Rendered by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- OPERATIONS -->
-        <section id="operations" class="section">
-            <div id="operationsContent">
-                <!-- Content varies by mode -->
-            </div>
-        </section>
-
-        <!-- REPORTS -->
-        <section id="reports" class="section">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><i class="fas fa-file-excel"></i> Reportes y Exportaciones</div>
-                </div>
-                <div class="card-body">
-                    <div class="grid-2">
-                        <div class="card" style="border:1px dashed var(--htp-accent);">
-                            <div class="card-body text-center">
-                                <i class="fas fa-truck" style="font-size:32px;color:var(--htp-blue);margin-bottom:12px;"></i>
-                                <h3 style="font-size:15px;margin-bottom:8px;">Vueltas por Camión</h3>
-                                <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Exporta el detalle de vueltas de camiones por buque y período</p>
-                                <button class="btn btn-primary" onclick="exportTruckTurns()">
-                                    <i class="fas fa-download"></i> Exportar Excel
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card" style="border:1px dashed var(--htp-green);">
-                            <div class="card-body text-center">
-                                <i class="fas fa-ship" style="font-size:32px;color:var(--htp-green);margin-bottom:12px;"></i>
-                                <h3 style="font-size:15px;margin-bottom:8px;">Resumen de Buques</h3>
-                                <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Exporta resumen de todas las operaciones de buques</p>
-                                <button class="btn btn-success" onclick="exportShipsSummary()">
-                                    <i class="fas fa-download"></i> Exportar Excel
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card" style="border:1px dashed var(--htp-orange);">
-                            <div class="card-body text-center">
-                                <i class="fas fa-chart-bar" style="font-size:32px;color:var(--htp-orange);margin-bottom:12px;"></i>
-                                <h3 style="font-size:15px;margin-bottom:8px;">Reporte de Eficiencia</h3>
-                                <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Métricas de eficiencia y productividad</p>
-                                <button class="btn btn-warning" onclick="exportEfficiencyReport()">
-                                    <i class="fas fa-download"></i> Exportar Excel
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card" style="border:1px dashed var(--htp-red);">
-                            <div class="card-body text-center">
-                                <i class="fas fa-exclamation-triangle" style="font-size:32px;color:var(--htp-red);margin-bottom:12px;"></i>
-                                <h3 style="font-size:15px;margin-bottom:8px;">Detenciones</h3>
-                                <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Reporte detallado de detenciones por buque</p>
-                                <button class="btn btn-danger" onclick="exportDetentionsReport()">
-                                    <i class="fas fa-download"></i> Exportar Excel
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- MANAGEMENT -->
-        <section id="management" class="section">
-            <div class="grid-2">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-warehouse"></i> Configuración de Bodegas</div>
-                    </div>
-                    <div class="card-body">
-                        <div class="bodega-grid" id="bodegasGrid">
-                            <!-- Bodegas B1-B5 rendered by JS -->
-                        </div>
-                        <div class="mt-2">
-                            <button class="btn btn-primary" onclick="saveBodegasConfig()">
-                                <i class="fas fa-save"></i> Guardar Configuración
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-users-cog"></i> Configuración de Turnos</div>
-                    </div>
-                    <div class="card-body">
-                        <div id="turnosConfig">
-                            <!-- Turnos rendered by JS -->
-                        </div>
-                        <button class="btn btn-primary mt-2" onclick="saveTurnosConfig()">
-                            <i class="fas fa-save"></i> Guardar Turnos
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mt-2">
-                <div class="card-header">
-                    <div class="card-title"><i class="fas fa-exclamation-circle"></i> Tipos de Detención</div>
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label class="form-label">Agregar nuevo tipo de detención</label>
-                        <div class="flex gap-1">
-                            <input type="text" class="form-input" id="newDetentionType" placeholder="Nombre del tipo de detención">
-                            <button class="btn btn-primary" onclick="addDetentionType()">
-                                <i class="fas fa-plus"></i> Agregar
-                            </button>
-                        </div>
-                    </div>
-                    <div class="table-container mt-2">
-                        <table>
-                            <thead>
-                                <tr><th>Tipo de Detención</th><th>Acciones</th></tr>
-                            </thead>
-                            <tbody id="detentionTypesTable">
-                                <!-- Rendered by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- MODAL: Nuevo Buque -->
-    <div class="modal-overlay" id="modalNewShip">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-plus"></i> Nuevo Buque</div>
-                <button class="modal-close" onclick="closeModal('modalNewShip')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Nombre del Buque</label>
-                    <input type="text" class="form-input" id="newShipName" placeholder="Ej: MV Pacific Star">
-                </div>
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label class="form-label">Tipo de Operación</label>
-                        <select class="form-select" id="newShipOperation">
-                            <option value="Carga">Carga</option>
-                            <option value="Descarga">Descarga</option>
-                            <option value="Transbordo">Transbordo</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Tonelaje Total</label>
-                        <input type="number" class="form-input" id="newShipTonnage" placeholder="Ej: 50000">
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label class="form-label">Fecha de Inicio</label>
-                        <input type="datetime-local" class="form-input" id="newShipStart">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Fecha Est. Término</label>
-                        <input type="datetime-local" class="form-input" id="newShipEnd">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Bodegas Asignadas</label>
-                    <div class="bodega-grid" id="newShipBodegas" style="grid-template-columns: repeat(5, 1fr);">
-                        <div class="bodega-card" data-bodega="B1" onclick="toggleBodegaSelection(this)">
-                            <div class="bodega-name">B1</div>
-                        </div>
-                        <div class="bodega-card" data-bodega="B2" onclick="toggleBodegaSelection(this)">
-                            <div class="bodega-name">B2</div>
-                        </div>
-                        <div class="bodega-card" data-bodega="B3" onclick="toggleBodegaSelection(this)">
-                            <div class="bodega-name">B3</div>
-                        </div>
-                        <div class="bodega-card" data-bodega="B4" onclick="toggleBodegaSelection(this)">
-                            <div class="bodega-name">B4</div>
-                        </div>
-                        <div class="bodega-card" data-bodega="B5" onclick="toggleBodegaSelection(this)">
-                            <div class="bodega-name">B5</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Observaciones</label>
-                    <textarea class="form-textarea" id="newShipNotes" placeholder="Observaciones adicionales..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('modalNewShip')">Cancelar</button>
-                <button class="btn btn-primary" onclick="createNewShip()">
-                    <i class="fas fa-save"></i> Crear Buque
-                </button>
-            </div>
-        </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nombre del Buque</label>
+        <input type="text" id="buqueNombre" placeholder="Ej: MV GOOFY">
+      </div>
+      <div class="form-group">
+        <label>Voyage</label>
+        <input type="text" id="buqueVoyage" placeholder="Ej: V18">
+      </div>
     </div>
 
-    <!-- MODAL: Detalle Buque -->
-    <div class="modal-overlay" id="modalShipDetail">
-        <div class="modal" style="max-width: 800px;">
-            <div class="modal-header">
-                <div class="modal-title" id="shipDetailTitle">Detalle del Buque</div>
-                <button class="modal-close" onclick="closeModal('modalShipDetail')">&times;</button>
-            </div>
-            <div class="modal-body" id="shipDetailBody">
-                <!-- Rendered by JS -->
-            </div>
-            <div class="modal-footer" id="shipDetailFooter">
-                <button class="btn btn-outline" onclick="closeModal('modalShipDetail')">Cerrar</button>
-            </div>
-        </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tipo de Operación</label>
+        <select id="buqueTipoOp" onchange="cambiarTipoOp()">
+          <option value="embarque">Embarque (Carga)</option>
+          <option value="descarga">Descarga</option>
+          <option value="mixto">Mixto (Carga + Descarga)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tipo de Granel</label>
+        <select id="buqueTipoGranel">
+          <option value="trigo">Trigo</option>
+          <option value="soya">Soya</option>
+          <option value="carbon">Carbón</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
     </div>
 
-    <!-- MODAL: Configuración -->
-    <div class="modal-overlay" id="modalConfig">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-cog"></i> Configuración del Sistema</div>
-                <button class="modal-close" onclick="closeModal('modalConfig')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Nombre de la Empresa</label>
-                    <input type="text" class="form-input" id="configCompanyName" value="Huachipato Terminal Portuario">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Subtítulo</label>
-                    <input type="text" class="form-input" id="configSubtitle" value="Una empresa del Grupo CAP">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Logo URL (opcional)</label>
-                    <input type="text" class="form-input" id="configLogo" placeholder="URL del logo">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Zona Horaria</label>
-                    <select class="form-select" id="configTimezone">
-                        <option value="America/Santiago">Santiago, Chile (CLT)</option>
-                        <option value="America/Buenos_Aires">Buenos Aires (ART)</option>
-                        <option value="America/Lima">Lima (PET)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('modalConfig')">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveConfig()">
-                    <i class="fas fa-save"></i> Guardar
-                </button>
-            </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Rate Meta Día (ton/día)</label>
+        <input type="number" id="buqueRateMeta" placeholder="10000" min="1">
+      </div>
+      <div class="form-group">
+        <label>Fecha Inicio</label>
+        <input type="datetime-local" id="buqueFechaInicio">
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIGURACIÓN DE BODEGAS -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🏭</span> Configurar Bodegas</div>
+    <p style="font-size:13px; color:#8b9dc3; margin-bottom:16px;">
+      Active las bodegas que se usarán y configure sus capacidades. 
+      Para embarque: indique cuánto <strong>debe cargarse</strong>. 
+      Para descarga: indique cuánto <strong>lleva cargado</strong> (para calcular lo que falta).
+    </p>
+
+    <!-- BODEGA 1 -->
+    <div class="bodega-config" id="bodega1Config">
+      <div class="bodega-config-header">
+        <h4>🏭 BODEGA 1 (NO.1)</h4>
+        <div class="bodega-toggle">
+          <input type="checkbox" id="b1Activa" checked>
+          <label for="b1Activa">Activar</label>
         </div>
+      </div>
+      <div class="bodega-fields">
+        <div class="form-group">
+          <label>Capacidad Total (MT)</label>
+          <input type="number" id="b1Capacidad" value="12830" min="1">
+        </div>
+        <div class="form-group" id="b1CargadoGroup">
+          <label id="b1LabelCargado">Ya Cargado (MT)</label>
+          <input type="number" id="b1Cargado" value="0" step="0.01">
+        </div>
+      </div>
     </div>
 
-    <!-- MODAL: Registrar Detención -->
-    <div class="modal-overlay" id="modalDetention">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-exclamation-triangle"></i> Registrar Detención</div>
-                <button class="modal-close" onclick="closeModal('modalDetention')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Buque</label>
-                    <input type="text" class="form-input" id="detentionShip" readonly>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Tipo de Detención</label>
-                    <select class="form-select" id="detentionType">
-                        <option value="">Seleccionar tipo...</option>
-                    </select>
-                </div>
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label class="form-label">Inicio</label>
-                        <input type="datetime-local" class="form-input" id="detentionStart">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Término</label>
-                        <input type="datetime-local" class="form-input" id="detentionEnd">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Motivo / Observación</label>
-                    <textarea class="form-textarea" id="detentionNotes" placeholder="Describa el motivo de la detención..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('modalDetention')">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveDetention()">
-                    <i class="fas fa-save"></i> Registrar Detención
-                </button>
-            </div>
+    <!-- BODEGA 2 -->
+    <div class="bodega-config" id="bodega2Config">
+      <div class="bodega-config-header">
+        <h4>🏭 BODEGA 2 (NO.2)</h4>
+        <div class="bodega-toggle">
+          <input type="checkbox" id="b2Activa" checked>
+          <label for="b2Activa">Activar</label>
         </div>
+      </div>
+      <div class="bodega-fields">
+        <div class="form-group">
+          <label>Capacidad Total (MT)</label>
+          <input type="number" id="b2Capacidad" value="5500" min="1">
+        </div>
+        <div class="form-group" id="b2CargadoGroup">
+          <label id="b2LabelCargado">Ya Cargado (MT)</label>
+          <input type="number" id="b2Cargado" value="0" step="0.01">
+        </div>
+      </div>
     </div>
 
-    <!-- MODAL: Registrar Vuelta de Camión -->
-    <div class="modal-overlay" id="modalTruckTurn">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-truck"></i> Registrar Vuelta de Camión</div>
-                <button class="modal-close" onclick="closeModal('modalTruckTurn')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Buque</label>
-                    <select class="form-select" id="truckTurnShip"></select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Patente Camión</label>
-                    <input type="text" class="form-input" id="truckTurnPlate" placeholder="Ej: AB-CD-12">
-                </div>
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label class="form-label">Bodega</label>
-                        <select class="form-select" id="truckTurnBodega">
-                            <option value="B1">B1</option>
-                            <option value="B2">B2</option>
-                            <option value="B3">B3</option>
-                            <option value="B4">B4</option>
-                            <option value="B5">B5</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Toneladas</label>
-                        <input type="number" class="form-input" id="truckTurnTons" placeholder="Ej: 35.5" step="0.1">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Turno</label>
-                    <select class="form-select" id="truckTurnShift"></select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Hora de Registro</label>
-                    <input type="datetime-local" class="form-input" id="truckTurnTime">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('modalTruckTurn')">Cancelar</button>
-                <button class="btn btn-success" onclick="saveTruckTurn()">
-                    <i class="fas fa-save"></i> Registrar Vuelta
-                </button>
-            </div>
+    <!-- BODEGA 3 -->
+    <div class="bodega-config" id="bodega3Config">
+      <div class="bodega-config-header">
+        <h4>🏭 BODEGA 3 (NO.3)</h4>
+        <div class="bodega-toggle">
+          <input type="checkbox" id="b3Activa" checked>
+          <label for="b3Activa">Activar</label>
         </div>
+      </div>
+      <div class="bodega-fields">
+        <div class="form-group">
+          <label>Capacidad Total (MT)</label>
+          <input type="number" id="b3Capacidad" value="13200" min="1">
+        </div>
+        <div class="form-group" id="b3CargadoGroup">
+          <label id="b3LabelCargado">Ya Cargado (MT)</label>
+          <input type="number" id="b3Cargado" value="0" step="0.01">
+        </div>
+      </div>
     </div>
 
-    <!-- MODAL: Ajustar Tonelaje -->
-    <div class="modal-overlay" id="modalAdjustTonnage">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-weight-hanging"></i> Ajustar Tonelaje</div>
-                <button class="modal-close" onclick="closeModal('modalAdjustTonnage')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Buque</label>
-                    <input type="text" class="form-input" id="adjustTonnageShip" readonly>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Tonelaje Actual</label>
-                    <input type="number" class="form-input" id="adjustTonnageCurrent" readonly>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Nuevo Tonelaje Total</label>
-                    <input type="number" class="form-input" id="adjustTonnageNew" placeholder="Nuevo tonelaje">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Motivo del Ajuste</label>
-                    <textarea class="form-textarea" id="adjustTonnageReason" placeholder="Motivo del ajuste..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('modalAdjustTonnage')">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveTonnageAdjustment()">
-                    <i class="fas fa-save"></i> Guardar Ajuste
-                </button>
-            </div>
+    <!-- BODEGA 4 -->
+    <div class="bodega-config" id="bodega4Config">
+      <div class="bodega-config-header">
+        <h4>🏭 BODEGA 4 (NO.4)</h4>
+        <div class="bodega-toggle">
+          <input type="checkbox" id="b4Activa">
+          <label for="b4Activa">Activar</label>
         </div>
+      </div>
+      <div class="bodega-fields">
+        <div class="form-group">
+          <label>Capacidad Total (MT)</label>
+          <input type="number" id="b4Capacidad" value="8000" min="1">
+        </div>
+        <div class="form-group" id="b4CargadoGroup">
+          <label id="b4LabelCargado">Ya Cargado (MT)</label>
+          <input type="number" id="b4Cargado" value="0" step="0.01">
+        </div>
+      </div>
     </div>
 
-    <!-- MODAL: Cerrar Buque -->
-    <div class="modal-overlay" id="modalCloseShip">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-lock"></i> Cerrar Buque</div>
-                <button class="modal-close" onclick="closeModal('modalCloseShip')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-error">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>¿Está seguro de cerrar este buque? Esta acción no se puede deshacer fácilmente.</span>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Buque</label>
-                    <input type="text" class="form-input" id="closeShipName" readonly>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Fecha de Cierre</label>
-                    <input type="datetime-local" class="form-input" id="closeShipDate">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Tonelaje Final</label>
-                    <input type="number" class="form-input" id="closeShipFinalTonnage" placeholder="Tonelaje final cargado/descargado">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Observaciones de Cierre</label>
-                    <textarea class="form-textarea" id="closeShipNotes" placeholder="Observaciones finales..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('modalCloseShip')">Cancelar</button>
-                <button class="btn btn-danger" onclick="confirmCloseShip()">
-                    <i class="fas fa-lock"></i> Cerrar Buque
-                </button>
-            </div>
+    <!-- BODEGA 5 -->
+    <div class="bodega-config" id="bodega5Config">
+      <div class="bodega-config-header">
+        <h4>🏭 BODEGA 5 (NO.5)</h4>
+        <div class="bodega-toggle">
+          <input type="checkbox" id="b5Activa" checked>
+          <label for="b5Activa">Activar</label>
         </div>
-    </div>
-
-    <!-- MODAL: Eliminar Buque -->
-    <div class="modal-overlay" id="modalDeleteShip">
-        <div class="modal" style="max-width: 400px;">
-            <div class="modal-header">
-                <div class="modal-title" style="color: var(--htp-red);"><i class="fas fa-trash"></i> Eliminar Buque</div>
-                <button class="modal-close" onclick="closeModal('modalDeleteShip')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-error">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Esta acción eliminará permanentemente el buque y todos sus datos.</span>
-                </div>
-                <p style="font-size: 13px; margin-bottom: 12px;">Buque a eliminar: <strong id="deleteShipName"></strong></p>
-                <div class="form-group">
-                    <label class="form-label">Escriba ELIMINAR para confirmar</label>
-                    <input type="text" class="form-input" id="deleteShipConfirm" placeholder="ELIMINAR">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('modalDeleteShip')">Cancelar</button>
-                <button class="btn btn-danger" onclick="confirmDeleteShip()">
-                    <i class="fas fa-trash"></i> Eliminar Permanentemente
-                </button>
-            </div>
+      </div>
+      <div class="bodega-fields">
+        <div class="form-group">
+          <label>Capacidad Total (MT)</label>
+          <input type="number" id="b5Capacidad" value="12170" min="1">
         </div>
+        <div class="form-group" id="b5CargadoGroup">
+          <label id="b5LabelCargado">Ya Cargado (MT)</label>
+          <input type="number" id="b5Cargado" value="0" step="0.01">
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-    // ==================== CONFIGURACIÓN Y ESTADO ====================
-    const APP_MODE = new URLSearchParams(window.location.search).get('mode') || 'supervisor';
-    const MODES = { supervisor: 'Supervisor', tarja: 'Tarja', gerencia: 'Gerencia' };
+  <!-- CONFIGURACIÓN ACERO -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🏗️</span> Configuración Acero (Opcional)</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Peso Promedio Rollo (MT)</label>
+        <input type="number" id="aceroRolloPeso" value="12.5" step="0.1">
+      </div>
+      <div class="form-group">
+        <label>Peso Promedio Barra Estándar (MT)</label>
+        <input type="number" id="aceroBarraPeso" value="0.045" step="0.001">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Peso Promedio Barra Larga (MT)</label>
+      <input type="number" id="aceroBarraLargaPeso" value="0.085" step="0.001">
+    </div>
+  </div>
 
-    // Datos iniciales
-    let ships = JSON.parse(localStorage.getItem('htp_ships')) || [
-        {
-            id: 'ship-1', name: 'MV Pacific Star', operation: 'Carga', totalTonnage: 50000,
-            currentTonnage: 23500, startDate: '2026-06-01T08:00', endDate: '2026-06-10T18:00',
-            bodegas: ['B1', 'B2'], status: 'active', closed: false,
-            detentions: [], truckTurns: [], notes: 'Operación normal'
-        },
-        {
-            id: 'ship-2', name: 'MV Atlantic Hope', operation: 'Descarga', totalTonnage: 35000,
-            currentTonnage: 12000, startDate: '2026-06-05T06:00', endDate: '2026-06-12T20:00',
-            bodegas: ['B3'], status: 'active', closed: false,
-            detentions: [{ type: 'Clima', start: '2026-06-07T14:00', end: '2026-06-07T18:00', notes: 'Viento fuerte' }],
-            truckTurns: [], notes: ''
-        },
-        {
-            id: 'ship-3', name: 'MV Southern Cross', operation: 'Carga', totalTonnage: 45000,
-            currentTonnage: 45000, startDate: '2026-05-20T10:00', endDate: '2026-05-28T16:00',
-            bodegas: ['B4', 'B5'], status: 'completed', closed: true, closeDate: '2026-05-28T16:00',
-            detentions: [], truckTurns: [], notes: 'Buque completado sin novedades'
-        }
-    ];
+  <button class="btn btn-success" onclick="guardarBuque()">💾 GUARDAR Y ACTIVAR BUQUE</button>
+  <button class="btn btn-secondary" onclick="window.location.href='tarja.html'" style="margin-top:12px;">Ir a Pantalla Tarja →</button>
+</div>
 
-    let bodegas = JSON.parse(localStorage.getItem('htp_bodegas')) || [
-        { id: 'B1', name: 'B1', capacity: 15000, occupied: true, shipId: 'ship-1' },
-        { id: 'B2', name: 'B2', capacity: 15000, occupied: true, shipId: 'ship-1' },
-        { id: 'B3', name: 'B3', capacity: 12000, occupied: true, shipId: 'ship-2' },
-        { id: 'B4', name: 'B4', capacity: 10000, occupied: false, shipId: null },
-        { id: 'B5', name: 'B5', capacity: 10000, occupied: false, shipId: null }
-    ];
+<script>
+const BODEGAS = [
+  { id: 1, nombre: 'NO.1', defaultCap: 12830 },
+  { id: 2, nombre: 'NO.2', defaultCap: 5500 },
+  { id: 3, nombre: 'NO.3', defaultCap: 13200 },
+  { id: 4, nombre: 'NO.4', defaultCap: 8000 },
+  { id: 5, nombre: 'NO.5', defaultCap: 12170 }
+];
 
-    let turnos = JSON.parse(localStorage.getItem('htp_turnos')) || [
-        { id: 'T1', name: 'Turno A', start: '08:00', end: '16:00', active: true },
-        { id: 'T2', name: 'Turno B', start: '16:00', end: '00:00', active: true },
-        { id: 'T3', name: 'Turno C', start: '00:00', end: '08:00', active: true }
-    ];
+function init() {
+  // Fecha actual para datetime-local
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('buqueFechaInicio').value = now.toISOString().slice(0, 16);
 
-    let detentionTypes = JSON.parse(localStorage.getItem('htp_detentionTypes')) || [
-        'Clima', 'Marea', 'Avería Equipo', 'Falta de Personal', 'Espera de Camiones',
-        'Maniobra de Buque', 'Falla Eléctrica', 'Mantenimiento', 'Otro'
-    ];
+  cambiarTipoOp();
+  renderListaBuques();
+}
 
-    let config = JSON.parse(localStorage.getItem('htp_config')) || {
-        companyName: 'Huachipato Terminal Portuario',
-        subtitle: 'Una empresa del Grupo CAP',
-        timezone: 'America/Santiago'
-    };
+function cambiarTipoOp() {
+  const tipo = document.getElementById('buqueTipoOp').value;
+  const labels = document.querySelectorAll('[id$="LabelCargado"]');
 
-    let currentShip = null;
-    let currentTurno = null;
-    let selectedBodegas = [];
-
-    // ==================== INICIALIZACIÓN ====================
-    function init() {
-        // Configurar modo
-        document.getElementById('modeBadge').textContent = MODES[APP_MODE];
-        document.getElementById('modeBadge').className = 'mode-badge mode-' + APP_MODE;
-
-        // Fecha actual
-        updateCurrentDate();
-        setInterval(updateCurrentDate, 60000);
-
-        // Configurar navegación según modo
-        setupNavigation();
-
-        // Renderizar contenido inicial
-        renderDashboard();
-        renderShips();
-        renderBodegas();
-        renderTurnosConfig();
-        renderDetentionTypes();
-        renderOperations();
-
-        // Configurar modales
-        setupModals();
-
-        // Cargar configuración
-        document.getElementById('configCompanyName').value = config.companyName;
-        document.getElementById('configSubtitle').value = config.subtitle;
-        document.getElementById('configTimezone').value = config.timezone;
+  labels.forEach(lbl => {
+    if (tipo === 'embarque') {
+      lbl.textContent = 'Ya Cargado (MT)';
+    } else if (tipo === 'descarga') {
+      lbl.textContent = 'Total a Descargar (MT)';
+    } else {
+      lbl.textContent = 'Ya Cargado / Inicial (MT)';
     }
+  });
+}
 
-    function updateCurrentDate() {
-        const now = new Date();
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        document.getElementById('currentDate').textContent = now.toLocaleDateString('es-CL', options);
+function showAlert(type, msg) {
+  const el = document.getElementById('alert' + type.charAt(0).toUpperCase() + type.slice(1));
+  el.textContent = msg;
+  el.classList.add('active');
+  setTimeout(() => el.classList.remove('active'), 4000);
+}
+
+function guardarBuque() {
+  const nombre = document.getElementById('buqueNombre').value.trim().toUpperCase();
+  const voyage = document.getElementById('buqueVoyage').value.trim().toUpperCase();
+  const tipoOp = document.getElementById('buqueTipoOp').value;
+  const tipoGranel = document.getElementById('buqueTipoGranel').value;
+  const rateMeta = parseFloat(document.getElementById('buqueRateMeta').value) || 0;
+  const fechaInicio = document.getElementById('buqueFechaInicio').value;
+
+  if (!nombre || !voyage || rateMeta <= 0) {
+    showAlert('error', 'Complete nombre, voyage y rate meta');
+    return;
+  }
+
+  // Cerrar buques anteriores
+  let buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
+  buques.forEach(b => {
+    if (b.estado === 'abierto') b.estado = 'cerrado';
+  });
+
+  // Configurar bodegas
+  const bodegas = [];
+  BODEGAS.forEach(b => {
+    const activa = document.getElementById('b' + b.id + 'Activa').checked;
+    if (activa) {
+      const capacidad = parseFloat(document.getElementById('b' + b.id + 'Capacidad').value) || b.defaultCap;
+      const cargado = parseFloat(document.getElementById('b' + b.id + 'Cargado').value) || 0;
+
+      bodegas.push({
+        id: 'B' + b.id,
+        nombre: b.nombre,
+        activa: true,
+        capacidad: capacidad,
+        cargadoInicial: cargado,
+        cargadoActual: cargado,
+        descargado: 0,
+        porcentajeDescargado: 0,
+        tipo: tipoOp === 'descarga' ? 'descarga' : 'embarque'
+      });
     }
-
-    function setupNavigation() {
-        const navTabs = document.getElementById('navTabs');
-        const tabs = navTabs.querySelectorAll('.nav-tab');
-
-        // Ocultar/mostrar tabs según modo
-        if (APP_MODE === 'tarja') {
-            tabs.forEach(t => {
-                const section = t.dataset.section;
-                if (section === 'management') t.style.display = 'none';
-            });
-        } else if (APP_MODE === 'gerencia') {
-            // Gerencia ve todo
-        }
-    }
-
-    function showSection(sectionId) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-
-        const section = document.getElementById(sectionId);
-        if (section) section.classList.add('active');
-
-        const tab = document.querySelector(`.nav-tab[data-section="${sectionId}"]`);
-        if (tab) tab.classList.add('active');
-
-        // Renderizar contenido específico
-        if (sectionId === 'dashboard') renderDashboard();
-        if (sectionId === 'ships') renderShips();
-        if (sectionId === 'pastShips') renderPastShips();
-        if (sectionId === 'operations') renderOperations();
-        if (sectionId === 'management') { renderBodegas(); renderTurnosConfig(); renderDetentionTypes(); }
-    }
-
-    // ==================== DASHBOARD ====================
-    function renderDashboard() {
-        const activeShips = ships.filter(s => !s.closed);
-        const totalTons = activeShips.reduce((sum, s) => sum + (s.currentTonnage || 0), 0);
-        const totalTrucks = activeShips.reduce((sum, s) => sum + (s.truckTurns ? s.truckTurns.length : 0), 0);
-        const efficiency = activeShips.length > 0
-            ? Math.round(activeShips.reduce((sum, s) => sum + ((s.currentTonnage / s.totalTonnage) * 100), 0) / activeShips.length)
-            : 0;
-
-        document.getElementById('statActiveShips').textContent = activeShips.length;
-        document.getElementById('statTotalTons').textContent = totalTons.toLocaleString();
-        document.getElementById('statTrucksToday').textContent = totalTrucks;
-        document.getElementById('statEfficiency').textContent = efficiency + '%';
-
-        // Renderizar buques activos en dashboard
-        const dashboardShips = document.getElementById('dashboardShips');
-        if (activeShips.length === 0) {
-            dashboardShips.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-ship"></i>
-                    <h3>No hay buques activos</h3>
-                    <p>Los buques en operación aparecerán aquí</p>
-                </div>`;
-        } else {
-            dashboardShips.innerHTML = activeShips.map(ship => `
-                <div class="ship-card" style="margin-bottom:12px;" onclick="showShipDetail('${ship.id}')">
-                    <div class="ship-name">${ship.name}</div>
-                    <div class="ship-detail">${ship.operation} | ${ship.bodegas.join(', ')}</div>
-                    <div class="ship-progress">
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width:${(ship.currentTonnage/ship.totalTonnage*100)}%;background:var(--htp-blue);"></div>
-                        </div>
-                    </div>
-                    <div class="ship-stats">
-                        <div class="ship-stat">
-                            <div class="ship-stat-value">${ship.currentTonnage.toLocaleString()}</div>
-                            <div class="ship-stat-label">Prog.</div>
-                        </div>
-                        <div class="ship-stat">
-                            <div class="ship-stat-value">${ship.totalTonnage.toLocaleString()}</div>
-                            <div class="ship-stat-label">Total</div>
-                        </div>
-                        <div class="ship-stat">
-                            <div class="ship-stat-value">${ship.truckTurns ? ship.truckTurns.length : 0}</div>
-                            <div class="ship-stat-label">Camiones</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-    }
-
-    // ==================== BARCOS / SHIPS ====================
-    function renderShips() {
-        const grid = document.getElementById('shipsGrid');
-        const activeShips = ships.filter(s => !s.closed);
-        const search = document.getElementById('shipSearch')?.value?.toLowerCase() || '';
-        const filtered = activeShips.filter(s => s.name.toLowerCase().includes(search));
-
-        if (filtered.length === 0) {
-            grid.innerHTML = `
-                <div class="empty-state" style="grid-column: 1/-1;">
-                    <i class="fas fa-ship"></i>
-                    <h3>No hay buques activos</h3>
-                    <p>Cree un nuevo buque para comenzar</p>
-                </div>`;
-            return;
-        }
-
-        grid.innerHTML = filtered.map(ship => {
-            const progress = Math.min(100, (ship.currentTonnage / ship.totalTonnage) * 100);
-            const progressColor = progress >= 90 ? 'var(--htp-green)' : progress >= 50 ? 'var(--htp-accent)' : 'var(--htp-orange)';
-            return `
-                <div class="ship-card ${ship.closed ? 'closed' : ''}" onclick="showShipDetail('${ship.id}')">
-                    <div class="ship-name">${ship.name}</div>
-                    <div class="ship-detail"><i class="fas fa-anchor"></i> ${ship.operation}</div>
-                    <div class="ship-detail"><i class="fas fa-warehouse"></i> ${ship.bodegas.join(', ')}</div>
-                    <div class="ship-detail"><i class="fas fa-calendar"></i> ${formatDate(ship.startDate)} - ${formatDate(ship.endDate)}</div>
-                    <div class="ship-progress">
-                        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-bottom:4px;">
-                            <span>Progreso</span>
-                            <span>${progress.toFixed(1)}%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width:${progress}%;background:${progressColor};"></div>
-                        </div>
-                    </div>
-                    <div class="ship-stats">
-                        <div class="ship-stat">
-                            <div class="ship-stat-value">${ship.currentTonnage.toLocaleString()}</div>
-                            <div class="ship-stat-label">Prog. (t)</div>
-                        </div>
-                        <div class="ship-stat">
-                            <div class="ship-stat-value">${ship.totalTonnage.toLocaleString()}</div>
-                            <div class="ship-stat-label">Total (t)</div>
-                        </div>
-                        <div class="ship-stat">
-                            <div class="ship-stat-value">${ship.truckTurns ? ship.truckTurns.length : 0}</div>
-                            <div class="ship-stat-label">Vueltas</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function filterShips() { renderShips(); }
-
-    function showShipDetail(shipId) {
-        const ship = ships.find(s => s.id === shipId);
-        if (!ship) return;
-        currentShip = ship;
-
-        document.getElementById('shipDetailTitle').innerHTML = `<i class="fas fa-ship"></i> ${ship.name}`;
-
-        const progress = Math.min(100, (ship.currentTonnage / ship.totalTonnage) * 100);
-        const detentionsCount = ship.detentions ? ship.detentions.length : 0;
-        const detentionsTime = ship.detentions ? ship.detentions.reduce((sum, d) => {
-            const start = new Date(d.start);
-            const end = new Date(d.end);
-            return sum + (end - start) / (1000 * 60 * 60);
-        }, 0) : 0;
-
-        let actions = '';
-        if (!ship.closed) {
-            if (APP_MODE === 'supervisor' || APP_MODE === 'gerencia') {
-                actions += `<button class="btn btn-primary" onclick="closeModal('modalShipDetail'); showModal('modalAdjustTonnage'); setupAdjustTonnageModal()"><i class="fas fa-weight-hanging"></i> Ajustar Tonelaje</button>`;
-                actions += `<button class="btn btn-warning" onclick="closeModal('modalShipDetail'); showModal('modalDetention'); setupDetentionModal()"><i class="fas fa-exclamation-triangle"></i> Detención</button>`;
-                actions += `<button class="btn btn-danger" onclick="closeModal('modalShipDetail'); showModal('modalCloseShip'); setupCloseShipModal()"><i class="fas fa-lock"></i> Cerrar</button>`;
-            }
-            if (APP_MODE === 'gerencia') {
-                actions += `<button class="btn btn-danger" onclick="closeModal('modalShipDetail'); showModal('modalDeleteShip'); setupDeleteShipModal()"><i class="fas fa-trash"></i> Eliminar</button>`;
-            }
-        }
-
-        document.getElementById('shipDetailBody').innerHTML = `
-            <div class="grid-2" style="margin-bottom:20px;">
-                <div>
-                    <div class="form-group">
-                        <label class="form-label">Operación</label>
-                        <div class="form-input" style="background:#f7fafc;">${ship.operation}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Bodegas</label>
-                        <div class="form-input" style="background:#f7fafc;">${ship.bodegas.join(', ')}</div>
-                    </div>
-                </div>
-                <div>
-                    <div class="form-group">
-                        <label class="form-label">Fecha Inicio</label>
-                        <div class="form-input" style="background:#f7fafc;">${formatDate(ship.startDate)}</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Fecha Término Est.</label>
-                        <div class="form-input" style="background:#f7fafc;">${formatDate(ship.endDate)}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Progreso</label>
-                <div class="progress-bar-bg" style="height:20px;">
-                    <div class="progress-bar-fill" style="width:${progress}%;background:var(--htp-blue);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:600;">${progress.toFixed(1)}%</div>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--text-light);">
-                    <span>${ship.currentTonnage.toLocaleString()} t</span>
-                    <span>${ship.totalTonnage.toLocaleString()} t</span>
-                </div>
-            </div>
-            <div class="grid-3" style="margin-top:16px;">
-                <div class="stat-card" style="padding:16px;">
-                    <div class="stat-label">Detenciones</div>
-                    <div class="stat-value" style="font-size:20px;">${detentionsCount}</div>
-                </div>
-                <div class="stat-card orange" style="padding:16px;">
-                    <div class="stat-label">Tiempo Perdido</div>
-                    <div class="stat-value" style="font-size:20px;">${detentionsTime.toFixed(1)}h</div>
-                </div>
-                <div class="stat-card green" style="padding:16px;">
-                    <div class="stat-label">Vueltas Camión</div>
-                    <div class="stat-value" style="font-size:20px;">${ship.truckTurns ? ship.truckTurns.length : 0}</div>
-                </div>
-            </div>
-            ${ship.notes ? `<div class="form-group mt-2"><label class="form-label">Observaciones</label><div style="padding:12px;background:#f7fafc;border-radius:8px;font-size:13px;">${ship.notes}</div></div>` : ''}
-            ${ship.detentions && ship.detentions.length > 0 ? `
-                <div class="mt-2">
-                    <label class="form-label">Detenciones Registradas</label>
-                    <div class="table-container">
-                        <table>
-                            <thead><tr><th>Tipo</th><th>Inicio</th><th>Término</th><th>Duración</th><th>Notas</th></tr></thead>
-                            <tbody>
-                                ${ship.detentions.map(d => {
-                                    const start = new Date(d.start);
-                                    const end = new Date(d.end);
-                                    const hours = ((end - start) / (1000 * 60 * 60)).toFixed(1);
-                                    return `<tr><td><span class="badge badge-red">${d.type}</span></td><td>${formatDate(d.start)}</td><td>${formatDate(d.end)}</td><td>${hours}h</td><td>${d.notes || '-'}</td></tr>`;
-                                }).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            ` : ''}
-        `;
-
-        document.getElementById('shipDetailFooter').innerHTML = `
-            <button class="btn btn-outline" onclick="closeModal('modalShipDetail')">Cerrar</button>
-            ${actions}
-        `;
-
-        showModal('modalShipDetail');
-    }
-
-    // ==================== BARCOS PASADOS ====================
-    function renderPastShips(filter = 'all') {
-        const tbody = document.getElementById('pastShipsTable');
-        let pastShips = ships.filter(s => s.closed);
-
-        if (filter === 'with-detentions') pastShips = pastShips.filter(s => s.detentions && s.detentions.length > 0);
-        if (filter === 'no-detentions') pastShips = pastShips.filter(s => !s.detentions || s.detentions.length === 0);
-
-        if (pastShips.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="padding:24px;color:var(--text-light);">No hay buques en el historial</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = pastShips.map(ship => {
-            const detentionsCount = ship.detentions ? ship.detentions.length : 0;
-            return `
-                <tr>
-                    <td><strong>${ship.name}</strong></td>
-                    <td>${ship.operation}</td>
-                    <td>${formatDate(ship.startDate)}</td>
-                    <td>${formatDate(ship.closeDate || ship.endDate)}</td>
-                    <td>${(ship.closeFinalTonnage || ship.currentTonnage).toLocaleString()} t</td>
-                    <td>${detentionsCount > 0 ? `<span class="badge badge-red">${detentionsCount}</span>` : '<span class="badge badge-green">0</span>'}</td>
-                    <td><span class="badge badge-gray">Cerrado</span></td>
-                </tr>
-            `;
-        }).join('');
-    }
-
-    function filterPastShips(filter) {
-        document.querySelectorAll('#pastShips .sub-tab').forEach(t => t.classList.remove('active'));
-        event.target.classList.add('active');
-        renderPastShips(filter);
-    }
-
-    // ==================== CREAR NUEVO BUQUE ====================
-    function toggleBodegaSelection(el) {
-        const bodega = el.dataset.bodega;
-        if (selectedBodegas.includes(bodega)) {
-            selectedBodegas = selectedBodegas.filter(b => b !== bodega);
-            el.classList.remove('selected');
-        } else {
-            selectedBodegas.push(bodega);
-            el.classList.add('selected');
-        }
-    }
-
-    function createNewShip() {
-        const name = document.getElementById('newShipName').value.trim();
-        const operation = document.getElementById('newShipOperation').value;
-        const tonnage = parseFloat(document.getElementById('newShipTonnage').value) || 0;
-        const start = document.getElementById('newShipStart').value;
-        const end = document.getElementById('newShipEnd').value;
-        const notes = document.getElementById('newShipNotes').value;
-
-        if (!name) { alert('Ingrese el nombre del buque'); return; }
-        if (selectedBodegas.length === 0) { alert('Seleccione al menos una bodega'); return; }
-        if (!start || !end) { alert('Ingrese las fechas de inicio y término'); return; }
-
-        // Verificar bodegas disponibles
-        for (const bodegaId of selectedBodegas) {
-            const bodega = bodegas.find(b => b.id === bodegaId);
-            if (bodega && bodega.occupied) {
-                alert(`La bodega ${bodegaId} ya está ocupada`);
-                return;
-            }
-        }
-
-        const newShip = {
-            id: 'ship-' + Date.now(),
-            name, operation, totalTonnage: tonnage, currentTonnage: 0,
-            startDate: start, endDate: end, bodegas: [...selectedBodegas],
-            status: 'active', closed: false, detentions: [], truckTurns: [], notes
-        };
-
-        ships.push(newShip);
-
-        // Ocupar bodegas
-        selectedBodegas.forEach(bodegaId => {
-            const bodega = bodegas.find(b => b.id === bodegaId);
-            if (bodega) { bodega.occupied = true; bodega.shipId = newShip.id; }
-        });
-
-        saveData();
-        selectedBodegas = [];
-        closeModal('modalNewShip');
-        renderShips();
-        renderDashboard();
-        renderBodegas();
-        alert('Buque creado exitosamente');
-    }
-
-    // ==================== AJUSTAR TONELAJE ====================
-    function setupAdjustTonnageModal() {
-        if (!currentShip) return;
-        document.getElementById('adjustTonnageShip').value = currentShip.name;
-        document.getElementById('adjustTonnageCurrent').value = currentShip.currentTonnage;
-        document.getElementById('adjustTonnageNew').value = currentShip.currentTonnage;
-        document.getElementById('adjustTonnageReason').value = '';
-    }
-
-    function saveTonnageAdjustment() {
-        if (!currentShip) return;
-        const newTonnage = parseFloat(document.getElementById('adjustTonnageNew').value);
-        const reason = document.getElementById('adjustTonnageReason').value;
-
-        if (isNaN(newTonnage) || newTonnage < 0) { alert('Ingrese un tonelaje válido'); return; }
-
-        currentShip.currentTonnage = newTonnage;
-        if (reason) currentShip.notes = (currentShip.notes ? currentShip.notes + '\n' : '') + `Ajuste tonelaje: ${reason}`;
-
-        saveData();
-        closeModal('modalAdjustTonnage');
-        renderShips();
-        renderDashboard();
-        alert('Tonelaje ajustado exitosamente');
-    }
-
-    // ==================== DETENCIONES ====================
-    function setupDetentionModal() {
-        if (!currentShip) return;
-        document.getElementById('detentionShip').value = currentShip.name;
-        const select = document.getElementById('detentionType');
-        select.innerHTML = '<option value="">Seleccionar tipo...</option>' +
-            detentionTypes.map(t => `<option value="${t}">${t}</option>`).join('');
-        document.getElementById('detentionStart').value = formatDateTimeLocal(new Date());
-        document.getElementById('detentionEnd').value = '';
-        document.getElementById('detentionNotes').value = '';
-    }
-
-    function saveDetention() {
-        if (!currentShip) return;
-        const type = document.getElementById('detentionType').value;
-        const start = document.getElementById('detentionStart').value;
-        const end = document.getElementById('detentionEnd').value;
-        const notes = document.getElementById('detentionNotes').value;
-
-        if (!type) { alert('Seleccione el tipo de detención'); return; }
-        if (!start || !end) { alert('Ingrese las fechas de inicio y término'); return; }
-
-        if (!currentShip.detentions) currentShip.detentions = [];
-        currentShip.detentions.push({ type, start, end, notes });
-
-        saveData();
-        closeModal('modalDetention');
-        alert('Detención registrada exitosamente');
-    }
-
-    // ==================== CERRAR BUQUE ====================
-    function setupCloseShipModal() {
-        if (!currentShip) return;
-        document.getElementById('closeShipName').value = currentShip.name;
-        document.getElementById('closeShipDate').value = formatDateTimeLocal(new Date());
-        document.getElementById('closeShipFinalTonnage').value = currentShip.currentTonnage;
-        document.getElementById('closeShipNotes').value = '';
-    }
-
-    function confirmCloseShip() {
-        if (!currentShip) return;
-        const closeDate = document.getElementById('closeShipDate').value;
-        const finalTonnage = parseFloat(document.getElementById('closeShipFinalTonnage').value);
-        const notes = document.getElementById('closeShipNotes').value;
-
-        if (!closeDate) { alert('Ingrese la fecha de cierre'); return; }
-
-        currentShip.closed = true;
-        currentShip.closeDate = closeDate;
-        currentShip.closeFinalTonnage = finalTonnage;
-        currentShip.status = 'completed';
-        if (notes) currentShip.notes += '\n[Cierre: ' + notes + ']';
-
-        // Liberar bodegas
-        currentShip.bodegas.forEach(bodegaId => {
-            const bodega = bodegas.find(b => b.id === bodegaId);
-            if (bodega) { bodega.occupied = false; bodega.shipId = null; }
-        });
-
-        saveData();
-        closeModal('modalCloseShip');
-        renderShips();
-        renderDashboard();
-        renderBodegas();
-        alert('Buque cerrado exitosamente');
-    }
-
-    // ==================== ELIMINAR BUQUE ====================
-    function setupDeleteShipModal() {
-        if (!currentShip) return;
-        document.getElementById('deleteShipName').textContent = currentShip.name;
-        document.getElementById('deleteShipConfirm').value = '';
-    }
-
-    function confirmDeleteShip() {
-        if (!currentShip) return;
-        const confirm = document.getElementById('deleteShipConfirm').value;
-        if (confirm !== 'ELIMINAR') { alert('Escriba ELIMINAR para confirmar'); return; }
-
-        // Liberar bodegas
-        currentShip.bodegas.forEach(bodegaId => {
-            const bodega = bodegas.find(b => b.id === bodegaId);
-            if (bodega) { bodega.occupied = false; bodega.shipId = null; }
-        });
-
-        ships = ships.filter(s => s.id !== currentShip.id);
-        currentShip = null;
-
-        saveData();
-        closeModal('modalDeleteShip');
-        renderShips();
-        renderDashboard();
-        renderBodegas();
-        alert('Buque eliminado permanentemente');
-    }
-
-    // ==================== BODEGAS ====================
-    function renderBodegas() {
-        const grid = document.getElementById('bodegasGrid');
-        grid.innerHTML = bodegas.map(b => `
-            <div class="bodega-card ${b.occupied ? 'occupied' : ''}">
-                <div class="bodega-name">${b.name}</div>
-                <div class="bodega-status">
-                    <span class="badge ${b.occupied ? 'badge-orange' : 'badge-green'}">${b.occupied ? 'Ocupada' : 'Libre'}</span>
-                </div>
-                <div class="bodega-capacity">Cap: ${b.capacity.toLocaleString()} t</div>
-                ${b.occupied && b.shipId ? `<div class="bodega-capacity" style="font-size:10px;">${ships.find(s => s.id === b.shipId)?.name || ''}</div>` : ''}
-            </div>
-        `).join('');
-    }
-
-    function saveBodegasConfig() {
-        saveData();
-        alert('Configuración de bodegas guardada');
-    }
-
-    // ==================== TURNOS ====================
-    function renderTurnosConfig() {
-        const container = document.getElementById('turnosConfig');
-        container.innerHTML = turnos.map((t, i) => `
-            <div class="turno-card ${t.active ? '' : 'selected'}" style="opacity:${t.active ? 1 : 0.6};">
-                <div class="turno-header">
-                    <div class="turno-name">${t.name}</div>
-                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
-                        <input type="checkbox" ${t.active ? 'checked' : ''} onchange="toggleTurno('${t.id}')"> Activo
-                    </label>
-                </div>
-                <div class="turno-time"><i class="fas fa-clock"></i> ${t.start} - ${t.end}</div>
-            </div>
-        `).join('');
-    }
-
-    function toggleTurno(turnoId) {
-        const turno = turnos.find(t => t.id === turnoId);
-        if (turno) turno.active = !turno.active;
-        renderTurnosConfig();
-    }
-
-    function saveTurnosConfig() {
-        saveData();
-        alert('Configuración de turnos guardada');
-    }
-
-    // ==================== TIPOS DE DETENCIÓN ====================
-    function renderDetentionTypes() {
-        const tbody = document.getElementById('detentionTypesTable');
-        tbody.innerHTML = detentionTypes.map((t, i) => `
-            <tr>
-                <td>${t}</td>
-                <td>
-                    <button class="btn btn-sm btn-danger" onclick="removeDetentionType(${i})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    function addDetentionType() {
-        const input = document.getElementById('newDetentionType');
-        const value = input.value.trim();
-        if (!value) return;
-        if (detentionTypes.includes(value)) { alert('Este tipo ya existe'); return; }
-        detentionTypes.push(value);
-        input.value = '';
-        saveData();
-        renderDetentionTypes();
-    }
-
-    function removeDetentionType(index) {
-        detentionTypes.splice(index, 1);
-        saveData();
-        renderDetentionTypes();
-    }
-
-    // ==================== OPERACIONES (TARJA) ====================
-    function renderOperations() {
-        const container = document.getElementById('operationsContent');
-
-        if (APP_MODE === 'tarja') {
-            container.innerHTML = `
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-truck"></i> Registro de Vueltas de Camión</div>
-                        <button class="btn btn-success" onclick="showModal('modalTruckTurn'); setupTruckTurnModal()">
-                            <i class="fas fa-plus"></i> Nueva Vuelta
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group" style="max-width:300px;">
-                            <select class="form-select" id="truckTurnFilterShip" onchange="renderTruckTurnsTable()">
-                                <option value="">Todos los buques</option>
-                                ${ships.filter(s => !s.closed).map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="table-container">
-                            <table>
-                                <thead>
-                                    <tr><th>Hora</th><th>Buque</th><th>Patente</th><th>Bodega</th><th>Toneladas</th><th>Turno</th></tr>
-                                </thead>
-                                <tbody id="truckTurnsTable"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderTruckTurnsTable();
-        } else if (APP_MODE === 'supervisor') {
-            container.innerHTML = `
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-cogs"></i> Panel de Operaciones - Supervisor</div>
-                    </div>
-                    <div class="card-body">
-                        <div class="grid-2">
-                            <div class="card">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-exclamation-triangle" style="font-size:32px;color:var(--htp-orange);margin-bottom:12px;"></i>
-                                    <h3 style="font-size:15px;margin-bottom:8px;">Registrar Detención</h3>
-                                    <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Registre una detención en un buque activo</p>
-                                    <select class="form-select mb-1" id="quickDetentionShip">
-                                        <option value="">Seleccionar buque...</option>
-                                        ${ships.filter(s => !s.closed).map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-                                    </select>
-                                    <button class="btn btn-warning" onclick="quickDetention()">
-                                        <i class="fas fa-plus"></i> Registrar Detención
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-weight-hanging" style="font-size:32px;color:var(--htp-blue);margin-bottom:12px;"></i>
-                                    <h3 style="font-size:15px;margin-bottom:8px;">Ajustar Tonelaje</h3>
-                                    <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">Ajuste el tonelaje de un buque</p>
-                                    <select class="form-select mb-1" id="quickAdjustShip">
-                                        <option value="">Seleccionar buque...</option>
-                                        ${ships.filter(s => !s.closed).map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-                                    </select>
-                                    <button class="btn btn-primary" onclick="quickAdjustTonnage()">
-                                        <i class="fas fa-edit"></i> Ajustar Tonelaje
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card mt-2">
-                            <div class="card-header">
-                                <div class="card-title"><i class="fas fa-truck"></i> Últimas Vueltas de Camión</div>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-container">
-                                    <table>
-                                        <thead>
-                                            <tr><th>Hora</th><th>Buque</th><th>Patente</th><th>Bodega</th><th>Toneladas</th><th>Turno</th></tr>
-                                        </thead>
-                                        <tbody id="supervisorTruckTurnsTable"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderSupervisorTruckTurns();
-        } else {
-            container.innerHTML = `
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-chart-line"></i> Panel de Gerencia</div>
-                    </div>
-                    <div class="card-body">
-                        <div class="grid-2">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h3 style="font-size:14px;margin-bottom:12px;color:var(--htp-blue);"><i class="fas fa-ship"></i> Resumen de Buques</h3>
-                                    <div class="table-container">
-                                        <table>
-                                            <thead><tr><th>Buque</th><th>Estado</th><th>Progreso</th><th>Detenciones</th></tr></thead>
-                                            <tbody>
-                                                ${ships.map(s => {
-                                                    const progress = Math.min(100, (s.currentTonnage / s.totalTonnage) * 100).toFixed(1);
-                                                    return `<tr>
-                                                        <td>${s.name}</td>
-                                                        <td><span class="badge ${s.closed ? 'badge-gray' : 'badge-green'}">${s.closed ? 'Cerrado' : 'Activo'}</span></td>
-                                                        <td>${progress}%</td>
-                                                        <td>${s.detentions ? s.detentions.length : 0}</td>
-                                                    </tr>`;
-                                                }).join('')}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card">
-                                <div class="card-body">
-                                    <h3 style="font-size:14px;margin-bottom:12px;color:var(--htp-blue);"><i class="fas fa-exclamation-triangle"></i> Detenciones Recientes</h3>
-                                    <div class="timeline">
-                                        ${ships.flatMap(s => (s.detentions || []).map(d => ({...d, ship: s.name}))).sort((a,b) => new Date(b.start) - new Date(a.start)).slice(0, 5).map(d => `
-                                            <div class="timeline-item">
-                                                <div class="timeline-dot red"></div>
-                                                <div class="timeline-content">
-                                                    <div class="timeline-time">${d.ship} - ${formatDate(d.start)}</div>
-                                                    <div class="timeline-text"><span class="badge badge-red">${d.type}</span> ${d.notes || ''}</div>
-                                                </div>
-                                            </div>
-                                        `).join('') || '<p style="color:var(--text-light);font-size:13px;">No hay detenciones registradas</p>'}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-    }
-
-    function setupTruckTurnModal() {
-        const shipSelect = document.getElementById('truckTurnShip');
-        shipSelect.innerHTML = ships.filter(s => !s.closed).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-
-        const turnoSelect = document.getElementById('truckTurnShift');
-        turnoSelect.innerHTML = turnos.filter(t => t.active).map(t => `<option value="${t.id}">${t.name} (${t.start}-${t.end})</option>`).join('');
-
-        document.getElementById('truckTurnPlate').value = '';
-        document.getElementById('truckTurnBodega').value = 'B1';
-        document.getElementById('truckTurnTons').value = '';
-        document.getElementById('truckTurnTime').value = formatDateTimeLocal(new Date());
-    }
-
-    function saveTruckTurn() {
-        const shipId = document.getElementById('truckTurnShip').value;
-        const plate = document.getElementById('truckTurnPlate').value.trim();
-        const bodega = document.getElementById('truckTurnBodega').value;
-        const tons = parseFloat(document.getElementById('truckTurnTons').value);
-        const turnoId = document.getElementById('truckTurnShift').value;
-        const time = document.getElementById('truckTurnTime').value;
-
-        if (!shipId) { alert('Seleccione un buque'); return; }
-        if (!plate) { alert('Ingrese la patente del camión'); return; }
-        if (isNaN(tons) || tons <= 0) { alert('Ingrese las toneladas'); return; }
-        if (!time) { alert('Ingrese la hora'); return; }
-
-        const ship = ships.find(s => s.id === shipId);
-        if (!ship) return;
-
-        if (!ship.truckTurns) ship.truckTurns = [];
-        ship.truckTurns.push({ plate, bodega, tons, turnoId, time, id: Date.now() });
-        ship.currentTonnage = (ship.currentTonnage || 0) + tons;
-
-        saveData();
-        closeModal('modalTruckTurn');
-        renderTruckTurnsTable();
-        renderDashboard();
-        alert('Vuelta registrada exitosamente');
-    }
-
-    function renderTruckTurnsTable() {
-        const filterShipId = document.getElementById('truckTurnFilterShip')?.value;
-        const tbody = document.getElementById('truckTurnsTable');
-        if (!tbody) return;
-
-        let allTurns = [];
-        ships.forEach(s => {
-            if (s.truckTurns) {
-                s.truckTurns.forEach(t => {
-                    allTurns.push({ ...t, shipName: s.name, shipId: s.id });
-                });
-            }
-        });
-
-        if (filterShipId) allTurns = allTurns.filter(t => t.shipId === filterShipId);
-        allTurns.sort((a, b) => new Date(b.time) - new Date(a.time));
-
-        if (allTurns.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:24px;color:var(--text-light);">No hay vueltas registradas</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = allTurns.map(t => `
-            <tr>
-                <td>${formatDate(t.time)}</td>
-                <td>${t.shipName}</td>
-                <td><strong>${t.plate}</strong></td>
-                <td>${t.bodega}</td>
-                <td>${t.tons.toFixed(1)} t</td>
-                <td>${turnos.find(tr => tr.id === t.turnoId)?.name || t.turnoId}</td>
-            </tr>
-        `).join('');
-    }
-
-    function renderSupervisorTruckTurns() {
-        const tbody = document.getElementById('supervisorTruckTurnsTable');
-        if (!tbody) return;
-
-        let allTurns = [];
-        ships.forEach(s => {
-            if (s.truckTurns) {
-                s.truckTurns.forEach(t => {
-                    allTurns.push({ ...t, shipName: s.name });
-                });
-            }
-        });
-        allTurns.sort((a, b) => new Date(b.time) - new Date(a.time));
-        const recent = allTurns.slice(0, 20);
-
-        if (recent.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:24px;color:var(--text-light);">No hay vueltas registradas</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = recent.map(t => `
-            <tr>
-                <td>${formatDate(t.time)}</td>
-                <td>${t.shipName}</td>
-                <td><strong>${t.plate}</strong></td>
-                <td>${t.bodega}</td>
-                <td>${t.tons.toFixed(1)} t</td>
-                <td>${turnos.find(tr => tr.id === t.turnoId)?.name || t.turnoId}</td>
-            </tr>
-        `).join('');
-    }
-
-    function quickDetention() {
-        const shipId = document.getElementById('quickDetentionShip').value;
-        if (!shipId) { alert('Seleccione un buque'); return; }
-        currentShip = ships.find(s => s.id === shipId);
-        showModal('modalDetention');
-        setupDetentionModal();
-    }
-
-    function quickAdjustTonnage() {
-        const shipId = document.getElementById('quickAdjustShip').value;
-        if (!shipId) { alert('Seleccione un buque'); return; }
-        currentShip = ships.find(s => s.id === shipId);
-        showModal('modalAdjustTonnage');
-        setupAdjustTonnageModal();
-    }
-
-    // ==================== EXPORTACIONES EXCEL ====================
-    function exportTruckTurns() {
-        let allTurns = [];
-        ships.forEach(s => {
-            if (s.truckTurns) {
-                s.truckTurns.forEach(t => {
-                    allTurns.push({
-                        'Buque': s.name,
-                        'Patente Camión': t.plate,
-                        'Bodega': t.bodega,
-                        'Toneladas': t.tons,
-                        'Turno': turnos.find(tr => tr.id === t.turnoId)?.name || t.turnoId,
-                        'Fecha/Hora': formatDate(t.time)
-                    });
-                });
-            }
-        });
-
-        if (allTurns.length === 0) { alert('No hay vueltas para exportar'); return; }
-
-        const ws = XLSX.utils.json_to_sheet(allTurns);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Vueltas por Camión');
-        XLSX.writeFile(wb, 'HTP_Vueltas_Camion_' + formatFileDate() + '.xlsx');
-    }
-
-    function exportShipsSummary() {
-        const data = ships.map(s => ({
-            'Nombre': s.name,
-            'Operación': s.operation,
-            'Estado': s.closed ? 'Cerrado' : 'Activo',
-            'Tonelaje Total': s.totalTonnage,
-            'Tonelaje Progreso': s.currentTonnage,
-            'Progreso %': ((s.currentTonnage / s.totalTonnage) * 100).toFixed(1) + '%',
-            'Bodegas': s.bodegas.join(', '),
-            'Fecha Inicio': formatDate(s.startDate),
-            'Fecha Término': formatDate(s.endDate),
-            'Detenciones': s.detentions ? s.detentions.length : 0,
-            'Vueltas Camión': s.truckTurns ? s.truckTurns.length : 0
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Resumen Buques');
-        XLSX.writeFile(wb, 'HTP_Resumen_Buques_' + formatFileDate() + '.xlsx');
-    }
-
-    function exportEfficiencyReport() {
-        const data = ships.filter(s => !s.closed).map(s => {
-            const progress = (s.currentTonnage / s.totalTonnage) * 100;
-            const detentionsCount = s.detentions ? s.detentions.length : 0;
-            const detentionsTime = s.detentions ? s.detentions.reduce((sum, d) => {
-                return sum + (new Date(d.end) - new Date(d.start)) / (1000 * 60 * 60);
-            }, 0) : 0;
-            return {
-                'Buque': s.name,
-                'Operación': s.operation,
-                'Tonelaje Total': s.totalTonnage,
-                'Tonelaje Actual': s.currentTonnage,
-                'Progreso %': progress.toFixed(1),
-                'Detenciones': detentionsCount,
-                'Horas Perdidas': detentionsTime.toFixed(1),
-                'Vueltas Camión': s.truckTurns ? s.truckTurns.length : 0,
-                'Eficiencia Est.': Math.max(0, 100 - (detentionsTime * 2)).toFixed(1) + '%'
-            };
-        });
-
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Eficiencia');
-        XLSX.writeFile(wb, 'HTP_Eficiencia_' + formatFileDate() + '.xlsx');
-    }
-
-    function exportDetentionsReport() {
-        let allDetentions = [];
-        ships.forEach(s => {
-            if (s.detentions) {
-                s.detentions.forEach(d => {
-                    const hours = ((new Date(d.end) - new Date(d.start)) / (1000 * 60 * 60)).toFixed(1);
-                    allDetentions.push({
-                        'Buque': s.name,
-                        'Tipo': d.type,
-                        'Inicio': formatDate(d.start),
-                        'Término': formatDate(d.end),
-                        'Duración (horas)': hours,
-                        'Observaciones': d.notes || ''
-                    });
-                });
-            }
-        });
-
-        if (allDetentions.length === 0) { alert('No hay detenciones para exportar'); return; }
-
-        const ws = XLSX.utils.json_to_sheet(allDetentions);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Detenciones');
-        XLSX.writeFile(wb, 'HTP_Detenciones_' + formatFileDate() + '.xlsx');
-    }
-
-    // ==================== CONFIGURACIÓN ====================
-    function saveConfig() {
-        config.companyName = document.getElementById('configCompanyName').value;
-        config.subtitle = document.getElementById('configSubtitle').value;
-        config.timezone = document.getElementById('configTimezone').value;
-        saveData();
-        closeModal('modalConfig');
-        alert('Configuración guardada');
-    }
-
-    // ==================== MODALES ====================
-    function showModal(modalId) {
-        document.getElementById(modalId).classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal(modalId) {
-        document.getElementById(modalId).classList.remove('active');
-        document.body.style.overflow = '';
-    }
-
-    function setupModals() {
-        document.querySelectorAll('.modal-overlay').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) closeModal(this.id);
-            });
-        });
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal-overlay.active').forEach(m => closeModal(m.id));
-            }
-        });
-    }
-
-    // ==================== UTILIDADES ====================
-    function formatDate(dateStr) {
-        if (!dateStr) return '-';
-        const d = new Date(dateStr);
-        return d.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    }
-
-    function formatDateTimeLocal(date) {
-        const pad = n => n.toString().padStart(2, '0');
-        return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-    }
-
-    function formatFileDate() {
-        const now = new Date();
-        const pad = n => n.toString().padStart(2, '0');
-        return `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
-    }
-
-    function saveData() {
-        localStorage.setItem('htp_ships', JSON.stringify(ships));
-        localStorage.setItem('htp_bodegas', JSON.stringify(bodegas));
-        localStorage.setItem('htp_turnos', JSON.stringify(turnos));
-        localStorage.setItem('htp_detentionTypes', JSON.stringify(detentionTypes));
-        localStorage.setItem('htp_config', JSON.stringify(config));
-    }
-
-    // ==================== INICIAR ====================
-    document.addEventListener('DOMContentLoaded', init);
-    </script>
+  });
+
+  if (bodegas.length === 0) {
+    showAlert('error', 'Active al menos una bodega');
+    return;
+  }
+
+  const buque = {
+    id: Date.now().toString(),
+    nombre: nombre,
+    voyage: voyage,
+    tipoOperacion: tipoOp,
+    tipoGranel: tipoGranel,
+    rateMeta: rateMeta,
+    fechaInicio: new Date(fechaInicio).toISOString(),
+    estado: 'abierto',
+    bodegas: bodegas,
+    acero: {
+      rolloPeso: parseFloat(document.getElementById('aceroRolloPeso').value) || 12.5,
+      barraPeso: parseFloat(document.getElementById('aceroBarraPeso').value) || 0.045,
+      barraLargaPeso: parseFloat(document.getElementById('aceroBarraLargaPeso').value) || 0.085
+    },
+    registros: [],
+    cierres: [],
+    detenciones: [],
+    atrasos: [],
+    gira: null
+  };
+
+  buques.push(buque);
+  localStorage.setItem('htp_buques', JSON.stringify(buques));
+  localStorage.setItem('htp_buque_activo', buque.id);
+
+  // Limpiar form
+  document.getElementById('buqueNombre').value = '';
+  document.getElementById('buqueVoyage').value = '';
+  document.getElementById('buqueRateMeta').value = '';
+
+  showAlert('success', 'Buque ' + nombre + ' ' + voyage + ' activado correctamente');
+  renderListaBuques();
+}
+
+function renderListaBuques() {
+  const buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
+  const container = document.getElementById('listaBuques');
+
+  if (buques.length === 0) {
+    container.innerHTML = '<p style="color:#8b9dc3; text-align:center; padding:20px;">No hay buques configurados</p>';
+    return;
+  }
+
+  container.innerHTML = buques.slice().reverse().map(b => {
+    let badgeClass = 'badge-cerrado';
+    let badgeText = 'CERRADO';
+    if (b.estado === 'abierto') { badgeClass = 'badge-abierto'; badgeText = 'ACTIVO'; }
+    else if (b.estado === 'gira') { badgeClass = 'badge-gira'; badgeText = 'GIRA'; }
+
+    const totalCap = b.bodegas.reduce((s, b) => s + b.capacidad, 0);
+    const totalCargado = b.bodegas.reduce((s, b) => s + b.cargadoActual, 0);
+    const pct = totalCap > 0 ? (totalCargado / totalCap * 100).toFixed(1) : 0;
+
+    return `
+      <div class="buque-list-item">
+        <div>
+          <h4>${b.nombre} ${b.voyage} <span class="badge ${badgeClass}">${badgeText}</span></h4>
+          <p>${b.tipoOperacion} • ${b.tipoGranel} • Rate: ${b.rateMeta.toLocaleString()} ton/día</p>
+          <p>${b.bodegas.length} bodegas • ${totalCargado.toFixed(1)}/${totalCap.toLocaleString()} MT (${pct}%)</p>
+        </div>
+        <div style="display:flex; gap:6px;">
+          ${b.estado === 'abierto' ? 
+            `<button onclick="cerrarBuque('${b.id}')" style="background:rgba(255,23,68,0.2); border:none; color:#ff1744; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px;">Cerrar</button>` 
+            : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function cerrarBuque(id) {
+  if (!confirm('¿Cerrar este buque?')) return;
+  let buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
+  const b = buques.find(bu => bu.id === id);
+  if (b) {
+    b.estado = 'cerrado';
+    b.fechaCierre = new Date().toISOString();
+    localStorage.setItem('htp_buques', JSON.stringify(buques));
+    showAlert('success', 'Buque cerrado');
+    renderListaBuques();
+  }
+}
+
+init();
+</script>
 </body>
 </html>
