@@ -34,6 +34,20 @@ body {
 }
 .logo-text { font-size: 14px; font-weight: 600; }
 .logo-text span { font-size: 11px; color: #8b9dc3; display: block; font-weight: 400; }
+.btn-back {
+  background: transparent;
+  border: 1px solid rgba(30, 77, 139, 0.4);
+  color: #8b9dc3;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-back:hover { border-color: #1e4d8b; color: #e8eaf6; }
 
 .container { max-width: 800px; margin: 0 auto; padding: 20px; }
 
@@ -47,9 +61,10 @@ body {
 .card-title {
   font-size: 16px; font-weight: 700;
   margin-bottom: 16px;
-  display: flex; align-items: center; gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.card-title .icon { font-size: 20px; }
 
 .form-group { margin-bottom: 16px; }
 .form-group label {
@@ -137,19 +152,10 @@ body {
   gap: 8px;
 }
 .btn:active { transform: scale(0.98); }
-.btn-primary {
-  background: linear-gradient(135deg, #1e4d8b, #2a6bc6);
-  color: white;
-  box-shadow: 0 4px 16px rgba(30, 77, 139, 0.3);
-}
 .btn-success {
   background: linear-gradient(135deg, #00c853, #00e676);
   color: #0a1628;
   box-shadow: 0 4px 16px rgba(0, 200, 83, 0.3);
-}
-.btn-danger {
-  background: linear-gradient(135deg, #ff1744, #d50000);
-  color: white;
 }
 .btn-secondary {
   background: transparent;
@@ -207,18 +213,19 @@ body {
     <div class="logo-icon">HTP</div>
     <div class="logo-text">
       Control de Transferencia
-      <span>Muelle HTP - Configuración</span>
+      <span>Configurar Buque</span>
     </div>
   </div>
+  <a href="index.html" class="btn-back">← Volver</a>
 </div>
 
 <div class="container">
   <div class="alert alert-success" id="alertSuccess"></div>
   <div class="alert alert-error" id="alertError"></div>
 
-  <!-- LISTA DE BUQUES ACTIVOS -->
+  <!-- LISTA DE BUQUES -->
   <div class="card" id="listaBuquesCard">
-    <div class="card-title"><span class="icon">🚢</span> Buques Configurados</div>
+    <div class="card-title">🚢 Buques Configurados</div>
     <div id="listaBuques">
       <p style="color:#8b9dc3; text-align:center; padding:20px;">No hay buques configurados</p>
     </div>
@@ -226,7 +233,7 @@ body {
 
   <!-- FORMULARIO NUEVO BUQUE -->
   <div class="card">
-    <div class="card-title"><span class="icon">➕</span> Configurar Nuevo Buque</div>
+    <div class="card-title">➕ Configurar Nuevo Buque</div>
 
     <div class="form-row">
       <div class="form-group">
@@ -273,7 +280,7 @@ body {
 
   <!-- CONFIGURACIÓN DE BODEGAS -->
   <div class="card">
-    <div class="card-title"><span class="icon">🏭</span> Configurar Bodegas</div>
+    <div class="card-title">🏭 Configurar Bodegas</div>
     <p style="font-size:13px; color:#8b9dc3; margin-bottom:16px;">
       Active las bodegas que se usarán y configure sus capacidades. 
       Para embarque: indique cuánto <strong>debe cargarse</strong>. 
@@ -388,7 +395,7 @@ body {
 
   <!-- CONFIGURACIÓN ACERO -->
   <div class="card">
-    <div class="card-title"><span class="icon">🏗️</span> Configuración Acero (Opcional)</div>
+    <div class="card-title">🏗️ Configuración Acero (Opcional)</div>
     <div class="form-row">
       <div class="form-group">
         <label>Peso Promedio Rollo (MT)</label>
@@ -406,7 +413,7 @@ body {
   </div>
 
   <button class="btn btn-success" onclick="guardarBuque()">💾 GUARDAR Y ACTIVAR BUQUE</button>
-  <button class="btn btn-secondary" onclick="window.location.href='tarja.html'" style="margin-top:12px;">Ir a Pantalla Tarja →</button>
+  <a href="index.html" class="btn btn-secondary" style="margin-top:12px; text-decoration:none;">← Volver al Menú Principal</a>
 </div>
 
 <script>
@@ -419,7 +426,6 @@ const BODEGAS = [
 ];
 
 function init() {
-  // Fecha actual para datetime-local
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   document.getElementById('buqueFechaInicio').value = now.toISOString().slice(0, 16);
@@ -463,13 +469,11 @@ function guardarBuque() {
     return;
   }
 
-  // Cerrar buques anteriores
   let buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
   buques.forEach(b => {
     if (b.estado === 'abierto') b.estado = 'cerrado';
   });
 
-  // Configurar bodegas
   const bodegas = [];
   BODEGAS.forEach(b => {
     const activa = document.getElementById('b' + b.id + 'Activa').checked;
@@ -522,7 +526,6 @@ function guardarBuque() {
   localStorage.setItem('htp_buques', JSON.stringify(buques));
   localStorage.setItem('htp_buque_activo', buque.id);
 
-  // Limpiar form
   document.getElementById('buqueNombre').value = '';
   document.getElementById('buqueVoyage').value = '';
   document.getElementById('buqueRateMeta').value = '';

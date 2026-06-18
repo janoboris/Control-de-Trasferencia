@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HTP - Tarja</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0a1628;
+  color: #e8eaf6;
+  min-height: 100vh;
+  padding-bottom: 100px;
+}
+.header {
+  background: #0f1d33;
+  border-bottom: 1px solid rgba(30, 77, 139, 0.3);
+  padding: 14px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.header-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e85d3e;
+}
+.header-sub {
+  font-size: 12px;
+  color: #8b9dc3;
+}
+.header-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-abierto { background: rgba(0, 200, 83, 0.15); color: #00c853; }
+.badge-cerrado { background: rgba(255, 23, 68, 0.15); color: #ff1744; }
+
+.container { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+/* BODEGA CARDS - Estado actual */
+.bodega-card {
+  background: #0f1d33;
+  border: 1px solid rgba(30, 77, 139, 0.3);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.bodega-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.bodega-card-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+}
+.bodega-card-header .badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.badge-embarque { background: rgba(0, 200, 83, 0.15); color: #00c853; }
+.badge-descarga { background: rgba(74, 158, 255, 0.15); color: #4a9eff; }
+
+.bodega-progress {
+  background: #0a1628;
+  border-radius: 8px;
+  height: 24px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 8px;
+}
+.bodega-progress-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.5s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.fill-embarque { background: linear-gradient(90deg, #00c853, #00e676); }
+.fill-descarga { background: linear-gradient(90deg, #4a9eff, #1e4d8b); }
+.fill-warning { background: linear-gradient(90deg, #ff9100, #ffc400); }
+.fill-danger { background: linear-gradient(90deg, #ff1744, #ff5252); }
+
+.bodega-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  font-size: 12px;
+}
+.bodega-stat {
+  text-align: center;
+  padding: 8px;
+  background: #0a1628;
+  border-radius: 8px;
+}
+.bodega-stat .num { font-size: 16px; font-weight: 700; color: #fff; }
+.bodega-stat .lbl { font-size: 10px; color: #8b9dc3; text-transform: uppercase; }
+.bodega-stat .faltan { color: #ff9100; font-weight: 600; }
+
+/* SECTIONS */
+.section {
+  background: #0f1d33;
+  border: 1px solid rgba(30, 77, 139, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title .icon { font-size: 20px; }
+
+/* FORM */
+.form-group { margin-bottom: 14px; }
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: #8b9dc3;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 14px 16px;
+  background: #0a1628;
+  border: 1px solid rgba(30, 77, 139, 0.4);
+  border-radius: 12px;
+  color: #e8eaf6;
+  font-size: 16px;
+  outline: none;
+}
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #e85d3e;
+  box-shadow: 0 0 0 3px rgba(232, 93, 62, 0.2);
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* BUTTONS */
+.btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: linear-gradient(135deg, #e85d3e, #ff7043);
+  color: white;
+  box-shadow: 0 4px 16px rgba(232, 93, 62, 0.3);
+}
+.btn-success {
+  background: linear-gradient(135deg, #00c853, #00e676);
+  color: #0a1628;
+  box-shadow: 0 4px 16px rgba(0, 200, 83, 0.3);
+}
+.btn-warning {
+  background: linear-gradient(135deg, #ff9100, #ffc400);
+  color: #0a1628;
+}
+.btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(30, 77, 139, 0.4);
+  color: #8b9dc3;
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #e8eaf6;
+}
+
+/* TIPO SELECTOR */
+.tipo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.tipo-btn {
+  background: #0a1628;
+  border: 2px solid rgba(30, 77, 139, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #e8eaf6;
+}
+.tipo-btn:hover { border-color: #e85d3e; }
+.tipo-btn.selected {
+  border-color: #e85d3e;
+  background: rgba(232, 93, 62, 0.1);
+}
+.tipo-btn .icon { font-size: 28px; display: block; margin-bottom: 6px; }
+.tipo-btn .name { font-size: 14px; font-weight: 600; }
+.tipo-btn .desc { font-size: 11px; color: #8b9dc3; margin-top: 2px; }
+
+/* BODEGA SELECTOR */
+.bodega-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.bodega-btn {
+  background: #0a1628;
+  border: 2px solid rgba(30, 77, 139, 0.3);
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #e8eaf6;
+}
+.bodega-btn:hover { border-color: #e85d3e; }
+.bodega-btn.selected {
+  border-color: #e85d3e;
+  background: rgba(232, 93, 62, 0.1);
+}
+.bodega-btn .name { font-size: 14px; font-weight: 700; }
+.bodega-btn .info { font-size: 11px; color: #8b9dc3; margin-top: 4px; }
+
+/* RECENT */
+.recent-list { max-height: 200px; overflow-y: auto; }
+.recent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(30, 77, 139, 0.1);
+  font-size: 13px;
+}
+.recent-item:last-child { border-bottom: none; }
+.recent-time { color: #8b9dc3; font-size: 11px; }
+.recent-detail { font-weight: 500; }
+.recent-ton { color: #00c853; font-weight: 700; }
+
+/* ALERT */
+.alert {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  display: none;
+  font-weight: 500;
+}
+.alert.active { display: block; }
+.alert-success { background: rgba(0, 200, 83, 0.15); border: 1px solid rgba(0, 200, 83, 0.3); color: #00c853; }
+.alert-error { background: rgba(255, 23, 68, 0.15); border: 1px solid rgba(255, 23, 68, 0.3); color: #ff1744; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(10, 22, 40, 0.98);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(30, 77, 139, 0.3);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0;
+  z-index: 100;
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 16px;
+  color: #5c6bc0;
+  background: none;
+  border: none;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.nav-item.active { color: #e85d3e; }
+.nav-item .icon { font-size: 22px; }
+
+/* METRICS */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.metric-box {
+  background: #0a1628;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+.metric-value { font-size: 22px; font-weight: 700; }
+.metric-value.success { color: #00c853; }
+.metric-value.warning { color: #ff9100; }
+.metric-label { font-size: 11px; color: #8b9dc3; text-transform: uppercase; }
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  padding: 8px 16px;
+  border: 1px solid rgba(30, 77, 139, 0.3);
+  background: #0a1628;
+  border-radius: 10px;
+  color: #8b9dc3;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.tab.active {
+  background: linear-gradient(135deg, #e85d3e, #ff7043);
+  border-color: transparent;
+  color: white;
+}
+
+/* HIDDEN */
+.hidden { display: none !important; }
+
+@media (max-width: 480px) {
+  .form-row { grid-template-columns: 1fr; }
+  .tipo-grid { grid-template-columns: 1fr; }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-title" id="headerBuque">--</div>
+      <div class="header-sub" id="headerInfo">Seleccione buque y turno</div>
+    </div>
+    <span class="header-badge badge-abierto" id="headerEstado">SIN BUQUE</span>
+  </div>
+</div>
+
+<div class="container">
+  <div class="alert alert-success" id="alertSuccess"></div>
+  <div class="alert alert-error" id="alertError"></div>
+
+  <!-- ====== PASO 1: SELECCIONAR BUQUE Y TURNO ====== -->
+  <div id="paso1">
+    <div class="section">
+      <div class="section-title"><span class="icon">🚢</span> 1. Seleccionar Buque</div>
+      <div id="listaBuques">
+        <p style="color:#8b9dc3; text-align:center; padding:20px;">No hay buques activos. El supervisor debe configurar uno primero.</p>
+      </div>
+    </div>
+
+    <div class="section" id="turnoSection" style="display:none;">
+      <div class="section-title"><span class="icon">📅</span> 2. Seleccionar Turno</div>
+      <div class="tipo-grid">
+        <button class="tipo-btn" onclick="selectTurno(1, this)">
+          <span class="icon">🌙</span>
+          <span class="name">1° Turno</span>
+          <span class="desc">00:00 - 08:00</span>
+        </button>
+        <button class="tipo-btn" onclick="selectTurno(2, this)">
+          <span class="icon">🌅</span>
+          <span class="name">2° Turno</span>
+          <span class="desc">08:00 - 16:00</span>
+        </button>
+        <button class="tipo-btn" onclick="selectTurno(3, this)">
+          <span class="icon">🌇</span>
+          <span class="name">3° Turno</span>
+          <span class="desc">16:00 - 00:00</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PASO 2: DASHBOARD BODEGAS (SOLO LECTURA) ====== -->
+  <div id="paso2" class="hidden">
+    <div class="section">
+      <div class="section-title"><span class="icon">🏭</span> Estado de Bodegas</div>
+      <div id="bodegasDashboard"></div>
+    </div>
+
+    <!-- Métricas del turno -->
+    <div class="metrics-grid">
+      <div class="metric-box">
+        <div class="metric-value success" id="metricCamiones">0</div>
+        <div class="metric-label">Camiones</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-value success" id="metricToneladas">0</div>
+        <div class="metric-label">Toneladas</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-value warning" id="metricRateHora">0</div>
+        <div class="metric-label">Rate Hora</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-value warning" id="metricRateDia">0</div>
+        <div class="metric-label">Rate Día</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PASO 3: REGISTRAR GRANELES ====== -->
+  <div id="paso3Granel" class="hidden">
+    <div class="section">
+      <div class="section-title"><span class="icon">🌾</span> Registrar Graneles</div>
+
+      <div class="form-group">
+        <label>Tipo de Registro</label>
+        <div class="tipo-grid">
+          <button class="tipo-btn selected" id="btnCamion" onclick="setTipoRegistro('camion')">
+            <span class="icon">🚛</span>
+            <span class="name">Por Camión</span>
+            <span class="desc">Porteo individual</span>
+          </button>
+          <button class="tipo-btn" id="btnPorcentaje" onclick="setTipoRegistro('porcentaje')">
+            <span class="icon">📊</span>
+            <span class="name">Por Porcentaje</span>
+            <span class="desc">% descargado</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- POR CAMIÓN -->
+      <div id="formCamion">
+        <div class="form-group">
+          <label>Bodega Destino</label>
+          <div class="bodega-grid" id="bodegasSelectorCamion"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Patente del Camión</label>
+          <input type="text" id="camionPatente" placeholder="AB-CD-12" maxlength="10">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tara Vacía (kg)</label>
+            <input type="number" id="camionTaraVacia" placeholder="15200" onchange="calcularCarga()">
+          </div>
+          <div class="form-group">
+            <label>Tara Llena (kg)</label>
+            <input type="number" id="camionTaraLlena" placeholder="39100" onchange="calcularCarga()">
+          </div>
+        </div>
+
+        <div style="background:#0a1628; border-radius:10px; padding:14px; text-align:center; margin-bottom:14px;">
+          <div style="font-size:11px; color:#8b9dc3; text-transform:uppercase;">Carga Neta</div>
+          <div style="font-size:26px; font-weight:700; color:#00c853;" id="cargaNetaDisplay">0.00 MT</div>
+        </div>
+
+        <button class="btn btn-success" onclick="registrarCamion()">✅ REGISTRAR CAMIÓN</button>
+      </div>
+
+      <!-- POR PORCENTAJE -->
+      <div id="formPorcentaje" class="hidden">
+        <div class="form-group">
+          <label>Bodega</label>
+          <div class="bodega-grid" id="bodegasSelectorPct"></div>
+        </div>
+
+        <div class="form-group">
+          <label>% Descargado TOTAL (acumulado)</label>
+          <input type="number" id="pctDescargado" placeholder="0" min="0" max="100" step="0.1">
+        </div>
+
+        <div style="background:#0a1628; border-radius:10px; padding:14px; margin-bottom:14px;">
+          <div style="font-size:12px; color:#8b9dc3; margin-bottom:4px;">Cálculo automático</div>
+          <div id="pctCalculado" style="font-size:13px;">Seleccione bodega y %</div>
+        </div>
+
+        <button class="btn btn-success" onclick="registrarPorcentaje()">✅ REGISTRAR %</button>
+      </div>
+    </div>
+
+    <!-- Últimos registros -->
+    <div class="section">
+      <div class="section-title"><span class="icon">📋</span> Últimos Registros</div>
+      <div class="recent-list" id="recentGranel">
+        <p style="color:#8b9dc3; text-align:center; padding:12px;">Sin registros aún</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PASO 3: REGISTRAR ACERO ====== -->
+  <div id="paso3Acero" class="hidden">
+    <div class="section">
+      <div class="section-title"><span class="icon">🏗️</span> Registrar Acero</div>
+
+      <div class="form-group">
+        <label>Tipo de Acero</label>
+        <div class="tipo-grid">
+          <button class="tipo-btn selected" id="btnRollos" onclick="setTipoAcero('rollos')">
+            <span class="icon">🌀</span>
+            <span class="name">Rollos</span>
+            <span class="desc" id="descRollos">12.5 MT/prom</span>
+          </button>
+          <button class="tipo-btn" id="btnBarras" onclick="setTipoAcero('barras')">
+            <span class="icon">⬡</span>
+            <span class="name">Barras</span>
+            <span class="desc" id="descBarras">45 kg/prom</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ROLLOS -->
+      <div id="formRollos">
+        <div class="form-group">
+          <label>Patente</label>
+          <input type="text" id="rolloPatente" placeholder="AB-CD-12">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cantidad Rollos</label>
+            <input type="number" id="rolloCantidad" placeholder="9" min="1" onchange="calcularAcero()">
+          </div>
+          <div class="form-group">
+            <label>Peso por Rollo (MT)</label>
+            <input type="number" id="rolloPeso" placeholder="12.5" step="0.1" onchange="calcularAcero()">
+          </div>
+        </div>
+        <div style="background:#0a1628; border-radius:10px; padding:14px; text-align:center; margin-bottom:14px;">
+          <div style="font-size:11px; color:#8b9dc3; text-transform:uppercase;">Total</div>
+          <div style="font-size:26px; font-weight:700; color:#00c853;" id="rolloTotal">0.00 MT</div>
+        </div>
+        <button class="btn btn-success" onclick="registrarRollos()">✅ REGISTRAR ROLLOS</button>
+      </div>
+
+      <!-- BARRAS -->
+      <div id="formBarras" class="hidden">
+        <div class="form-group">
+          <label>Tipo de Barra</label>
+          <select id="barraTipo" onchange="actualizarPesoBarra()">
+            <option value="std">Estándar</option>
+            <option value="larga">Larga</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Patente</label>
+          <input type="text" id="barraPatente" placeholder="AB-CD-12">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cantidad Barras</label>
+            <input type="number" id="barraCantidad" placeholder="16" min="1" onchange="calcularAcero()">
+          </div>
+          <div class="form-group">
+            <label>Peso por Barra (MT)</label>
+            <input type="number" id="barraPeso" placeholder="0.045" step="0.001" onchange="calcularAcero()">
+          </div>
+        </div>
+        <div style="background:#0a1628; border-radius:10px; padding:14px; text-align:center; margin-bottom:14px;">
+          <div style="font-size:11px; color:#8b9dc3; text-transform:uppercase;">Total</div>
+          <div style="font-size:26px; font-weight:700; color:#00c853;" id="barraTotal">0.00 MT</div>
+        </div>
+        <button class="btn btn-success" onclick="registrarBarras()">✅ REGISTRAR BARRAS</button>
+      </div>
+    </div>
+
+    <!-- Acumulado acero -->
+    <div class="section">
+      <div class="section-title"><span class="icon">📊</span> Acumulado Acero - Turno</div>
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-value" id="aceroRollosCount">0</div>
+          <div class="metric-label">Rollos</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value" id="aceroBarrasCount">0</div>
+          <div class="metric-label">Barras</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value success" id="aceroTotalTon">0</div>
+          <div class="metric-label">Total MT</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value warning" id="aceroRateHora">0</div>
+          <div class="metric-label">Rate Hora</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== CIERRE DE TURNO ====== -->
+  <div id="pasoCierre" class="hidden">
+    <div class="section">
+      <div class="section-title"><span class="icon">🔒</span> Cierre de Turno</div>
+
+      <div class="form-group">
+        <label>Minutos de Atraso</label>
+        <input type="number" id="cierreAtraso" value="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Minutos de Detención</label>
+        <input type="number" id="cierreDetencion" value="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Observaciones</label>
+        <input type="text" id="cierreObs" placeholder="Ej: Lluvia, problema mecánico...">
+      </div>
+
+      <button class="btn btn-warning" onclick="solicitarCierre()">🔒 SOLICITAR CIERRE</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottomNav" style="display:none;">
+  <button class="nav-item active" onclick="showTab('bodegas')" id="navBodegas">
+    <span class="icon">🏭</span>
+    <span>Bodegas</span>
+  </button>
+  <button class="nav-item" onclick="showTab('granel')" id="navGranel">
+    <span class="icon">🌾</span>
+    <span>Granel</span>
+  </button>
+  <button class="nav-item" onclick="showTab('acero')" id="navAcero">
+    <span class="icon">🏗️</span>
+    <span>Acero</span>
+  </button>
+  <button class="nav-item" onclick="showTab('cierre')" id="navCierre">
+    <span class="icon">🔒</span>
+    <span>Cierre</span>
+  </button>
+</div>
+
+<script>
+let buqueActivo = null;
+let turnoActual = null;
+let currentTab = 'bodegas';
+let tipoRegistro = 'camion';
+let tipoAcero = 'rollos';
+let bodegaSeleccionada = null;
+let bodegaSeleccionadaPct = null;
+
+function init() {
+  cargarBuques();
+}
+
+function cargarBuques() {
+  const buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
+  const activos = buques.filter(b => b.estado === 'abierto');
+  const container = document.getElementById('listaBuques');
+
+  if (activos.length === 0) {
+    container.innerHTML = '<p style="color:#8b9dc3; text-align:center; padding:20px;">No hay buques activos. El supervisor debe configurar uno primero en <strong>index.html</strong>.</p>';
+    return;
+  }
+
+  container.innerHTML = activos.map(b => {
+    const totalCap = b.bodegas.reduce((s, b) => s + b.capacidad, 0);
+    const totalCargado = b.bodegas.reduce((s, b) => s + b.cargadoActual, 0);
+    const pct = totalCap > 0 ? (totalCargado / totalCap * 100).toFixed(1) : 0;
+
+    return `
+      <div class="buque-list-item" style="cursor:pointer; margin-bottom:10px;" onclick="seleccionarBuque('${b.id}')">
+        <div>
+          <h4 style="font-size:15px; font-weight:700; margin-bottom:4px;">${b.nombre} ${b.voyage}</h4>
+          <p style="font-size:12px; color:#8b9dc3;">${b.tipoOperacion} • ${b.tipoGranel} • ${b.bodegas.length} bodegas</p>
+          <p style="font-size:12px; color:#00c853;">${totalCargado.toFixed(1)}/${totalCap.toLocaleString()} MT (${pct}%)</p>
+        </div>
+        <div style="font-size:20px;">→</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function seleccionarBuque(id) {
+  const buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
+  buqueActivo = buques.find(b => b.id === id);
+
+  if (!buqueActivo) return;
+
+  document.getElementById('headerBuque').textContent = buqueActivo.nombre + ' ' + buqueActivo.voyage;
+  document.getElementById('headerInfo').textContent = buqueActivo.tipoOperacion + ' • ' + buqueActivo.tipoGranel;
+  document.getElementById('headerEstado').textContent = 'ACTIVO';
+  document.getElementById('headerEstado').className = 'header-badge badge-abierto';
+
+  document.getElementById('turnoSection').style.display = 'block';
+
+  // Actualizar descripciones de acero
+  if (buqueActivo.acero) {
+    document.getElementById('descRollos').textContent = buqueActivo.acero.rolloPeso + ' MT/prom';
+    document.getElementById('descBarras').textContent = (buqueActivo.acero.barraPeso * 1000).toFixed(0) + ' kg/prom';
+    document.getElementById('rolloPeso').value = buqueActivo.acero.rolloPeso;
+    document.getElementById('barraPeso').value = buqueActivo.acero.barraPeso;
+  }
+}
+
+function selectTurno(turno, btn) {
+  turnoActual = turno;
+  document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  // Crear o cargar turno
+  let turnos = JSON.parse(localStorage.getItem('htp_turnos') || '[]');
+  const hoy = new Date().toISOString().split('T')[0];
+
+  let turnoData = turnos.find(t => 
+    t.buqueId === buqueActivo.id && 
+    t.turno === turno && 
+    t.fecha === hoy
+  );
+
+  if (!turnoData) {
+    turnoData = {
+      id: Date.now().toString(),
+      buqueId: buqueActivo.id,
+      turno: turno,
+      fecha: hoy,
+      estado: 'abierto',
+      registros: [],
+      minutosAtraso: 0,
+      minutosDetencion: 0,
+      observaciones: ''
+    };
+    turnos.push(turnoData);
+    localStorage.setItem('htp_turnos', JSON.stringify(turnos));
+  }
+
+  document.getElementById('paso1').classList.add('hidden');
+  document.getElementById('paso2').classList.remove('hidden');
+  document.getElementById('bottomNav').style.display = 'flex';
+
+  renderBodegasDashboard();
+  updateMetrics();
+  renderBodegasSelector();
+  renderRecent();
+}
+
+function showTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+
+  document.getElementById('paso2').classList.add('hidden');
+  document.getElementById('paso3Granel').classList.add('hidden');
+  document.getElementById('paso3Acero').classList.add('hidden');
+  document.getElementById('pasoCierre').classList.add('hidden');
+
+  if (tab === 'bodegas') {
+    document.getElementById('paso2').classList.remove('hidden');
+    renderBodegasDashboard();
+  } else if (tab === 'granel') {
+    document.getElementById('paso3Granel').classList.remove('hidden');
+  } else if (tab === 'acero') {
+    document.getElementById('paso3Acero').classList.remove('hidden');
+  } else if (tab === 'cierre') {
+    document.getElementById('pasoCierre').classList.remove('hidden');
+  }
+
+  updateMetrics();
+}
+
+function renderBodegasDashboard() {
+  if (!buqueActivo) return;
+
+  const container = document.getElementById('bodegasDashboard');
+
+  container.innerHTML = buqueActivo.bodegas.map(b => {
+    const capacidad = b.capacidad || 0;
+    const cargado = b.cargadoActual || 0;
+    const descargado = b.descargado || 0;
+    const total = cargado + descargado;
+    const pct = capacidad > 0 ? Math.min((total / capacidad) * 100, 100) : 0;
+    const faltan = Math.max(0, capacidad - total);
+
+    let fillClass = 'fill-embarque';
+    if (b.tipo === 'descarga') fillClass = 'fill-descarga';
+    if (pct >= 90) fillClass = 'fill-warning';
+    if (pct >= 100) fillClass = 'fill-danger';
+
+    const badgeClass = b.tipo === 'descarga' ? 'badge-descarga' : 'badge-embarque';
+    const tipoText = b.tipo === 'descarga' ? 'DESCARGA' : 'EMBARQUE';
+
+    return `
+      <div class="bodega-card">
+        <div class="bodega-card-header">
+          <h3>🏭 ${b.id} (${b.nombre})</h3>
+          <span class="badge ${badgeClass}">${tipoText}</span>
+        </div>
+        <div class="bodega-progress">
+          <div class="bodega-progress-fill ${fillClass}" style="width:${pct.toFixed(1)}%">
+            ${pct.toFixed(1)}%
+          </div>
+        </div>
+        <div class="bodega-stats">
+          <div class="bodega-stat">
+            <div class="num">${cargado.toFixed(1)}</div>
+            <div class="lbl">Cargado</div>
+          </div>
+          <div class="bodega-stat">
+            <div class="num">${descargado.toFixed(1)}</div>
+            <div class="lbl">Descargado</div>
+          </div>
+          <div class="bodega-stat">
+            <div class="num faltan">${faltan.toFixed(1)}</div>
+            <div class="lbl">Faltan</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderBodegasSelector() {
+  if (!buqueActivo) return;
+
+  const html = buqueActivo.bodegas.map(b => {
+    const cargado = b.cargadoActual || 0;
+    const cap = b.capacidad || 0;
+    const pct = cap > 0 ? (cargado / cap * 100).toFixed(0) : 0;
+
+    return `
+      <button class="bodega-btn ${bodegaSeleccionada === b.id ? 'selected' : ''}" 
+              onclick="selectBodega('${b.id}')">
+        <div class="name">${b.id}</div>
+        <div class="info">${cargado.toFixed(0)}/${cap.toLocaleString()}<br>${pct}%</div>
+      </button>
+    `;
+  }).join('');
+
+  document.getElementById('bodegasSelectorCamion').innerHTML = html;
+
+  const htmlPct = buqueActivo.bodegas.map(b => {
+    const cargado = b.cargadoActual || 0;
+    const cap = b.capacidad || 0;
+    const pct = cap > 0 ? (cargado / cap * 100).toFixed(0) : 0;
+
+    return `
+      <button class="bodega-btn ${bodegaSeleccionadaPct === b.id ? 'selected' : ''}" 
+              onclick="selectBodegaPct('${b.id}')">
+        <div class="name">${b.id}</div>
+        <div class="info">${cargado.toFixed(0)}/${cap.toLocaleString()}<br>${pct}%</div>
+      </button>
+    `;
+  }).join('');
+
+  document.getElementById('bodegasSelectorPct').innerHTML = htmlPct;
+}
+
+function selectBodega(id) {
+  bodegaSeleccionada = id;
+  renderBodegasSelector();
+}
+
+function selectBodegaPct(id) {
+  bodegaSeleccionadaPct = id;
+  renderBodegasSelector();
+
+  // Calcular preview
+  const b = buqueActivo.bodegas.find(bo => bo.id === id);
+  if (b) {
+    const cap = b.capacidad || 0;
+    const actual = b.cargadoActual || 0;
+    const pctActual = cap > 0 ? (actual / cap * 100).toFixed(1) : 0;
+    document.getElementById('pctCalculado').innerHTML = `
+      Actual: ${actual.toFixed(1)} MT (${pctActual}%)<br>
+      Capacidad: ${cap.toLocaleString()} MT
+    `;
+  }
+}
+
+function setTipoRegistro(tipo) {
+  tipoRegistro = tipo;
+  document.getElementById('btnCamion').classList.toggle('selected', tipo === 'camion');
+  document.getElementById('btnPorcentaje').classList.toggle('selected', tipo === 'porcentaje');
+  document.getElementById('formCamion').classList.toggle('hidden', tipo !== 'camion');
+  document.getElementById('formPorcentaje').classList.toggle('hidden', tipo !== 'porcentaje');
+}
+
+function calcularCarga() {
+  const taraVacia = parseFloat(document.getElementById('camionTaraVacia').value) || 0;
+  const taraLlena = parseFloat(document.getElementById('camionTaraLlena').value) || 0;
+  const carga = (taraLlena - taraVacia) / 1000;
+  document.getElementById('cargaNetaDisplay').textContent = carga.toFixed(2) + ' MT';
+  return carga;
+}
+
+function registrarCamion() {
+  if (!bodegaSeleccionada) {
+    showAlert('error', 'Seleccione una bodega');
+    return;
+  }
+
+  const patente = document.getElementById('camionPatente').value.trim().toUpperCase();
+  const carga = calcularCarga();
+
+  if (!patente || carga <= 0) {
+    showAlert('error', 'Complete patente y pesos válidos');
+    return;
+  }
+
+  // Guardar registro
+  guardarRegistro({
+    tipo: 'camion_granel',
+    bodega: bodegaSeleccionada,
+    patente: patente,
+    taraVacia: parseFloat(document.getElementById('camionTaraVacia').value) || 0,
+    taraLlena: parseFloat(document.getElementById('camionTaraLlena').value) || 0,
+    toneladas: carga,
+    hora: new Date().toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'})
+  });
+
+  // Actualizar bodega
+  const b = buqueActivo.bodegas.find(bo => bo.id === bodegaSeleccionada);
+  if (b) {
+    b.cargadoActual = (b.cargadoActual || 0) + carga;
+  }
+
+  guardarBuque();
+
+  // Limpiar
+  document.getElementById('camionPatente').value = '';
+  document.getElementById('camionTaraVacia').value = '';
+  document.getElementById('camionTaraLlena').value = '';
+  document.getElementById('cargaNetaDisplay').textContent = '0.00 MT';
+
+  showAlert('success', 'Camión ' + patente + ' registrado: +' + carga.toFixed(2) + ' MT');
+  renderBodegasDashboard();
+  renderBodegasSelector();
+  updateMetrics();
+  renderRecent();
+}
+
+function registrarPorcentaje() {
+  if (!bodegaSeleccionadaPct) {
+    showAlert('error', 'Seleccione una bodega');
+    return;
+  }
+
+  const pct = parseFloat(document.getElementById('pctDescargado').value) || 0;
+  if (pct < 0 || pct > 100) {
+    showAlert('error', 'Porcentaje debe ser entre 0 y 100');
+    return;
+  }
+
+  const b = buqueActivo.bodegas.find(bo => bo.id === bodegaSeleccionadaPct);
+  if (!b) return;
+
+  const cap = b.capacidad || 0;
+  const nuevoDescargado = (pct / 100) * cap;
+  const anterior = b.descargado || 0;
+  const delta = nuevoDescargado - anterior;
+
+  b.descargado = nuevoDescargado;
+  b.porcentajeDescargado = pct;
+  b.cargadoActual = Math.max(0, cap - nuevoDescargado);
+
+  guardarRegistro({
+    tipo: 'porcentaje_granel',
+    bodega: bodegaSeleccionadaPct,
+    porcentaje: pct,
+    toneladas: delta,
+    hora: new Date().toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'})
+  });
+
+  guardarBuque();
+
+  document.getElementById('pctDescargado').value = '';
+
+  showAlert('success', b.id + ' actualizado: ' + pct + '% descargado');
+  renderBodegasDashboard();
+  renderBodegasSelector();
+  updateMetrics();
+  renderRecent();
+}
+
+function setTipoAcero(tipo) {
+  tipoAcero = tipo;
+  document.getElementById('btnRollos').classList.toggle('selected', tipo === 'rollos');
+  document.getElementById('btnBarras').classList.toggle('selected', tipo === 'barras');
+  document.getElementById('formRollos').classList.toggle('hidden', tipo !== 'rollos');
+  document.getElementById('formBarras').classList.toggle('hidden', tipo !== 'barras');
+}
+
+function actualizarPesoBarra() {
+  const tipo = document.getElementById('barraTipo').value;
+  if (buqueActivo && buqueActivo.acero) {
+    const peso = tipo === 'larga' ? buqueActivo.acero.barraLargaPeso : buqueActivo.acero.barraPeso;
+    document.getElementById('barraPeso').value = peso;
+    calcularAcero();
+  }
+}
+
+function calcularAcero() {
+  if (tipoAcero === 'rollos') {
+    const cantidad = parseInt(document.getElementById('rolloCantidad').value) || 0;
+    const peso = parseFloat(document.getElementById('rolloPeso').value) || 0;
+    const total = cantidad * peso;
+    document.getElementById('rolloTotal').textContent = total.toFixed(2) + ' MT';
+    return total;
+  } else {
+    const cantidad = parseInt(document.getElementById('barraCantidad').value) || 0;
+    const peso = parseFloat(document.getElementById('barraPeso').value) || 0;
+    const total = cantidad * peso;
+    document.getElementById('barraTotal').textContent = total.toFixed(2) + ' MT';
+    return total;
+  }
+}
+
+function registrarRollos() {
+  const patente = document.getElementById('rolloPatente').value.trim().toUpperCase();
+  const cantidad = parseInt(document.getElementById('rolloCantidad').value) || 0;
+  const peso = parseFloat(document.getElementById('rolloPeso').value) || 0;
+  const total = cantidad * peso;
+
+  if (!patente || cantidad <= 0 || peso <= 0) {
+    showAlert('error', 'Complete todos los campos');
+    return;
+  }
+
+  guardarRegistro({
+    tipo: 'acero_rollos',
+    patente: patente,
+    cantidad: cantidad,
+    pesoUnitario: peso,
+    toneladas: total,
+    hora: new Date().toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'})
+  });
+
+  document.getElementById('rolloPatente').value = '';
+  document.getElementById('rolloCantidad').value = '';
+  document.getElementById('rolloTotal').textContent = '0.00 MT';
+
+  showAlert('success', cantidad + ' rollos registrados: ' + total.toFixed(2) + ' MT');
+  updateMetrics();
+  updateAceroMetrics();
+}
+
+function registrarBarras() {
+  const patente = document.getElementById('barraPatente').value.trim().toUpperCase();
+  const tipo = document.getElementById('barraTipo').value;
+  const cantidad = parseInt(document.getElementById('barraCantidad').value) || 0;
+  const peso = parseFloat(document.getElementById('barraPeso').value) || 0;
+  const total = cantidad * peso;
+
+  if (!patente || cantidad <= 0 || peso <= 0) {
+    showAlert('error', 'Complete todos los campos');
+    return;
+  }
+
+  guardarRegistro({
+    tipo: 'acero_barras',
+    patente: patente,
+    tipoBarra: tipo,
+    cantidad: cantidad,
+    pesoUnitario: peso,
+    toneladas: total,
+    hora: new Date().toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'})
+  });
+
+  document.getElementById('barraPatente').value = '';
+  document.getElementById('barraCantidad').value = '';
+  document.getElementById('barraTotal').textContent = '0.00 MT';
+
+  showAlert('success', cantidad + ' barras registradas: ' + total.toFixed(2) + ' MT');
+  updateMetrics();
+  updateAceroMetrics();
+}
+
+function guardarRegistro(registro) {
+  let turnos = JSON.parse(localStorage.getItem('htp_turnos') || '[]');
+  const hoy = new Date().toISOString().split('T')[0];
+
+  let turno = turnos.find(t => 
+    t.buqueId === buqueActivo.id && 
+    t.turno === turnoActual && 
+    t.fecha === hoy
+  );
+
+  if (turno) {
+    turno.registros.push(registro);
+    localStorage.setItem('htp_turnos', JSON.stringify(turnos));
+  }
+}
+
+function guardarBuque() {
+  let buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
+  const idx = buques.findIndex(b => b.id === buqueActivo.id);
+  if (idx >= 0) {
+    buques[idx] = buqueActivo;
+    localStorage.setItem('htp_buques', JSON.stringify(buques));
+  }
+}
+
+function getRegistrosTurno() {
+  const turnos = JSON.parse(localStorage.getItem('htp_turnos') || '[]');
+  const hoy = new Date().toISOString().split('T')[0];
+
+  const turno = turnos.find(t => 
+    t.buqueId === buqueActivo.id && 
+    t.turno === turnoActual && 
+    t.fecha === hoy
+  );
+
+  return turno ? turno.registros : [];
+}
+
+function updateMetrics() {
+  const registros = getRegistrosTurno();
+
+  let camiones = 0;
+  let toneladas = 0;
+
+  registros.forEach(r => {
+    if (r.tipo === 'camion_granel') camiones++;
+    toneladas += r.toneladas || 0;
+  });
+
+  const rateHora = toneladas / 8;
+  const rateDia = rateHora * 24;
+
+  document.getElementById('metricCamiones').textContent = camiones;
+  document.getElementById('metricToneladas').textContent = toneladas.toFixed(1);
+  document.getElementById('metricRateHora').textContent = rateHora.toFixed(1);
+  document.getElementById('metricRateDia').textContent = rateDia.toFixed(0);
+}
+
+function updateAceroMetrics() {
+  const registros = getRegistrosTurno();
+
+  let rollos = 0, rollosTon = 0;
+  let barras = 0, barrasTon = 0;
+
+  registros.forEach(r => {
+    if (r.tipo === 'acero_rollos') {
+      rollos += r.cantidad || 0;
+      rollosTon += r.toneladas || 0;
+    } else if (r.tipo === 'acero_barras') {
+      barras += r.cantidad || 0;
+      barrasTon += r.toneladas || 0;
+    }
+  });
+
+  const totalTon = rollosTon + barrasTon;
+  const rateHora = totalTon / 8;
+
+  document.getElementById('aceroRollosCount').textContent = rollos;
+  document.getElementById('aceroBarrasCount').textContent = barras;
+  document.getElementById('aceroTotalTon').textContent = totalTon.toFixed(2);
+  document.getElementById('aceroRateHora').textContent = rateHora.toFixed(1);
+}
+
+function renderRecent() {
+  const registros = getRegistrosTurno().slice().reverse().slice(0, 10);
+
+  if (registros.length === 0) {
+    document.getElementById('recentGranel').innerHTML = '<p style="color:#8b9dc3; text-align:center; padding:12px;">Sin registros aún</p>';
+    return;
+  }
+
+  document.getElementById('recentGranel').innerHTML = registros.map(r => {
+    let detail = '';
+    if (r.tipo === 'camion_granel') {
+      detail = `🚛 ${r.patente} → ${r.bodega}`;
+    } else if (r.tipo === 'porcentaje_granel') {
+      detail = `📊 ${r.bodega} ${r.porcentaje}%`;
+    } else if (r.tipo === 'acero_rollos') {
+      detail = `🌀 ${r.patente} ${r.cantidad} rollos`;
+    } else if (r.tipo === 'acero_barras') {
+      detail = `⬡ ${r.patente} ${r.cantidad} barras`;
+    }
+
+    return `
+      <div class="recent-item">
+        <div>
+          <span class="recent-time">${r.hora}</span>
+          <div class="recent-detail">${detail}</div>
+        </div>
+        <div class="recent-ton">+${(r.toneladas || 0).toFixed(2)} MT</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function solicitarCierre() {
+  const atraso = parseInt(document.getElementById('cierreAtraso').value) || 0;
+  const detencion = parseInt(document.getElementById('cierreDetencion').value) || 0;
+  const obs = document.getElementById('cierreObs').value;
+
+  let turnos = JSON.parse(localStorage.getItem('htp_turnos') || '[]');
+  const hoy = new Date().toISOString().split('T')[0];
+
+  let turno = turnos.find(t => 
+    t.buqueId === buqueActivo.id && 
+    t.turno === turnoActual && 
+    t.fecha === hoy
+  );
+
+  if (turno) {
+    turno.estado = 'pendiente';
+    turno.minutosAtraso = atraso;
+    turno.minutosDetencion = detencion;
+    turno.observaciones = obs;
+    localStorage.setItem('htp_turnos', JSON.stringify(turnos));
+  }
+
+  showAlert('success', 'Cierre solicitado. Esperando aprobación del supervisor.');
+
+  // Reset
+  document.getElementById('cierreAtraso').value = '0';
+  document.getElementById('cierreDetencion').value = '0';
+  document.getElementById('cierreObs').value = '';
+}
+
+function showAlert(type, msg) {
+  const el = document.getElementById('alert' + type.charAt(0).toUpperCase() + type.slice(1));
+  el.textContent = msg;
+  el.classList.add('active');
+  setTimeout(() => el.classList.remove('active'), 4000);
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HTP - Supervisor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0a1628;
+  color: #e8eaf6;
+  min-height: 100vh;
+  padding-bottom: 20px;
+}
+.header {
+  background: #0f1d33;
+  border-bottom: 1px solid rgba(30, 77, 139, 0.3);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #4a9eff;
+}
+.header-sub {
+  font-size: 12px;
+  color: #8b9dc3;
+}
+
+.container { max-width: 900px; margin: 0 auto; padding: 16px; }
+
+.card {
+  background: #0f1d33;
+  border: 1px solid rgba(30, 77, 139, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title .icon { font-size: 20px; }
+
+/* METRICS */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.metric-box {
+  background: #0a1628;
+  border: 1px solid rgba(30, 77, 139, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.metric-value.success { color: #00c853; }
+.metric-value.warning { color: #ff9100; }
+.metric-value.danger { color: #ff1744; }
+.metric-value.info { color: #4a9eff; }
+.metric-label {
+  font-size: 11px;
+  color: #8b9dc3;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.metric-sub { font-size: 11px; color: #5c6bc0; margin-top: 2px; }
+
+/* BODEGA DASHBOARD */
+.bodega-card {
+  background: #0a1628;
+  border: 1px solid rgba(30, 77, 139, 0.2);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.bodega-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.bodega-card-header h3 { font-size: 15px; font-weight: 700; }
+.bodega-card-header .badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.badge-embarque { background: rgba(0, 200, 83, 0.15); color: #00c853; }
+.badge-descarga { background: rgba(74, 158, 255, 0.15); color: #4a9eff; }
+.badge-completo { background: rgba(255, 215, 0, 0.15); color: #ffd700; }
+
+.bodega-progress {
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  height: 24px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 10px;
+}
+.bodega-progress-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.5s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.fill-embarque { background: linear-gradient(90deg, #00c853, #00e676); }
+.fill-descarga { background: linear-gradient(90deg, #4a9eff, #1e4d8b); }
+.fill-warning { background: linear-gradient(90deg, #ff9100, #ffc400); }
+.fill-danger { background: linear-gradient(90deg, #ff1744, #ff5252); }
+.fill-completo { background: linear-gradient(90deg, #ffd700, #ffab00); }
+
+.bodega-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  font-size: 12px;
+}
+.bodega-stat {
+  text-align: center;
+  padding: 8px 4px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+}
+.bodega-stat .num { font-size: 15px; font-weight: 700; }
+.bodega-stat .lbl { font-size: 9px; color: #8b9dc3; text-transform: uppercase; }
+.bodega-stat .success { color: #00c853; }
+.bodega-stat .warning { color: #ff9100; }
+.bodega-stat .danger { color: #ff1744; }
+
+/* RATE COMPARISON */
+.rate-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.rate-box {
+  background: #0a1628;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.rate-box.meta { border: 1px solid rgba(74, 158, 255, 0.3); }
+.rate-box.real { border: 1px solid rgba(0, 200, 83, 0.3); }
+.rate-box.danger { border: 1px solid rgba(255, 23, 68, 0.3); }
+.rate-title { font-size: 11px; color: #8b9dc3; text-transform: uppercase; margin-bottom: 6px; }
+.rate-value { font-size: 22px; font-weight: 700; }
+.rate-variation {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.rate-variation.positive { color: #00c853; }
+.rate-variation.negative { color: #ff1744; }
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  padding: 10px 18px;
+  border: 1px solid rgba(30, 77, 139, 0.3);
+  background: #0a1628;
+  border-radius: 10px;
+  color: #8b9dc3;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.tab.active {
+  background: linear-gradient(135deg, #1e4d8b, #2a6bc6);
+  border-color: transparent;
+  color: white;
+}
+
+/* TABLE */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  text-align: left;
+  padding: 10px 8px;
+  color: #4a9eff;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  border-bottom: 1px solid rgba(30, 77, 139, 0.3);
+}
+.data-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(30, 77, 139, 0.1);
+  color: #c5cae9;
+}
+.data-table tr:last-child td { border-bottom: none; }
+
+/* LIST */
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #0a1628;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+.list-item h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.list-item p { font-size: 12px; color: #8b9dc3; }
+
+/* BUTTONS */
+.btn {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-block { width: 100%; }
+.btn-primary {
+  background: linear-gradient(135deg, #1e4d8b, #2a6bc6);
+  color: white;
+}
+.btn-success {
+  background: linear-gradient(135deg, #00c853, #00e676);
+  color: #0a1628;
+}
+.btn-danger {
+  background: linear-gradient(135deg, #ff1744, #d50000);
+  color: white;
+}
+.btn-warning {
+  background: linear-gradient(135deg, #ff9100, #ffc400);
+  color: #0a1628;
+}
+.btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(30, 77, 139, 0.4);
+  color: #8b9dc3;
+}
+.btn-xs { padding: 6px 10px; font-size: 12px; }
+
+/* ALERT */
+.alert {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  display: none;
+  font-weight: 500;
+}
+.alert.active { display: block; }
+.alert-success { background: rgba(0, 200, 83, 0.15); border: 1px solid rgba(0, 200, 83, 0.3); color: #00c853; }
+.alert-error { background: rgba(255, 23, 68, 0.15); border: 1px solid rgba(255, 23, 68, 0.3); color: #ff1744; }
+
+/* HIDDEN */
+.hidden { display: none !important; }
+
+/* ETC */
+.etc-box {
+  background: #0a1628;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.etc-bodega { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.etc-fecha { font-size: 18px; font-weight: 700; color: #ff9100; }
+.etc-horas { font-size: 11px; color: #8b9dc3; }
+
+/* FORM */
+.form-group { margin-bottom: 14px; }
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: #8b9dc3;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 14px;
+  background: #0a1628;
+  border: 1px solid rgba(30, 77, 139, 0.4);
+  border-radius: 10px;
+  color: #e8eaf6;
+  font-size: 15px;
+  outline: none;
+}
+
+@media (max-width: 480px) {
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .rate-comparison { grid-template-columns: 1fr; }
+  .bodega-stats { grid-template-columns: 1fr 1fr; }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0a1628; }
+::-webkit-scrollbar-thumb { background: #1e4d8b; border-radius: 3px; }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-title">👁️ Supervisor HTP</div>
+      <div class="header-sub" id="headerInfo">Panel de Control</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-secondary btn-xs" onclick="window.location.href='index.html'">⚙️ Config</button>
+      <button class="btn btn-secondary btn-xs" onclick="window.location.href='tarja.html'">📝 Tarja</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="alert alert-success" id="alertSuccess"></div>
+  <div class="alert alert-error" id="alertError"></div>
+
+  <!-- SELECCIONAR BUQUE -->
+  <div class="card" id="selectBuqueCard">
+    <div class="card-title"><span class="icon">🚢</span> Seleccionar Buque</div>
+    <div id="listaBuques">
+      <p style="color:#8b9dc3; text-align:center; padding:20px;">No hay buques configurados</p>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div>
+        <h1 style="font-size:20px; font-weight:700;" id="dashBuqueName">--</h1>
+        <p style="font-size:13px; color:#8b9dc3;" id="dashBuqueInfo">--</p>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px; color:#8b9dc3;">ETC Buque</div>
+        <div style="font-size:16px; font-weight:700; color:#ff9100;" id="dashETC">--</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('resumen')" id="tabResumen">📊 Resumen</button>
+      <button class="tab" onclick="showTab('bodegas')" id="tabBodegas">🏭 Bodegas</button>
+      <button class="tab" onclick="showTab('turnos')" id="tabTurnos">📅 Turnos</button>
+      <button class="tab" onclick="showTab('cierres')" id="tabCierres">🔒 Cierres</button>
+      <button class="tab" onclick="showTab('acciones')" id="tabAcciones">⚡ Acciones</button>
+    </div>
+
+    <!-- RESUMEN -->
+    <div id="sectionResumen">
+      <!-- Rate -->
+      <div class="card">
+        <div class="card-title"><span class="icon">📈</span> Rate Programado vs Real</div>
+        <div class="rate-comparison">
+          <div class="rate-box meta">
+            <div class="rate-title">Meta</div>
+            <div class="rate-value" id="rateMeta" style="color:#4a9eff;">--</div>
+            <div style="font-size:11px; color:#8b9dc3;">ton/día</div>
+          </div>
+          <div class="rate-box real" id="rateRealBox">
+            <div class="rate-title">Real</div>
+            <div class="rate-value" id="rateReal" style="color:#00c853;">--</div>
+            <div style="font-size:11px; color:#8b9dc3;">ton/día</div>
+          </div>
+        </div>
+        <div style="text-align:center; padding:12px; background:#0a1628; border-radius:10px;">
+          <div style="font-size:13px; color:#8b9dc3; margin-bottom:4px;">Variación</div>
+          <div class="rate-variation" id="rateVariation">--</div>
+        </div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-value" id="supTiempo">--</div>
+          <div class="metric-label">Tiempo Total</div>
+          <div class="metric-sub">hrs</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value info" id="supTonHr">--</div>
+          <div class="metric-label">Rate Hora</div>
+          <div class="metric-sub">ton/hr</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value success" id="supTonDia">--</div>
+          <div class="metric-label">Rate Día</div>
+          <div class="metric-sub">ton/día</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value" id="supCamiones">--</div>
+          <div class="metric-label">Camiones</div>
+          <div class="metric-sub">total</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value warning" id="supDetencion">0</div>
+          <div class="metric-label">Detención</div>
+          <div class="metric-sub">min</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value warning" id="supAtraso">0</div>
+          <div class="metric-label">Atraso</div>
+          <div class="metric-sub">min</div>
+        </div>
+      </div>
+
+      <!-- ETC -->
+      <div class="card">
+        <div class="card-title"><span class="icon">⏰</span> ETC por Bodega</div>
+        <div id="etcBodegas"></div>
+      </div>
+
+      <!-- Acero -->
+      <div class="card" id="aceroCard" style="display:none;">
+        <div class="card-title"><span class="icon">🏗️</span> Acero Acumulado</div>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-value" id="aceroRollos">0</div>
+            <div class="metric-label">Rollos</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value" id="aceroBarras">0</div>
+            <div class="metric-label">Barras</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value success" id="aceroTon">0</div>
+            <div class="metric-label">Total MT</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BODEGAS DETALLE -->
+    <div id="sectionBodegas" class="hidden">
+      <div class="card">
+        <div class="card-title"><span class="icon">🏭</span> Estado Detallado de Bodegas</div>
+        <div id="bodegasDetalle"></div>
+      </div>
+    </div>
+
+    <!-- TURNOS -->
+    <div id="sectionTurnos" class="hidden">
+      <div class="card">
+        <div class="card-title"><span class="icon">📅</span> Historial de Turnos</div>
+        <div id="turnosList"></div>
+      </div>
+    </div>
+
+    <!-- CIERRES PENDIENTES -->
+    <div id="sectionCierres" class="hidden">
+      <div class="card">
+        <div class="card-title"><span class="icon">🔒</span> Cierres Pendientes</div>
+        <div id="cierresPendientes"></div>
+      </div>
+    </div>
+
+    <!-- ACCIONES -->
+    <div id="sectionAcciones" class="hidden">
+      <div class="card">
+        <div class="card-title"><span class="icon">⚡</span> Acciones del Buque</div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+          <button class="btn btn-warning" onclick="registrarGira()">🔄 Gira</button>
+          <button class="btn btn-danger" onclick="cerrarBuque()">🏁 Cerrar Buque</button>
+        </div>
+
+        <div class="form-group">
+          <label>Ajustar Tonelaje Manual (MT)</label>
+          <div id="ajusteBodegas"></div>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="guardarAjuste()">💾 Guardar Ajuste</button>
+
+        <div style="margin-top:16px; border-top:1px solid rgba(30,77,139,0.2); padding-top:16px;">
+          <button class="btn btn-success btn-block" onclick="exportarExcel()">📥 Exportar Excel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let buqueSeleccionado = null;
+let currentTab = 'resumen';
+
+function init() {
+  renderListaBuques();
+}
+
+function renderListaBuques() {
+  const buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
+  const container = document.getElementById('listaBuques');
+
+  if (buques.length === 0) {
+    container.innerHTML = '<p style="color:#8b9dc3; text-align:center; padding:20px;">No hay buques. Configure uno en <strong>index.html</strong></p>';
+    return;
+  }
+
+  container.innerHTML = buques.slice().reverse().map(b => {
+    let estadoColor = '#ff1744';
+    let estadoText = 'CERRADO';
+    if (b.estado === 'abierto') { estadoColor = '#00c853'; estadoText = 'ABIERTO'; }
+    else if (b.estado === 'gira') { estadoColor = '#ff9100'; estadoText = 'GIRA'; }
+
+    const totalCap = b.bodegas.reduce((s, b) => s + b.capacidad, 0);
+    const totalCargado = b.bodegas.reduce((s, b) => s + b.cargadoActual, 0);
+    const pct = totalCap > 0 ? (totalCargado / totalCap * 100).toFixed(1) : 0;
+
+    return `
+      <div class="list-item" style="cursor:pointer;" onclick="seleccionarBuque('${b.id}')">
+        <div>
+          <h4>${b.nombre} ${b.voyage} <span style="color:${estadoColor}; font-size:12px;">● ${estadoText}</span></h4>
+          <p>${b.tipoOperacion} • ${b.tipoGranel} • Rate: ${b.rateMeta.toLocaleString()} ton/día</p>
+          <p>${b.bodegas.length} bodegas • ${totalCargado.toFixed(1)}/${totalCap.toLocaleString()} MT (${pct}%)</p>
+        </div>
+        <div style="font-size:20px; color:#4a9eff;">→</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function seleccionarBuque(id) {
+  const buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
+  buqueSeleccionado = buques.find(b => b.id === id);
+
+  if (!buqueSeleccionado) return;
+
+  document.getElementById('selectBuqueCard').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+
+  document.getElementById('dashBuqueName').textContent = buqueSeleccionado.nombre + ' ' + buqueSeleccionado.voyage;
+  document.getElementById('dashBuqueInfo').textContent = buqueSeleccionado.tipoOperacion + ' • ' + buqueSeleccionado.tipoGranel + ' • ' + buqueSeleccionado.bodegas.length + ' bodegas';
+
+  showTab('resumen');
+}
+
+function showTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+
+  document.getElementById('sectionResumen').classList.add('hidden');
+  document.getElementById('sectionBodegas').classList.add('hidden');
+  document.getElementById('sectionTurnos').classList.add('hidden');
+  document.getElementById('sectionCierres').classList.add('hidden');
+  document.getElementById('sectionAcciones').classList.add('hidden');
+  document.getElementById('section' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('hidden');
+
+  if (tab === 'resumen') renderResumen();
+  if (tab === 'bodegas') renderBodegasDetalle();
+  if (tab === 'turnos') renderTurnos();
+  if (tab === 'cierres') renderCierres();
+  if (tab === 'acciones') renderAcciones();
+}
+
+function calcularRate(buque) {
+  const turnos = JSON.parse(localStorage.getItem('htp_turnos') || '[]')
+    .filter(t => t.buqueId === buque.id && (t.estado === 'aprobado' || t.estado === 'abierto'));
+
+  let tonTotal = 0;
+  let horasTrabajadas = 0;
+  let minAfectados = 0;
+  let camiones = 0;
+  let minDetencion = 0;
+  let minAtraso = 0;
+
+  turnos.forEach(t => {
+    t.registros.forEach(r => {
+      tonTotal += r.toneladas || 0;
+      if (r.tipo === 'camion_granel') camiones++;
+    });
+
+    horasTrabajadas += 8;
+    minAtraso += t.minutosAtraso || 0;
+    minDetencion += t.minutosDetencion || 0;
+    minAfectados += (t.minutosAtraso || 0) + (t.minutosDetencion || 0);
+  });
+
+  // Gira
+  let horasGira = 0;
+  if (buque.gira && buque.gira.salida) {
+    const fin = buque.gira.regreso || new Date().toISOString();
+    horasGira = (new Date(fin) - new Date(buque.gira.salida)) / (1000 * 60 * 60);
+  }
+
+  const horasEfectivas = Math.max(0.1, horasTrabajadas - horasGira - (minAfectados / 60));
+  const rateHora = tonTotal / horasEfectivas;
+  const rateDia = rateHora * 24;
+
+  let variacion = 0;
+  if (buque.rateMeta > 0) {
+    variacion = ((rateDia - buque.rateMeta) / buque.rateMeta) * 100;
+  }
+
+  return { 
+    tonTotal, rateHora, rateDia, variacion, horasEfectivas, 
+    horasGira, horasAfectadas: minAfectados / 60, camiones,
+    minDetencion, minAtraso, horasTrabajadas
+  };
+}
+
+function calcularETC(buque, rateHora) {
+  if (!rateHora || rateHora <= 0) return null;
+
+  const ahora = new Date();
+  const etcs = {};
+
+  buque.bodegas.forEach(b => {
+    const cap = b.capacidad || 0;
+    const cargado = b.cargadoActual || 0;
+    const descargado = b.descargado || 0;
+    const total = cargado + descargado;
+    const faltan = Math.max(0, cap - total);
+
+    if (faltan > 0) {
+      const horas = faltan / rateHora;
+      const etc = new Date(ahora.getTime() + horas * 60 * 60 * 1000);
+      etcs[b.id] = {
+        nombre: b.nombre,
+        faltan,
+        etc: etc.toLocaleString('es-CL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}),
+        horas: horas.toFixed(1)
+      };
+    } else {
+      etcs[b.id] = { nombre: b.nombre, faltan: 0, etc: 'COMPLETADO', horas: 0 };
+    }
+  });
+
+  return etcs;
+}
+
+function renderResumen() {
+  if (!buqueSeleccionado) return;
+
+  const rate = calcularRate(buqueSeleccionado);
+  const etcs = calcularETC(buqueSeleccionado, rate.rateHora);
+
+  // Rate
+  document.getElementById('rateMeta').textContent = buqueSeleccionado.rateMeta.toLocaleString('es-CL', {maximumFractionDigits:0});
+  document.getElementById('rateReal').textContent = rate.rateDia.toLocaleString('es-CL', {maximumFractionDigits:0});
+
+  const varEl = document.getElementById('rateVariation');
+  if (rate.variacion >= 0) {
+    varEl.textContent = '+' + rate.variacion.toFixed(1) + '% ✅';
+    varEl.className = 'rate-variation positive';
+    document.getElementById('rateRealBox').className = 'rate-box real';
+  } else {
+    varEl.textContent = rate.variacion.toFixed(1) + '% 🔴';
+    varEl.className = 'rate-variation negative';
+    document.getElementById('rateRealBox').className = 'rate-box danger';
+  }
+
+  // Metrics
+  const tiempoTotal = rate.horasEfectivas + rate.horasGira + rate.horasAfectadas;
+  document.getElementById('supTiempo').textContent = tiempoTotal.toFixed(1);
+  document.getElementById('supTonHr').textContent = rate.rateHora.toFixed(1);
+  document.getElementById('supTonDia').textContent = rate.rateDia.toLocaleString('es-CL', {maximumFractionDigits:0});
+  document.getElementById('supCamiones').textContent = rate.camiones;
+  document.getElementById('supDetencion').textContent = rate.minDetencion;
+  document.getElementById('supAtraso').textContent = rate.minAtraso;
+
+  // ETC
+  let etcHtml = '';
+  let maxETC = null;
+  if (etcs) {
+    const etcsList = Object.values(etcs).filter(e => e.horas > 0);
+    if (etcsList.length > 0) {
+      maxETC = etcsList.reduce((a, b) => a.horas > b.horas ? a : b);
+    }
+
+    Object.values(etcs).forEach(e => {
+      etcHtml += `
+        <div class="etc-box">
+          <div class="etc-bodega">${e.nombre}</div>
+          <div class="etc-fecha">${e.etc}</div>
+          <div class="etc-horas">Faltan: ${e.faltan.toFixed(1)} MT • ${e.horas} hrs</div>
+        </div>
+      `;
+    });
+  }
+  document.getElementById('etcBodegas').innerHTML = etcHtml || '<p style="color:#8b9dc3; text-align:center;">No disponible</p>';
+
+  // ETC global
+  document.getElementById('dashETC').textContent = maxETC ? maxETC.etc : '--';
+
+  // Acero
+  const turnos = JSON.parse(localStorage.getItem('htp_turnos') || '[]')
+    .filter(t => t.buqueId === buqueSeleccionado.id);
+  let rollos = 0, rollosTon = 0, barras = 0, barrasTon = 0;
+
+  turnos.forEach(t => {
+    t.registros.forEach(r => {
+      if (r.tipo === 'acero_rollos') { rollos += r.cantidad || 0; rollosTon += r.toneladas || 0; }
+      else if (r.tipo === 'acero_barras') { barras += r.cantidad || 0; barrasTon += r.toneladas || 0; }
+    });
+  });
+
+  if (rollos > 0 || barras > 0) {
+    document.getElementById('aceroCard').style.display = 'block';
+    document.getElementById('aceroRollos').textContent = rollos;
+    document.getElementById('aceroBarras').textContent = barras;
+    document.getElementById('aceroTon').textContent = (rollosTon + barrasTon).toFixed(2);
+  } else {
+    document.getElementById('aceroCard').style.display = 'none';
+  }
+}
+
+function renderBodegasDetalle() {
+  if (!buqueSeleccionado) return;
+
+  const container = document.getElementById('bodegasDetalle');
+  const rate = calcularRate(buqueSeleccionado);
+  const etcs = calcularETC(buqueSeleccionado, rate.rateHora);
+
+  container.innerHTML = buqueSeleccionado.bodegas.map(b => {
+    const cap = b.capacidad || 0;
+    const cargado = b.cargadoActual || 0;
+    const descargado = b.descargado || 0;
+    const total = cargado + descargado;
+    const pct = cap > 0 ? Math.min((total / cap) * 100, 100) : 0;
+    const faltan = Math.max(0, cap - total);
+
+    let fillClass = b.tipo === 'descarga' ? 'fill-descarga' : 'fill-embarque';
+    if (pct >= 100) fillClass = 'fill-completo';
+    else if (pct >= 80) fillClass = 'fill-warning';
+
+    const badgeClass = b.tipo === 'descarga' ? 'badge-descarga' : 'badge-embarque';
+    const tipoText = b.tipo === 'descarga' ? 'DESCARGA' : 'EMBARQUE';
+    const etc = etcs && etcs[b.id] ? etcs[b.id].etc : '--';
+
+    return `
+      <div class="bodega-card">
+        <div class="bodega-card-header">
+          <h3>🏭 ${b.id} (${b.nombre})</h3>
+          <span class="badge ${badgeClass}">${tipoText}</span>
+        </div>
+        <div class="bodega-progress">
+          <div class="bodega-progress-fill ${fillClass}" style="width:${pct.toFixed(1)}%">
+            ${pct.toFixed(1)}%
+          </div>
+        </div>
+        <div class="bodega-stats">
+          <div class="bodega-stat">
+            <div class="num">${cargado.toFixed(1)}</div>
+            <div class="lbl">Cargado MT</div>
+          </div>
+          <div class="bodega-stat">
+            <div class="num">${descargado.toFixed(1)}</div>
+            <div class="lbl">Descargado MT</div>
+          </div>
+          <div class="bodega-stat">
+            <div class="num ${faltan > 0 ? 'warning' : 'success'}">${faltan.toFixed(1)}</div>
+            <div class="lbl">Faltan MT</div>
+          </div>
+          <div class="bodega-stat">
+            <div class="num info">${etc}</div>
+            <div class="lbl">ETC</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTurnos() {
+  if (!buqueSeleccionado) return;
+
+  const turnos = JSON.parse(localStorage.getItem('htp_turnos') || '[]')
+    .filter(t => t.buqueId === buqueSeleccionado.id)
+    .sort((a, b) => new Date(b.fecha + 'T00:00') - new Date(a.fecha + 'T00:00'));
+
+  const container = document.getElementById('turnosList');
+
+  if (turnos.length === 0) {
+    container.innerHTML = '<p style="color:#8b9dc3; text-align:center; padding:20px;">Sin turnos registrados</p>';
+    return;
+  }
+
+  let html = '<table class="data-table"><thead><tr><th>Fecha</th><th>Turno</th><th>Estado</th><th>Registros</th><th>Toneladas</th><th>Atraso</th><th>Detención</th></tr></thead><tbody>';
+
+  turnos.forEach(t => {
+    const ton = t.registros.reduce((s, r) => s + (r.toneladas || 0), 0);
+    const estadoColor = t.estado === 'aprobado' ? '#00c853' : t.estado === 'pendiente' ? '#ff9100' : '#4a9eff';
+
+    html += `<tr>
+      <td>${t.fecha}</td>
+      <td>${t.turno}°</td>
+      <td style="color:${estadoColor}; font-weight:600;">${t.estado.toUpperCase()}</td>
+      <td>${t.registros.length}</td>
+      <td>${ton.toFixed(1)} MT</td>
+      <td>${t.minutosAtraso || 0} min</td>
+      <td>${t.minutosDetencion || 0} min</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function renderCierres() {
+  if (!buqueSeleccionado) return;
+
+  const turnos = JSON.parse(localStorage.getItem('htp_turnos') || '[]')
+    .filter(t => t.buqueId === buqueSeleccionado.id && t.estado === 'pendiente');
+
+  const container = document.getElementById('cierresPendientes');
+
+  if (turnos.length === 0) {
+    container.innerHTML = '<p style="color:#8b9dc3; text-align:center; padding:20px;">No hay cierres pendientes</p>';
+    return;
+  }
+
+  container.innerHTML = turnos.map(t => {
+    const ton = t.registros.reduce((s, r) => s + (r.toneladas || 0), 0);
+    const camiones = t.registros.filter(r => r.tipo === 'camion_granel').length;
+
+    return `
+      <div class="list-item">
+        <div>
+          <h4>📝 Turno ${t.turno}° - ${t.fecha}</h4>
+          <p>${camiones} camiones • ${ton.toFixed(1)} MT</p>
+          <p>Atraso: ${t.minutosAtraso || 0}min | Detención: ${t.minutosDetencion || 0}min</p>
+          ${t.observaciones ? `<p style="color:#ff9100;">Obs: ${t.observaciones}</p>` : ''}
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-success btn-xs" onclick="aprobarCierre('${t.id}')">✅</button>
+          <button class="btn btn-danger btn-xs" onclick="rechazarCierre('${t.id}')">❌</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function aprobarCierre(id) {
+  let turnos = JSON.parse(localStorage.getItem('htp_turnos') || '[]');
+  const t = turnos.find(t => t.id === id);
+  if (t) {
+    t.estado = 'aprobado';
+    localStorage.setItem('htp_turnos', JSON.stringify(turnos));
+    showAlert('success', 'Cierre aprobado');
+    renderCierres();
+    renderResumen();
+  }
+}
+
+function rechazarCierre(id) {
+  let turnos = JSON.parse(localStorage.getItem('htp_turnos') || '[]');
+  const t = turnos.find(t => t.id === id);
+  if (t) {
+    t.estado = 'rechazado';
+    localStorage.setItem('htp_turnos', JSON.stringify(turnos));
+    showAlert('error', 'Cierre rechazado');
+    renderCierres();
+  }
+}
+
+function renderAcciones() {
+  if (!buqueSeleccionado) return;
+
+  const container = document.getElementById('ajusteBodegas');
+  container.innerHTML = buqueSeleccionado.bodegas.map((b, i) => `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+      <div class="form-group" style="margin-bottom:0;">
+        <label style="font-size:11px;">${b.id} - Cargado (MT)</label>
+        <input type="number" id="ajtCarg_${i}" value="${b.cargadoActual}" step="0.01">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label style="font-size:11px;">${b.id} - Descargado (MT)</label>
+        <input type="number" id="ajtDesc_${i}" value="${b.descargado}" step="0.01">
+      </div>
+    </div>
+  `).join('');
+}
+
+function guardarAjuste() {
+  if (!buqueSeleccionado) return;
+
+  buqueSeleccionado.bodegas.forEach((b, i) => {
+    b.cargadoActual = parseFloat(document.getElementById('ajtCarg_' + i).value) || 0;
+    b.descargado = parseFloat(document.getElementById('ajtDesc_' + i).value) || 0;
+  });
+
+  let buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
+  const idx = buques.findIndex(b => b.id === buqueSeleccionado.id);
+  if (idx >= 0) {
+    buques[idx] = buqueSeleccionado;
+    localStorage.setItem('htp_buques', JSON.stringify(buques));
+  }
+
+  showAlert('success', 'Ajuste guardado');
+  renderResumen();
+}
+
+function registrarGira() {
+  if (!buqueSeleccionado) return;
+
+  const buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
+  const b = buques.find(bu => bu.id === buqueSeleccionado.id);
+
+  if (b.estado === 'gira') {
+    // Regresar
+    b.estado = 'abierto';
+    b.gira = b.gira || {};
+    b.gira.regreso = new Date().toISOString();
+    showAlert('success', 'Buque regresado de gira');
+  } else {
+    // Salir
+    b.estado = 'gira';
+    b.gira = { salida: new Date().toISOString(), regreso: null };
+    showAlert('success', 'Buque enviado a gira');
+  }
+
+  localStorage.setItem('htp_buques', JSON.stringify(buques));
+  buqueSeleccionado = b;
+  renderResumen();
+}
+
+function cerrarBuque() {
+  if (!buqueSeleccionado) return;
+  if (!confirm('¿Cerrar permanentemente este buque?')) return;
+
+  const buques = JSON.parse(localStorage.getItem('htp_buques') || '[]');
+  const b = buques.find(bu => bu.id === buqueSeleccionado.id);
+  if (b) {
+    b.estado = 'cerrado';
+    b.fechaCierre = new Date().toISOString();
+    localStorage.setItem('htp_buques', JSON.stringify(buques));
+    showAlert('success', 'Buque cerrado');
+
+    setTimeout(() => {
+      location.reload();
+    }, 1500);
+  }
+}
+
+function exportarExcel() {
+  if (!buqueSeleccionado) return;
+
+  const rate = calcularRate(buqueSeleccionado);
+  const turnos = JSON.parse(localStorage.getItem('htp_turnos') || '[]')
+    .filter(t => t.buqueId === buqueSeleccionado.id);
+
+  const wb = XLSX.utils.book_new();
+
+  // Hoja 1: Resumen
+  const resumen = [
+    ['CONTROL DE TRANSFERENCIA - MUELLE HTP'],
+    [''],
+    ['Buque', buqueSeleccionado.nombre + ' ' + buqueSeleccionado.voyage],
+    ['Tipo', buqueSeleccionado.tipoOperacion],
+    ['Granel', buqueSeleccionado.tipoGranel],
+    ['Rate Meta', buqueSeleccionado.rateMeta],
+    ['Rate Real', rate.rateDia.toFixed(2)],
+    ['Rate Hora', rate.rateHora.toFixed(2)],
+    ['Toneladas Total', rate.tonTotal.toFixed(2)],
+    ['Camiones', rate.camiones],
+    ['Horas Efectivas', rate.horasEfectivas.toFixed(2)],
+    ['Min Detención', rate.minDetencion],
+    ['Min Atraso', rate.minAtraso]
+  ];
+
+  const ws1 = XLSX.utils.aoa_to_sheet(resumen);
+  XLSX.utils.book_append_sheet(wb, ws1, 'Resumen');
+
+  // Hoja 2: Bodegas
+  const bodegasData = [['Bodega', 'Capacidad', 'Cargado', 'Descargado', 'Faltan', '%']];
+  buqueSeleccionado.bodegas.forEach(b => {
+    const total = (b.cargadoActual || 0) + (b.descargado || 0);
+    const cap = b.capacidad || 0;
+    const pct = cap > 0 ? (total / cap * 100).toFixed(2) : 0;
+    bodegasData.push([
+      b.id + ' (' + b.nombre + ')',
+      cap,
+      b.cargadoActual || 0,
+      b.descargado || 0,
+      Math.max(0, cap - total).toFixed(2),
+      pct
+    ]);
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(bodegasData);
+  XLSX.utils.book_append_sheet(wb, ws2, 'Bodegas');
+
+  // Hoja 3: Turnos
+  const turnosData = [['Fecha', 'Turno', 'Estado', 'Registros', 'Toneladas', 'Atraso min', 'Detención min', 'Observaciones']];
+  turnos.forEach(t => {
+    const ton = t.registros.reduce((s, r) => s + (r.toneladas || 0), 0);
+    turnosData.push([
+      t.fecha, t.turno + '°', t.estado, t.registros.length,
+      ton.toFixed(2), t.minutosAtraso || 0, t.minutosDetencion || 0, t.observaciones || ''
+    ]);
+  });
+  const ws3 = XLSX.utils.aoa_to_sheet(turnosData);
+  XLSX.utils.book_append_sheet(wb, ws3, 'Turnos');
+
+  // Hoja 4: Registros Detallados
+  const regsData = [['Fecha', 'Turno', 'Hora', 'Tipo', 'Bodega', 'Patente', 'Toneladas', 'Cantidad']];
+  turnos.forEach(t => {
+    t.registros.forEach(r => {
+      regsData.push([
+        t.fecha, t.turno + '°', r.hora, r.tipo, r.bodega || '',
+        r.patente || '', r.toneladas || 0, r.cantidad || ''
+      ]);
+    });
+  });
+  const ws4 = XLSX.utils.aoa_to_sheet(regsData);
+  XLSX.utils.book_append_sheet(wb, ws4, 'Registros');
+
+  XLSX.writeFile(wb, `HTP_${buqueSeleccionado.nombre}_${buqueSeleccionado.voyage}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showAlert('success', 'Excel exportado');
+}
+
+function showAlert(type, msg) {
+  const el = document.getElementById('alert' + type.charAt(0).toUpperCase() + type.slice(1));
+  el.textContent = msg;
+  el.classList.add('active');
+  setTimeout(() => el.classList.remove('active'), 4000);
+}
+
+init();
+</script>
+</body>
+</html>
